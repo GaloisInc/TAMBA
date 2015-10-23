@@ -36,3 +36,47 @@ secret information. On the other hand, it may be safe to share $d$ if we have
 not shared any other information. This is the intuition behind _knowledge-based
 security policies_, we decide what we can share based on modelling what another
 party is able to infer from what we have already shared.
+
+Concrete Example:
+-----------------
+
+Often systems will store the following data regarding a user:
+
+1. Birthday, including:
+    a. Day
+    b. Month
+    c. Year
+2. zip-code
+3. gender
+
+These three items are known to be able to uniquely identify a majority of the
+US population. If a user is privacy conscious they may prohibit the application
+from sharing any of this information despite the fact that they would be okay with
+anyone knowing their birth-year, or zip-code, etc..
+
+The proposed solution to this is to allow the user to specify how difficult
+they would like it to be to infer their identity. This allows the application
+to share some of this information while ensuring that not enough is shared to
+allow a third party to infer the identity of the user. For example, the user
+could state that they do not want anyone to be able to narrow down the identity
+to fewer than 1,000 people (i.e. a $\frac{1}{1000}$ chance of identifying the
+user).
+
+A Little More Formal
+====================
+
+We have three actors:
+
+* $U$: the user
+* $A$: the user's agent
+* $Q$: a querying principal, the third part trying to infer information about $U$
+
+This paper introduces _Knowledge-based Security Policies_ which determine how
+the user's agent $A$ can safely respond to queries from $Q$ about user $U$. The
+technique accomplishes this by having $A$ maintain a probability distribution
+over $U$'s secret information for $Q$. $A$ may determine that $Q$ is able to
+infer $U$'s birth-year but not their birth-month and birth-day. If by sharing
+$U$'s birth-day $Q$ would be able to uniquely identify $U$, then $A$ would not
+share that data. However, if sharing the birth-day still keeps the probability
+of inferring $U$'s identity below $U$'s specified level, then $A$ has the
+option to share that data.
