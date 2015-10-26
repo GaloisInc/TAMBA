@@ -63,7 +63,7 @@ to fewer than 1,000 people (i.e. a $\frac{1}{1000}$ chance of identifying the
 user).
 
 A Little More Formal
-====================
+--------------------
 
 We have three actors:
 
@@ -80,3 +80,72 @@ $U$'s birth-day $Q$ would be able to uniquely identify $U$, then $A$ would not
 share that data. However, if sharing the birth-day still keeps the probability
 of inferring $U$'s identity below $U$'s specified level, then $A$ has the
 option to share that data.
+
+The user can specify a different privacy policy for each $Q$, allowing
+flexibility in what is shared with who.
+
+How it's Done
+-------------
+
+There are two parts to providing knowledge-based security policies:
+
+1. An algorithm for knowing when a query violates the policy
+2. A way to update the model of a $Q$'s beliefs based on responses to queries
+
+One of the key contributions of the paper is providing a method for implementing
+both of the above. Because these models are probabilistic in nature the use of
+a probabilistic language is a natural choice. However, the standard method, which
+uses the sampling of probability distributions, is too inefficient when dealing with
+large state spaces (for the purposes of this work), so instead the implementation
+is based on _abstract interpretation_.
+
+A Small Hitch
+-------------
+
+Unfortunately, we cannot have $A$ simply reject a query when the answer will allow
+$Q$ to know $U$'s secret information precisely. The reason for this is because
+the rejection of a query _is itself providing information_. The example in
+the paper is quite clear:
+
+Imagine $U$'s birthday is stored as a tuple: $(bday, byear)$. $Q$, wanting
+to know which users' birthday is in the next week sends this query to all
+users:
+
+
+```c
+today = 260;
+output = False;
+if (bday >= today && bday < (today + 7))
+    output = True;
+```
+
+In the above code, `today` references a non-secret global variable that
+represents the current day in the year. $U$'s secret variable `bday` needs to
+be accessed in order to respond to the query with a `True` or `False`. For our
+purposes, we will assume that $U$ has specified that no $Q$ should be able to
+determine $U$'s birtday to within 5%.
+
+The question we concern ourselves with is: When is it safe to respond to these
+kinds of queries?
+
+Let's consider a few possibilities. The first is that $U$'s `bday` value is
+270.  This means that the result of running the code above is `False`. What
+does that response allow $Q$ to infer? Well, assuming that this is the first
+query for $U$, then the $Q$ began with the following information (we use $C$ to
+represent the possible knowledge that $Q$ has about $U$, and $m$ to represent
+the probability of the knowledge to be true):
+
+$$C = 0 \leq bday < 365; m = 1$$
+
+In plain English: We know that the user's birthday is definitely a day in the
+year.
+
+After receiving `False` to the query above, $Q$ now knows that `bday` is _not_
+between 260 and 267. This allows $Q$ to split $C$ into two separate estimates:
+
+$$ C_{1} = 0   \leq bday < 260; m_{1} \approx 0.726 $$
+$$ C_{2} = 267 \leq bday < 365; m_{2} \approx 0.274 $$
+
+Because the actual value of `bday` is equally likely (from $Q$'s perspective)
+to be on any day other than the days of this week, $m_{1}$ and $m_{2}$ are
+weighted by the number of days before and after this week, respectively.
