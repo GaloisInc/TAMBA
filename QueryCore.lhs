@@ -3,7 +3,9 @@ titled "Dynamic Enforcement of Knowledge-based Security Policies".
 
 > module QueryCore where
 >
+> import Prelude hiding (LT, EQ, GT)
 > import Data.Map as M
+> import Data.Maybe (fromMaybe)
 
 It starts of as usual, with the AST:
 
@@ -32,7 +34,7 @@ We combine the above in three ways. Arithmetic expressions,
 
 > data ArithExp = Var Var
 >               | Int Int
->               | Aop ArithExp ArithExp ArithExp
+>               | Aop ArithOp ArithExp ArithExp
 >     deriving (Eq, Show)
 
 Boolean expressions,
@@ -65,7 +67,7 @@ standard boolean `if`.
 You may have noticed that we can only use `Variables` in `ArithExp`s. Therefore
 our state is a mapping from variables to `Int`s.
 
-> type State = Map Var Int
+> type State = Map String Int
 > initialState :: State
 > initialState = empty
 
@@ -169,6 +171,11 @@ We can easily define a fix-point for distributions:
 >   where
 >     d' = semS s (condition d b)
 
+Now we define the various semantic functions. They are all pretty
+straightforward.  Something worth pointing out is that the only partial
+function is `semE` on the `Var v` case, this partiality is inherited from the
+lookup of the variable in the Map.
+
 > semB :: BoolExp -> State -> Bool
 > semB (Not b)        s = not $ semB b s
 > semB (b1 `Or` b2)   s = semB b1 s || semB b2 s
@@ -176,7 +183,29 @@ We can easily define a fix-point for distributions:
 > semB (BOp op e1 e2) s = semRel op (semE e1 s) (semE e2 s)
 
 > semRel :: RelOp -> Int -> Int -> Bool
-> semRel op = undefined
+> semRel LEQ = (<=)
+> semRel LT  = (<)
+> semRel EQ  = (==)
+> semRel NEQ = (/=)
+> semRel GT  = (>)
+> semRel GEQ = (>=)
 
 > semE :: ArithExp -> State -> Int
-> semE b s = undefined
+> semE (Var v)        s = fromMaybe (err "semE" v) $ M.lookup v s
+> semE (Int i)        _ = i
+> semE (Aop op e1 e2) s = semOp op (semE e1 s) (semE e2 s)
+
+> err :: String -> String -> a
+> err s v = error $ "Error in " ++ s ++ " while trying to look up " ++ v
+
+> semOp :: ArithOp -> Int -> Int -> Int
+> semOp Add x y = x + y
+> semOp Mul x y = x * y
+> semOp Sub x y = x - y
+
+We can take the sample password checker program from the paper:
+
+> pwc :: Statement
+> pwc = IFTE (BOp EQ (Var "P") (Var "g"))
+>            ("a" := Int 1)
+>            ("a" := Int 0)
