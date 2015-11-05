@@ -1,4 +1,4 @@
-% Notes on the paper 'Dynamic Enforcement of Knowledge-based Security Policies'
+% Notes on the paper 'Dynamic Enforcement of Knowledge-based Security Policies': Part 1
 % JMCT
 
 General Idea
@@ -133,14 +133,15 @@ Let's consider a few possibilities. The first is that $U$'s `bday` value is
 does that response allow $Q$ to infer? Well, assuming that this is the first
 query for $U$, then the $Q$ began with the following information (we use $C$ to
 represent the possible knowledge that $Q$ has about $U$, and $m$ to represent
-the probability of the knowledge to be true):
+the probability of the knowledge to be true, the letter $C$ is used because
+the area described is a _c_onvex polyhedron (we'll get to what that means)):
 
 $$C = 0 \leq bday < 365; m = 1$$
 
 In plain English: We know that the user's birthday is definitely a day in the
 year.
 
-After receiving `False` to the query above, $Q$ now knows that `bday` is _not_
+After receiving `False` to the query above, $Q$ would know that `bday` is _not_
 between 260 and 267. This allows $Q$ to split $C$ into two separate estimates:
 
 $$ C_{1} = 0   \leq bday < 260; m_{1} \approx 0.726 $$
@@ -148,4 +149,55 @@ $$ C_{2} = 267 \leq bday < 365; m_{2} \approx 0.274 $$
 
 Because the actual value of `bday` is equally likely (from $Q$'s perspective)
 to be on any day other than the days of this week, $m_{1}$ and $m_{2}$ are
-weighted by the number of days before and after this week, respectively.
+weighted by the number of days before and after this week, respectively.  This
+model of $Q$'s knowledge tells us that $Q$ can only narrow down $U$'s `bday`
+value to one of 358 possible values, a $0.2\%$ chance of determining the exact
+value, well below $U$'s 5% setting. Therefore it is safe to respond to this
+query. Our updated model of $Q$'s knowledge is represented by the two
+distributions of $C_{1}$ and $C_{2}$ along with $m_{1}$ and $m_{2}$.
+
+Now assume that $Q$ makes the identical query the next day: `today = 261`.
+Because $U$'s `bday` is still not within a week of day 261 it may initially seem
+safe to respond `False` to this query. However, in order to ensure that
+knowledge-based security policies are secure _in general_ it is important to
+reject this query and not respond. Why is that?
+
+The reason is that although the answer is safe in _this_ case, it is very
+unsafe in _one particular_ case. With `bday` as 270, we could return `False`
+and $Q$'s model would barely change (it would just make it a little bit more
+likely that `bday` is before the current week), however, if `bday` was 267, the
+response to the query would be `True`, which allows $Q$ to _precisely_
+determine `bday`!
+
+This makes intuitive sense, if yesterday `bday` was _not_ in the current week,
+but today it _is_, then we know that `bday` is exactly 7 days from today. In
+order to avoid $Q$ being able to infer this, we must reject the query, but the
+only 'reason' to reject the query is if it allows $Q$ to infer secret
+information. The only secret information that could be inferred by responding
+to this query is the value of `bday`, therefore rejecting the query tells $Q$
+that the birth date is inferable with the response to the query. A `False`
+response would not provide an inferable value so the response must be `True`
+and as the logic above states, being `True` today but not yesterday means that
+the value of `bday` must be exactly 267.
+
+Because of this, the authors suggest that a query should be refused if _any_
+possible value of a secret could cause $Q$'s knowledge to increase above the
+threshold set by $U$. In the example above, this means rejecting the second
+query, _regardless_ of the actual value of `bday`. This prevents $Q$ from being
+able to infer knowledge based on the rejection of a query.
+
+Another Hitch
+-------------
+
+The last remaining issue is that our representation, which uses convex
+polyhedra, quickly blows up as the more and more queries are answered. In the
+example above we saw that we doubled the number of polyhedra that we needed to
+keep track of.  It turns out that such doubling is very common, and
+unfortunately so are even higher multiples.  For example if $Q$ knew the `bday`
+was definitely not on the first of any month, we would multiply the number of
+polyhedra by 12!
+
+One of the key contributions of the paper is a novel representation that allows
+us to keep the state-space small, which increases performance, whilst
+sacrificing very little accuracy. The solution is known as _probabilistic
+polyhedra_ and will be explained later on.
