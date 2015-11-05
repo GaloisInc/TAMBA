@@ -1,4 +1,8 @@
 COMP=pandoc
+COPTS=--highlight-style tango
 
 %.pdf: %.markdown
-				$(COMP) -o $@ $<
+				$(COMP) -s $(COPTS) -o $@ $<
+
+%.html: %.markdown
+				$(COMP) -s $(COPTS) -o $@ $<
