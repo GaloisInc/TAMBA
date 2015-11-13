@@ -1,5 +1,5 @@
 Here we provide a Haskell implementation of the Core language from the paper
-titled "Dynamic Enforcement of Knowledge-based Security Policies".
+titled "Quantifying Information-Flow with Beliefs".
 
 > module QueryCore where
 >
@@ -209,3 +209,23 @@ We can take the sample password checker program from the paper:
 > pwc = IFTE (BOp EQ (Var "P") (Var "g"))
 >            ("a" := Int 1)
 >            ("a" := Int 0)
+
+Now we can discuss the representation of beliefs, and the availabe operations.
+If we have two beliefs: b and b' we can manipulate them in three ways:
+
+* Combine them, creating a product of beliefs
+* Update a belief with new information about the world
+* Measure the distance between two beliefs
+
+> bprod :: Dist -> Dist -> Dist
+
+The issue with the above type signature is that beliefs in the paper are
+written as: b1 `bprod` b2 = \ (s1, s2) -> scale (lookup s1 b1) (lookup s2 b2)
+which means that the argument beliefs are Maps from Vars to Values and the result
+belief is a Map from (a pair of vars) to values. I need to sort this out.
+
+> bprod b1 b2 = undefined
+
+Updating is similar to `condition` above
+
+> update :: Dist -> 
