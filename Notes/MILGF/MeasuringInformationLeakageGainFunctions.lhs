@@ -11,15 +11,20 @@ We begin with some boilerplate
 > module GainFunctions where
 
 > import Prelude hiding (lookup)
-> import Data.Map as M
+> import Data.Map as M hiding (map)
 > import Data.List.Matrix
+> import Data.Maybe (catMaybes)
 
-And we must define some of the concepts we will be using
+Information-Theoretic Channels
+==============================
+
+We must define some of the concepts we will be using
 
 > type Input  = Int
 > type Output = Int
 
 > type Probability = Double
+> type Entropy     = Double -- Number of bits
 
 > type X = Vector Input         -- The finite set of inputs (indices matter)
 > type Y = Vector Output        -- The finite set of outputs (so we must use [])
@@ -52,7 +57,10 @@ With this as a given, a prior distribution over $X$ is just a distribution over
 
 > type Prior = Dist Input
 
-In the paper, they define 'joint distributions' as
+Operations on Channels
+----------------------
+
+In the paper, they define 'joint distributions' ($p(x,y)$ in the paper) as
 
 < jointDist :: (Input, Output) -> Probability
 < jointDist (x, y) = prior(x) * C(x, y)
@@ -107,7 +115,113 @@ This leaves us with the following definition:
 > jointDist :: Prior -> Channel -> Input -> Output -> Probability
 > jointDist pi chan i o = pi' * index i o c
 >   where
->     (x, y, c) = chan
+>     (_, _, c) = chan
 >     pi' = case lookup i pi of
 >             Just v  -> v
 >             Nothing -> error "out of bounds in prior lookup"
+
+With `jointDist` defined, we can now define a few other useful functions. The
+marginal probability calculates the probability for _any_ output given a specific
+input. So we sum the jointDist over each possible output. Written as $p(x)$ in
+the paper.
+
+> marginalProbI :: Prior -> Channel -> Input -> Probability
+> marginalProbI pi chan i = sum $ map (jointDist pi chan i) [0..y']
+>   where
+>     (_, y, _) = chan
+>     y' = length y - 1
+
+Conditional probability is the quotient of the joint distribution and marginal
+probability. Written as $p(y|x)$ in the paper.
+
+> condProbI :: Prior -> Channel -> Output -> Input -> Probability
+> condProbI pi chan o i = joint / marginal
+>   where
+>     joint    = jointDist pi chan i o
+>     marginal = marginalProbI pi chan i
+
+The two previous functions also have equivalents for $p(y)$ and $p(x|y)$.
+
+> marginalProbO :: Prior -> Channel -> Output -> Probability
+> marginalProbO pi chan o = sum $ zipWith ($) fs $ repeat o
+>   where
+>     (x, _, _) = chan
+>     x' = length x - 1
+>     fs = map (jointDist pi chan) [0..x']
+
+> condProbO :: Prior -> Channel -> Input -> Output -> Probability
+> condProbO pi chan i o
+>   | marginal /= 0 = joint / marginal
+>   | otherwise     = error "Conditional probability is undefined when p(y) == 0"
+>   where
+>     joint    = jointDist pi chan i o
+>     marginal = marginalProbO pi chan o
+
+Vulnerability
+=============
+
+Given a channel and a prior distribution on the inputs to that channel we can
+calculate the _vulnerability_ of that channel. Written as $V(\pi)$ in the
+paper.
+
+> vuln :: Channel -> Prior -> Probability
+> vuln chan pi = maximum $ catMaybes $ map (flip lookup pi) [0..x']
+>   where
+>     (x, _, _) = chan
+>     x'        = length x - 1
+
+The _posterior vulnerability_ ($V(\pi, C)$, in the paper) is written as
+
+> pVuln :: Prior -> Channel -> Probability
+> pVuln pi chan = sum $ map jointD ys
+>   where
+>     (x, y, c) = chan
+>     ys        = [0..length y - 1]
+>     xs        = [0..length x - 1]
+>     jointD o  = maximum $ map (\x' -> jointDist pi chan x' o) xs
+
+_min-entropy_ is the 'inverse' of vulnerability. Whereas vulnerability is a
+_probability_, min-entropy represents the number of _bits of uncertainty_.  To
+convert a vulnerability to a min-entrop (written $H_{\infty}(\pi)$ and
+$H_{\infty}(\pi, C)$ in the paper) we just take the $log_{2}$ of the
+vulnerability and negate it (to make it positive).
+
+> priorMinEntropy :: Channel -> Prior -> Entropy
+> priorMinEntropy chan = (* (-1)) . logBase 2 . vuln chan
+
+> postMinEntropy :: Prior -> Channel -> Entropy
+> postMinEntropy pi = (* (-1)) . logBase 2 . pVuln pi
+
+Min-entropy Leakage and Capacity
+--------------------------------
+
+The last of the main concepts dealing with information channels is _min-entropy
+leakage_ and _min-entropy capacity_. Interestingly there is no standard way to
+define these concepts. There are three common choices, which are detailed in
+[1]. This paper chooses to use a _relative_ measure for these concepts.  We
+cannot define min-capacity as it requires the supernum of a set involving _all_
+prior distributions. Instead we define it in terms of a given set of priors.
+
+> minLeakage :: Prior -> Channel -> Entropy
+> minLeakage pi chan = logBase 2 $ pVuln pi chan / vuln chan pi
+
+> minCapacity :: [Prior] -> Channel -> Entropy
+> minCapacity pis chan = maximum $ map (flip minLeakage chan) pis
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[1]: "Recent Developments in Quantitative Information Flow" Geoffrey Smith
+
