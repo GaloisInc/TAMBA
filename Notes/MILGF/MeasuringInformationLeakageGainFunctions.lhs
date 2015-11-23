@@ -87,22 +87,25 @@ Our channel matrix maps the input vectors to output vectors. So the dimensions
 of the matrix are $|X|*|Y|$. In this example that would mean our channel matrix
 must be of size 3 * 4. It would look something like this:
 
-C = |1 2 3  4 |
-    |4 5 6  7 |
-    |8 9 10 11|
+$$ C = \left| \begin{array}{cccc} 1 & 2 & 3 & 4 \\
+                                  5 & 6 & 7 & 8 \\
+                                  9 & 10 & 11 & 12
+              \end{array} \right| $$
 
 The indices into $C$, $C[x,y]$, represent the probability of seeing $y$ if the
 input was $x$. In the paper "Abstract Channels and Their Robust
 Information-Leakage Ordering" they use the following example $C$
 
-C = |1   0   0    0   |
-    |0   .5  .25  .25 |
-    |.5  .33 .17  0   |
+$$ C = \left| \begin{array}{cccc} 1 & 0    & 0   & 0 \\
+                                  0 & .5   & .25 & .25 \\
+                                  .5 & .33 & .17 & 0
+              \end{array} \right| $$
 
 
-C[1,2] = 0.25 -> The likelihood of seeing $y_{2}$ if the input was $x_{1}$. In
-order to take into account any uncertainty about `x` being the input, we scale
-the result by the likelihood of `x` being the input: `prior(x)`.
+$C[1,2] = 0.25$ represents the likelihood of seeing $y_{2}$ if the input was
+$x_{1}$. In order to take into account any uncertainty about `x` being the
+input, we scale the result by the likelihood of `x` being the input:
+`prior(x)`.
 
 Now back to the issue of representation. The definition assumes that there is
 access to `prior` and `C`. We could embed these values in a Reader Monad, and
@@ -196,11 +199,16 @@ Min-entropy Leakage and Capacity
 --------------------------------
 
 The last of the main concepts dealing with information channels is _min-entropy
-leakage_ and _min-entropy capacity_. Interestingly there is no standard way to
-define these concepts. There are three common choices, which are detailed in
-[1]. This paper chooses to use a _relative_ measure for these concepts.  We
-cannot define min-capacity as it requires the supernum of a set involving _all_
-prior distributions. Instead we define it in terms of a given set of priors.
+leakage_ and _min-entropy capacity_. When reasoning about a specific prior
+min-entropy leakage, `minLeakage`, is a measure of how much $C$ decreases
+uncertainty (for an adversary) about a secret. Min-capacity is the worst-case
+min-entropy leakage (i.e. universally qualified over all possible priors).
+
+Interestingly there is no standard way to define these concepts. There are
+three common choices, which are detailed in [1]. This paper chooses to use a
+_relative_ measure for these concepts.  We cannot define min-capacity as it
+requires the supernum of a set involving _all_ prior distributions. Instead we
+define it in terms of a given set of priors.
 
 > minLeakage :: Prior -> Channel -> Entropy
 > minLeakage pi chan = logBase 2 $ pVuln pi chan / vuln chan pi
@@ -209,18 +217,115 @@ prior distributions. Instead we define it in terms of a given set of priors.
 > minCapacity pis chan = maximum $ map (flip minLeakage chan) pis
 
 
+Gain Functions
+==============
+
+The problem with analysing systems using only the concepts defined above is
+that they are too coarse-grained. In particular the difference between the
+`vuln` and `pVuln` assumes that an adversary only benefits by guessing an
+_entire_ secret _exactly_ (Section III of the paper). In order to better model
+scenarios where adversaries can gain by partially learning a secret or by
+knowing that their assumptions are not correct, the authors have introduced
+_gain functions_. To quote from the paper directly:
+
+"The idea is that in any such scenario, there will be some set of guesses that
+the adversary could make about the secret, and for any guess $w$ and secret
+value $x$, there will be some gain that the adversary gets by choosing $w$ when
+the secret’s actual value is $x$.  A gain function $g$ will specify this gain
+as $g(w, x)$, using scores that range from 0 to 1."
+
+Instead of modelling the set of potential guess as $X$, we allow the guesses to
+come from an arbitrary set $W$. The type for $g$-functions in the paper is $g :
+W \times X \rightarrow [0,1]$, in Haskell-land a direct translation might be `g
+:: (W,X) -> Probability`, but since we aren't concerned with a _particular_
+gain function per se, we'll make it a type synonym in order to speak about gain
+functions in general. Additionally, they leave the cardinality of $W$ implicit
+when passing around $g$-functions, we don't have that luxury and need to pass
+it around as well (right now we'll do it was we do with the channels, using the
+size of our finite set).
+
+> type W = Vector Input -- Finite set of guesses about the input
+> type GainFunction = Input -> Input -> Probability
+> type GRep = (W, GainFunction)
+
+We now generalise vulnerability to accept $g$-functions
+
+> gVuln :: Channel -> GRep -> Prior -> Probability
+> gVuln chan (gs, g) pi = maximum $ map gMapped [0..g']
+>   where
+>     gMapped w = sum $ catMaybes $ map (\y -> fmap (* (g w y)) (lookup y pi)) [0..x']
+>     (x, _, _) = chan
+>     x'        = length x - 1
+>     g'        = length gs - 1
+
+The intuition behind `gVuln` is that the vulnerability of our system is bound
+by the expected gain to an adversary. If we assume that an adversary's gain is
+the maximum amount for any guess (i.e. $g$ always returns 1) then our
+vulnerability is actually the _sum_ of our priors, as opposed to the _maximum_
+from `vuln` above. This illustrates the fact that if an adversary is able to
+learn from _any_ observation, then we are actually more vulnerable than the
+standard measure for `vuln` estimates. This is because the standard measure
+assumes that the adversary only cares about being _exactly right_ and can't
+learn from any other situation, which is not true in general.
+
+Of course, we also have a _posterior_ $g$-vulnerability:
+
+> pGVuln :: GRep -> Prior -> Channel -> Probability
+> pGVuln (gs, g) pi chan = sum $ map yMapped [0..y']
+>   where
+>     yMapped y   = maximum $ map (wMapped y) [0..(length gs - 1)]
+>     wMapped y w = sum $ catMaybes $ map (body y w) [0..x']
+>     body y w x  = fmap ((* g w x) . (* jointDist pi chan x y)) $ lookup x pi
+>     (x, y, c)   = chan
+>     (x', y')    = (length x - 1, length y - 1)
 
 
+Generalise all the things!
+--------------------------
+
+For prior and posterior min-entropy we generalise, to $g$-entropy, in the
+straightforward way by adding an extra argument for the `GRep`.
+
+> gPriorMinEntropy :: GRep -> Channel -> Prior -> Entropy
+> gPriorMinEntropy grep chan = (* (-1)) . logBase 2 . gVuln chan grep
+
+> gPostMinEntropy :: GRep -> Prior -> Channel -> Entropy
+> gPostMinEntropy grep pi = (* (-1)) . logBase 2 . pGVuln grep pi
 
 
+The $g$-function analogues of `minLeakage` and `minCapacity` are also
+straightforward. 
+
+$g$-leakage:
+
+> minGLeakage :: GRep -> Prior -> Channel -> Entropy
+> minGLeakage grep pi chan = logBase 2 $ pGVuln grep pi chan / gVuln chan grep pi
+
+$g$-capacity:
+
+> minGCapacity :: [Prior] -> GRep -> Channel -> Entropy
+> minGCapacity pis grep chan = maximum $ map (flip (minGLeakage grep) chan) pis
 
 
+Example $g$-Functions
+=====================
 
 
+The simplest _realistic_ $g$-function is the _identity gain function_, where
+the adversary gains the maximum amount of information if they guessed
+correctly, and gain no information otherwise.
 
+> gId :: GainFunction
+> gId w x
+>   | w == x    = 1
+>   | otherwise = 0
 
+For `gId` above, we assume that $\left| W \right| = \left| X \right|$. Representing it as a matrix, `gId` is just
+the identity matrix, $I_{\left|X\right|}$.
 
+We are now able to write our first proposition! (TODO: Make this quickcheckable)
 
+Prop: gVuln gId == vuln
 
 
 [1]: "Recent Developments in Quantitative Information Flow" Geoffrey Smith
