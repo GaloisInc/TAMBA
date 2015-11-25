@@ -328,5 +328,26 @@ We are now able to write our first proposition! (TODO: Make this quickcheckable)
 Prop: gVuln gId == vuln
 
 
+Using Metrics to Create $g$-Functions
+-------------------------------------
+
+In many scenarios, it may be possible to reason about the _distance_ between
+two inputs. It is possible to generate a $g$-function from any such distance
+metric.
+
+Given a function $d : X \times X \rightarrow [0,\infty)$ that computes the distance
+between two elements of $X$, it must first satisfy three simple properties:
+
+1. Identity of indescernables: $d(x_{1}, x_{2}) = 0$ iff $x_{1} = x_{2}$
+2. Symmetry: $d(x_{1}, x_{2}) = d(x_{2}, x_{1})$
+3. Triangle Inequality: $d(x_{1}, x_{3}) \leq d(x_{1}, x_{2}) + d(x_{2}, x_{3})$
+
+If $d$ satisfies the three above properties you can generate a $g$-function by first
+normalizing $d$ to create $\overline{d} : X \times X \rightarrow [0,1]$. Then the
+$g$-function, $g_{d}$, is defined as
+
+$$g_{d}(w, x) = 1 - \overline{d}(w, x)$$
+
+
 [1]: "Recent Developments in Quantitative Information Flow" Geoffrey Smith
 
