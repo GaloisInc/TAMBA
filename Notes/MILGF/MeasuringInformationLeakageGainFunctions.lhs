@@ -18,22 +18,25 @@ We begin with some boilerplate
 Information-Theoretic Channels
 ==============================
 
-We must define some of the concepts we will be using
+We must define some of the concepts we will be using. The general idea is that
+this work represents queries/functions/programs as information-theoretic
+channels that map inputs to outputs.
 
 > type Input  = Int
 > type Output = Int
 
 > type Probability = Double
-> type Entropy     = Double -- Number of bits
+> type Entropy     = Double     -- Number of bits
 
 > type X = Vector Input         -- The finite set of inputs (indices matter)
 > type Y = Vector Output        -- The finite set of outputs (so we must use [])
 
 > type C = Matrix Probability   -- Channel Matrix TODO: improve
 
-There are some invariants on $C$. Namely, each entry in the matrix is between 0
-and 1 and the rows of the matrix sum to 1. If all the entries are _either_ 0 or
-1 then we say that the channel is deterministic (each row will contain exactly
+The matrix $C$ is what maps the inputs and output sets to each other.  There
+are some invariants on $C$. Namely, each entry in the matrix is between 0 and 1
+and the rows of the matrix sum to 1. If all the entries are _either_ 0 or 1
+then we say that the channel is deterministic (each row will contain exactly
 one 1, so each input produces a unique output).
 
 A 'Channel' combines these together, providing a representation of all possible
@@ -57,21 +60,11 @@ With this as a given, a prior distribution over $X$ is just a distribution over
 
 > type Prior = Dist Input
 
-Operations on Channels
-----------------------
+The Matrix Representation of a Channel
+--------------------------------------
 
-In the paper, they define 'joint distributions' ($p(x,y)$ in the paper) as
-
-< jointDist :: (Input, Output) -> Probability
-< jointDist (x, y) = prior(x) * C(x, y)
-
-Mapping this to Haskell leaves us with a few choices. The trivial choice is
-whether to write the function as curried or uncurried. We'll choose curried, of
-course. However, the non-trivial decision does not have a clear 'better'
-solution. In the paper's definition we see that there is implicit access to a
-term-level prior and to a Channel Matrix. The use of prior as a function is the
-standard 'lookup' operation in a Map. Let's discuss the channel matrix and
-how it works for a second.
+Before we dive into the definitions of all the operations we are interested it
+let's discuss the channel matrix and how it works for a second.
 
 Imagine a program with 3 possible inputs. This means that we would have a size
 3 vector (in the Mathematics sense) of type `X`:
@@ -103,9 +96,34 @@ $$ C = \left| \begin{array}{cccc} 1 & 0    & 0   & 0 \\
 
 
 $C[1,2] = 0.25$ represents the likelihood of seeing $y_{2}$ if the input was
-$x_{1}$. In order to take into account any uncertainty about `x` being the
-input, we scale the result by the likelihood of `x` being the input:
-`prior(x)`.
+$x_{1}$. Taking a row, $i$, of the matrix gives us the probabilities for all
+outputs given the input input $X_{i}$. Taking a column, $j$, and normalizing
+gives us the probability of each input resulting in that specific output
+$Y_{j}$. Taking the column in this manner and multiplying by the prior
+distribution gives us the _posterior_ distribution on $X$ and is often written
+as $p_{X|y_{j}}$ in the literature.
+
+Operations on Channels
+----------------------
+
+In the paper, they define 'joint distributions' ($p(x,y)$ in the paper) as
+
+< jointDist :: (Input, Output) -> Probability
+< jointDist (x, y) = prior(x) * C(x, y)
+
+The joint distribution tells us the likelihood that the observed output $y$ was
+a result of secret input $x$. This is calculated in a straightforward manner:
+Remembering that $C[x, y]$ gives us the probability of observing $y$ if the
+input was $x$ we then multiply that by the prior probability of the input being
+$x$ (commonly written as $\pi_{x}$ or $\pi[x]$ in the literature) in order to
+take into account the initial uncertainty. 
+
+Mapping this to Haskell leaves us with a few choices. The trivial choice is
+whether to write the function as curried or uncurried. We'll choose curried, of
+course. However, the non-trivial decision does not have a clear 'better'
+solution. In the paper's definition we see that there is implicit access to a
+term-level prior and to a Channel Matrix. The use of prior as a function is the
+standard 'lookup' operation in a Map. 
 
 Now back to the issue of representation. The definition assumes that there is
 access to `prior` and `C`. We could embed these values in a Reader Monad, and
@@ -320,8 +338,9 @@ correctly, and gain no information otherwise.
 >   | w == x    = 1
 >   | otherwise = 0
 
-For `gId` above, we assume that $\left| W \right| = \left| X \right|$. Representing it as a matrix, `gId` is just
-the identity matrix, $I_{\left|X\right|}$.
+For `gId` above, we assume that $\left| W \right| = \left| X \right|$.
+Representing it as a matrix, `gId` is just the identity matrix,
+$I_{\left|X\right|}$.
 
 We are now able to write our first proposition! (TODO: Make this quickcheckable)
 
