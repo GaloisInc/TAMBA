@@ -1,0 +1,5 @@
+This repo contains the code and some notes on background reading for the TAMBA
+group of the Brandeis project.
+
+Initially we are exploring how the work on g-Functions can guide our intuitions
+about privacy. The initial exploratory code is found in Code/MILGF/Main.hs
