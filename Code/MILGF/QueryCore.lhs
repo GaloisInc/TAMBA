@@ -211,6 +211,11 @@ We can take the sample password checker program from the paper:
 >            ("a" := Int 1)
 >            ("a" := Int 0)
 
+
+-------------------------------------------------------------------------------
+--------------------         Incomplete below this         --------------------
+-------------------------------------------------------------------------------
+
 Now we can discuss the representation of beliefs, and the availabe operations.
 If we have two beliefs: b and b' we can manipulate them in three ways:
 

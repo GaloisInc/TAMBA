@@ -12,8 +12,12 @@ We begin with some boilerplate
 
 > import Prelude hiding (lookup)
 > import Data.Map as M hiding (map)
+> import Data.List (nub)
 > import Data.List.Matrix
 > import Data.Maybe (catMaybes)
+> import Dist
+> import QueryCore
+> import StandardSemantics
 
 Information-Theoretic Channels
 ==============================
@@ -53,7 +57,7 @@ channel.  In general, a distribution over a set of values is a map from an
 element of that set to a probability of that element occurring. As we've got to
 make it concrete for the computer, probabilities are represented as `Doubles`.
 
-> type Dist a = Map a Probability
+< type Dist a = Map a Probability
 
 With this as a given, a prior distribution over $X$ is just a distribution over
 `Input`s
@@ -367,6 +371,88 @@ $g$-function, $g_{d}$, is defined as
 
 $$g_{d}(w, x) = 1 - \overline{d}(w, x)$$
 
+A Simple Query Language
+=======================
+
+Now that we know how to measure certain properties about the privacy of a
+system we can try to look at how these measures map to queries involving secret
+data.
+
+In order to do this we use the query language defined in `QueryCore.lhs`. The
+language is a simple imperative language with probabilistic conditionals.
+
+Eliding some auxiliary definitions the language has the following syntax
+
+< data Statement = Skip
+<                | Var := ArithExp
+<                | IFTE BoolExp Statement Statement
+<                | PIFTE Double Statement Statement
+<                | Statement :> Statement
+<                | While BoolExp Statement
+
+A simple password checker would look as follows
+
+< checkPass :: Statement
+< checkPass = IFTE (BOp EQ (Var "P") (Var "g"))
+<                  ("a" := Int 1)
+<                  ("a" := Int 0)
+
+The measures above assume that our system can be represented as a matrix but
+our use of a query language makes it difficult to directly map resulting
+outputs to the inputs that led to them. There is some work in using static
+analysi to aid in approximating this (Kopf and Rybalchenko, 2013). Because we
+are just trying to get a sense of how these measures relate to our intuitions
+and our queries will start of very small we are just going to enumerate the
+possible inputs.
+
+We are starting our tests with 4 simple queries of regarding the same
+secret data: a position (an integer from 0 to 100).
+
+Query 1: Is the position between 40 and 60?
+Query 2: Is the position between 45 and 55?
+Query 3: Is the position between 35 and 65?
+Query 4: Is the position between 59 and 70?
+
+In our query language they take the form of conditional tests.
+
+> q1 :: Statement
+> q1 = IFTE (And (BOp LEQ (Var "i") (Int 60))
+>                (BOp GEQ (Var "i") (Int 40)))
+>           ("o" := Int 1)
+>           ("o" := Int 0)
+
+> q2 :: Statement
+> q2 = IFTE (And (BOp LEQ (Var "i") (Int 55))
+>                (BOp GEQ (Var "i") (Int 45)))
+>           ("o" := Int 1)
+>           ("o" := Int 0)
+
+> q3 :: Statement
+> q3 = IFTE (And (BOp LEQ (Var "i") (Int 65))
+>                (BOp GEQ (Var "i") (Int 35)))
+>           ("o" := Int 1)
+>           ("o" := Int 0)
+
+> q4 :: Statement
+> q4 = IFTE (And (BOp LEQ (Var "i") (Int 70))
+>                (BOp GEQ (Var "i") (Int 59)))
+>           ("o" := Int 1)
+>           ("o" := Int 0)
+
+
+We can enumerate all possible inputs (as long as they're bounded) pretty
+easily.
+
+> runAllInputs :: Statement -> (Int, Int) -> [State]
+> runAllInputs s (min, max) = fmap (sem s) $ fmap (singleton "i") [min..max]
+
+> allOutputs :: [State] -> [Int]
+> allOutputs ss = nub $ fmap getOutput ss
+>   where
+>     getOutput s = case lookup "o" s of
+>                         Just v  -> v
+>                         Nothing -> error ("No output in state " ++ show s)
 
 [1]: "Recent Developments in Quantitative Information Flow" Geoffrey Smith
+(Kopf and Rybalchenko, 2013): "Automation of Quantitative Information-Flow Analysis" Boris Kopf and Andrey Rybalchenko
 
