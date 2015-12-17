@@ -17,6 +17,12 @@ zeroVector n = replicate n 0
 index :: Num a => Int -> Int -> Matrix a -> a
 index i j m = (m !! i) !! j
 
+-- | Replace an the value in a Vector at index `i` with the new value `r`
+replaceVec :: Int -> a -> Vector a -> Vector a
+replaceVec i r xs = is ++ r:zs
+  where
+    (is, z:zs) = splitAt i xs
+
 -- | Makes a zero vector with a single 1 element at index `i`.
 -- | If `i` is greater than `len - 1` you get a vector longer than `len`
 unitVector :: Num a => Int -> Int -> Vector a

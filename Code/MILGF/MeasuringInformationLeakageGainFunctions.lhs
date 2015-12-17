@@ -12,12 +12,13 @@ We begin with some boilerplate
 
 > import Prelude hiding (lookup)
 > import Data.Map as M hiding (map)
-> import Data.List (nub)
+> import Data.List (nub, sort, genericLength)
 > import Data.List.Matrix
 > import Data.Maybe (catMaybes)
 > import Dist
 > import QueryCore
 > import StandardSemantics
+> import Matricize
 
 Information-Theoretic Channels
 ==============================
@@ -63,6 +64,14 @@ With this as a given, a prior distribution over $X$ is just a distribution over
 `Input`s
 
 > type Prior = Dist Input
+
+The uniform prior is when all inputs are equally likely. This prior is of
+particular interest because it is actually the 'worst-case' in terms of
+possible leakage (although I feel that this points to one of the weaknesses of
+leakage as a measure).
+
+> uniPrior :: Channel -> Prior
+> uniPrior (is, _, _) = fromList $ zip is $ repeat (1 / genericLength is)
 
 The Matrix Representation of a Channel
 --------------------------------------
@@ -440,18 +449,6 @@ In our query language they take the form of conditional tests.
 >           ("o" := Int 0)
 
 
-We can enumerate all possible inputs (as long as they're bounded) pretty
-easily.
-
-> runAllInputs :: Statement -> (Int, Int) -> [State]
-> runAllInputs s (min, max) = fmap (sem s) $ fmap (singleton "i") [min..max]
-
-> allOutputs :: [State] -> [Int]
-> allOutputs ss = nub $ fmap getOutput ss
->   where
->     getOutput s = case lookup "o" s of
->                         Just v  -> v
->                         Nothing -> error ("No output in state " ++ show s)
 
 [1]: "Recent Developments in Quantitative Information Flow" Geoffrey Smith
 (Kopf and Rybalchenko, 2013): "Automation of Quantitative Information-Flow Analysis" Boris Kopf and Andrey Rybalchenko
