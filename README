@@ -1,5 +1,19 @@
 This repo contains the code and some notes on background reading for the TAMBA
 group of the Brandeis project.
 
+The code should work with any Haskell install that conforms to Haskell '98.
+This may change in the future as the implementation becomes more sophisticated.
+
 Initially we are exploring how the work on g-Functions can guide our intuitions
 about privacy. The initial exploratory code is found in Code/MILGF/Main.hs
+
+Below is an example ghci session:
+
+$ ghci Main.lhs
+λ -> let myC = chanelize q1 (0,100)
+λ -> let (myX, myY, myM) = myC
+λ -> let myPi = uniPrior myC
+λ -> vuln myC myPi -- Calculate the prior vulnerability of query `q1`
+9.900990099009901e-3
+λ -> minLeakage myPi myC
+1.0
