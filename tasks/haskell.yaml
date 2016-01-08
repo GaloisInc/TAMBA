@@ -1,0 +1,7 @@
+---
+- name: install GHC
+  apt: name=ghc state=present
+
+- name: install Cabal
+  apt: name=cabal-install state=present
+
