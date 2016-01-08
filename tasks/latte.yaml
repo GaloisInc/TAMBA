@@ -1,0 +1,31 @@
+---
+
+- name: Get LattE source archive
+  become: yes
+  become_user: vagrant
+  get_url: url=https://www.math.ucdavis.edu/~mkoeppe/latte/download/experimental/latte-integrale-1.7.3b.tar.gz dest=/home/vagrant/latte-integrale-1.7.3b.tar.gz
+
+- name: Unarchive LattE source
+  become: yes
+  become_user: vagrant
+  unarchive: src=/home/vagrant/latte-integrale-1.7.3b.tar.gz dest=/home/vagrant/ copy=no
+
+- name: run configure for LattE
+  become: yes
+  become_user: vagrant
+  shell: ./configure
+  args:
+    chdir: /home/vagrant/latte-integrale-1.7.3b
+
+- name: make LattE
+  become: yes
+  become_user: vagrant
+  shell: make
+  args:
+    chdir: /home/vagrant/latte-integrale-1.7.3b
+
+#- name: Install necessary LattE binaries
+#  become: yes
+#  shell: make install
+#  args:
+#    chdir: /usr/share/ppl-1.1

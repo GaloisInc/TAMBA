@@ -1,0 +1,29 @@
+---
+
+- file: path=/usr/share/ppl state=directory mode=0755
+
+- name: Get PPL source archive
+  get_url: url=ftp://ftp.cs.unipr.it/pub/ppl/releases/1.1/ppl-1.1.tar.bz2 dest=/usr/share/ppl-1.1.tar.bz2
+
+- name: Unarchive PPL source
+  unarchive: src=/usr/share/ppl-1.1.tar.bz2 dest=/usr/share/ copy=no
+
+- name: run configure for PPL lib
+  become: yes
+  become_user: vagrant
+  shell: ./configure --enable-interfaces=ocaml --with-mlgmp=/home/vagrant/.opam/4.02.0/lib/gmp/
+  args:
+    chdir: /usr/share/ppl-1.1
+
+- name: make PPL
+  become: yes
+  become_user: vagrant
+  shell: eval `opam config env`; make
+  args:
+    chdir: /usr/share/ppl-1.1
+
+- name: Install PPL
+  become: yes
+  shell: make install
+  args:
+    chdir: /usr/share/ppl-1.1

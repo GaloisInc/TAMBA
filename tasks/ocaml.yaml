@@ -1,0 +1,51 @@
+---
+- name: install OCaml
+  apt: name=ocaml state=present
+
+- name: install OPAM
+  apt: name=opam state=present
+
+#- shell: touch test.touch
+#  args:
+#    creates: test.touch
+#  become: yes
+#  become_user: vagrant
+#
+#- shell: echo $USER >> test.touch
+#  become: yes
+#  become_user: vagrant
+
+
+- name: init OPAM
+  become: yes
+  become_user: vagrant
+  command: opam init -y
+  args:
+    creates: /home/vagrant/.opam/
+
+- name: update OPAM
+  become: yes
+  become_user: vagrant
+  command: opam update
+  run_once: true
+
+- name: switch to OCaml 4.02.0
+  become: yes
+  become_user: vagrant
+  command: opam switch 4.02.0
+  run_once: true
+
+- name: Install ocamlfind
+  become: yes
+  become_user: vagrant
+  command: opam install ocamlfind -y
+
+- name: Install camlp5
+  become: yes
+  become_user: vagrant
+  command: opam install camlp5 -y
+
+- name: Install ocaml GMP bindings
+  become: yes
+  become_user: vagrant
+  command: opam install mlgmp -y

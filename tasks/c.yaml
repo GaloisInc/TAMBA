@@ -1,0 +1,9 @@
+---
+- name: install libgmp
+  apt: name=libgmp-dev state=present
+
+- name: install libmpfr
+  apt: name=libmpfr-dev state=present
+
+#- name: install PPL
+#  apt: name=ppl-dev state=present

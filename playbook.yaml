@@ -1,0 +1,11 @@
+---
+- hosts: all
+  sudo: true
+  tasks:
+    - name: update apt cache
+      apt: update_cache=yes
+    - include: tasks/system.yaml
+    - include: tasks/c.yaml
+    - include: tasks/ocaml.yaml
+    - include: tasks/ppl.yaml
+    - include: tasks/latte.yaml

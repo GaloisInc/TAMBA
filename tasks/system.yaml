@@ -1,0 +1,18 @@
+---
+- name: install dkms
+  apt: name=dkms state=present
+
+- name: install C compiler
+  apt: name=gcc state=present
+
+- name: install C++ compiler
+  apt: name=g++ state=present
+
+- name: install vim
+  apt: name=vim state=present
+
+- name: install emacs
+  apt: name=emacs state=present
+
+- name: install wget
+  apt: name=wget state=present
