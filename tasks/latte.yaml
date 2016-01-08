@@ -9,6 +9,8 @@
   become: yes
   become_user: vagrant
   unarchive: src=/home/vagrant/latte-integrale-1.7.3b.tar.gz dest=/home/vagrant/ copy=no
+  args:
+    creates: /home/vagrant/latte-integrale-1.7.3b/
 
 - name: run configure for LattE
   become: yes
@@ -16,6 +18,7 @@
   shell: ./configure
   args:
     chdir: /home/vagrant/latte-integrale-1.7.3b
+    creates: /home/vagrant/latte-integrale-1.7.3b/Makefile
 
 - name: make LattE
   become: yes
@@ -23,6 +26,8 @@
   shell: make
   args:
     chdir: /home/vagrant/latte-integrale-1.7.3b
+    creates: /home/vagrant/latte-integrale-1.7.3b/dest/bin/count
+    creates: /home/vagrant/latte-integralte-1.7.3b/dest/bin/latte-maximize
 
 #- name: Install necessary LattE binaries
 #  become: yes
