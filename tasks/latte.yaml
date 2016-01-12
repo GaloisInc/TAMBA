@@ -27,7 +27,7 @@
   args:
     chdir: /home/vagrant/latte-integrale-1.7.3b
     creates: /home/vagrant/latte-integrale-1.7.3b/dest/bin/count
-    creates: /home/vagrant/latte-integralte-1.7.3b/dest/bin/latte-maximize
+#    creates: /home/vagrant/latte-integralte-1.7.3b/dest/bin/latte-maximize
 
 #- name: Install necessary LattE binaries
 #  become: yes
