@@ -5,3 +5,15 @@
 - name: install Cabal
   apt: name=cabal-install state=present
 
+- name: update Cabal
+  become: yes
+  become_user: vagrant
+  command: cabal update
+  args:
+    creates: /home/vagrant/.cabal/packages/hackage.haskell.org/00-index.tar
+
+- name: Install pandoc
+  apt: name=pandoc state=present
+
+- name: Install Pandoc optional dependencies
+  apt: name=texlive state=present
