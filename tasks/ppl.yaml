@@ -1,7 +1,5 @@
 ---
 
-- file: path=/usr/share/ppl state=directory mode=0755
-
 - name: Get PPL source archive
   get_url: url=ftp://ftp.cs.unipr.it/pub/ppl/releases/1.1/ppl-1.1.tar.bz2 dest=/usr/share/ppl-1.1.tar.bz2
 
@@ -14,6 +12,7 @@
   shell: ./configure --enable-interfaces=ocaml --with-mlgmp=/home/vagrant/.opam/4.02.0/lib/gmp/
   args:
     chdir: /usr/share/ppl-1.1
+    creates: /usr/share/ppl-1.1/Makefile
 
 - name: make PPL
   become: yes
@@ -21,9 +20,11 @@
   shell: eval `opam config env`; make
   args:
     chdir: /usr/share/ppl-1.1
+    creates: /usr/share/ppl-1.1/src/.libs/libppl.so
 
 - name: Install PPL
   become: yes
   shell: make install
   args:
     chdir: /usr/share/ppl-1.1
+    creates: /usr/local/lib/libppl.so
