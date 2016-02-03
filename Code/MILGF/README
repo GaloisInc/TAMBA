@@ -10,10 +10,29 @@ about privacy. The initial exploratory code is found in Code/MILGF/Main.hs
 Below is an example ghci session:
 
 $ ghci Main.lhs
+
+First we convert one of our queries (defined in Main.lhs) and convert it to a
+channel representation. We have to choose the bounds of our input space, in
+this case we choose 0 to 100.
+
 λ -> let myC = chanelize q1 (0,100)
+
+If you want the components of the channel (Input Set, Output Set, Matrix), you
+can pattern match on the result of `chanelize`, as shown here.
+
 λ -> let (myX, myY, myM) = myC
+
+We can take a channel and calculate the uniform prior for the input space.
+
 λ -> let myPi = uniPrior myC
+
+With a channel and a prior, you can calculate various metrics, like
+vulnerability
+
 λ -> vuln myC myPi -- Calculate the prior vulnerability of query `q1`
 9.900990099009901e-3
+
+Or the min-leakage
+
 λ -> minLeakage myPi myC
 1.0
