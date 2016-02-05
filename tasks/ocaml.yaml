@@ -26,8 +26,10 @@
 - name: update OPAM
   become: yes
   become_user: vagrant
-  command: opam update
-  run_once: true
+  command: opam update && touch /home/vagrant/.opam-updated
+  args:
+    creates: /home/vagrant/.opam-updated
+
 
 - name: switch to OCaml 4.02.0
   become: yes
@@ -49,3 +51,8 @@
   become: yes
   become_user: vagrant
   command: opam install mlgmp -y
+
+- name: Ensure OPAM env is set in bash profile
+  shell: sh -c 'echo "eval \`opam config env\`" >> /home/vagrant/.profile' && touch /home/vagrant/.opam-config-profile
+  args:
+    creates: /home/vagrant/.opam-config-profile
