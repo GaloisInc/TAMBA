@@ -10,3 +10,4 @@
     - include: tasks/ocaml.yaml
     - include: tasks/ppl.yaml
     - include: tasks/latte.yaml
+    - include: tasks/prob.yaml

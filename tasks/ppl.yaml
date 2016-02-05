@@ -28,3 +28,9 @@
   args:
     chdir: /usr/share/ppl-1.1
     creates: /usr/local/lib/libppl.so
+
+- name: Add /usr/local/lib to ld.so.conf
+  become: yes
+  shell: echo "/usr/local/lib" >> /etc/ld.so.conf && ldconfig && touch /root/.ppl-path
+  args:
+    creates: /root/.ppl-path
