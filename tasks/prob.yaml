@@ -1,17 +1,19 @@
 ---
 
 - name: Create qif directory
-  file: path=/vagrant/qif state=directory
+  file: path=/vagrant/Code/qif state=directory
 
 - name: Get prob sources
   become: yes
   become_user: vagrant
-  shell: git clone https://github.com/plum-umd/qif.git /vagrant/qif
+  shell: git clone https://github.com/plum-umd/qif.git /vagrant/Code/qif
   args:
-    creates: /vagrant/qif/README.md
+    creates: /vagrant/Code/qif/README.md
 
 - name: Build prob
-  shell: make prob
+  become: yes
+  become_user: vagrant
+  shell: eval `opam config env` && make prob
   args:
-    chdir: /vagrant/qif/prob
-    creates: /vagrant/qif/prob/prob
+    chdir: /vagrant/Code/qif/prob
+    creates: /vagrant/Code/qif/prob/prob
