@@ -26,7 +26,7 @@
 - name: update OPAM
   become: yes
   become_user: vagrant
-  command: opam update && touch /home/vagrant/.opam-updated
+  shell: opam update && touch /home/vagrant/.opam-updated
   args:
     creates: /home/vagrant/.opam-updated
 
