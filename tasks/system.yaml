@@ -19,3 +19,11 @@
 
 - name: install git
   apt: name=git state=present
+
+- name: install libcdd
+  apt: name=libcdd-test state=present
+
+- name: link scdd_gmp in /usr/bin/
+  shell: ln -s /usr/lib/cdd-test/scdd_gmp /usr/bin/scdd_gmp
+  args:
+    creates: /usr/bin/lcdd_gmp
