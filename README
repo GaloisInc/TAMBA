@@ -1,0 +1,52 @@
+Testing And Measuring of Brandeis Artifacts
+===========================================
+
+Installation
+------------
+
+Installation is fairly straightforward. If you find that it's not, it's a bug
+and report it to jmct@galois.com or create an issue on github.
+
+First there are a few dependencies:
+
+* Vagrant
+* Ansible
+* A suitable virtual machine (I use Virtual Box)
+
+
+Once you have those installed, it should just be a simple matter of running
+`vagrant up` from the root of this repository.
+
+Using Vagrant
+-------------
+
+The first time you run `vagrant up` vagrant will download the appropriate
+Debian image and install the necessary software (including OCaml, PPL, LattE,
+etc.). Some things require building from source and therefore this initial
+provisioning can take quite a while (around 30 minutes on my machine).
+
+After the VM has been provisioned you'll be able to ssh into the VM using
+`vagrant ssh`. Once logged in you'll be in a standard Linux install with all of
+the necessary software for TAMBA. The VM will be sharing the root of this repo
+so any changes you make will reflect both in the VM and on the host machine.
+This way you can edit in your preferred editor on your host machine and run any
+software in the VM. The repo's directory is mounted at `/vagrant/` in the VM.
+
+When you want stop using the VM you can run `vagrant suspend`. Which will take
+a snapshot of the VM and stop your virtual machine host. Executing `vagrant up`
+in the root of this repo will restart the VM using the last snapshot so you
+will be right where you left off (and vagrant is smart enough to avoid
+reinstalling everything).
+
+Lastly, if we do change any part of the provisioning (for example, we switch to
+a newer version of OCaml) you just need to run `vagrant provision` and it will
+make the necessary changes without reinstalling anything it doesn't need to.
+
+Repo Conventions
+----------------
+
+Our two main branches will be 'master' and 'dev'. Let's try to ensure that
+'master' is always building and working (modulo unknown bugs). You are welcome
+and encouraged to create your own branches and push them to github. When you
+want to share what you're working on with the rest of us just make a pull
+request onto 'dev' on github.
