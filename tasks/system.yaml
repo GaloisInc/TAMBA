@@ -26,4 +26,4 @@
 - name: link scdd_gmp in /usr/bin/
   shell: ln -s /usr/lib/cdd-test/scdd_gmp /usr/bin/scdd_gmp
   args:
-    creates: /usr/bin/lcdd_gmp
+    creates: /usr/bin/scdd_gmp
