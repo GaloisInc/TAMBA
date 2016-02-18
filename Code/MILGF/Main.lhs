@@ -198,8 +198,8 @@ Given a channel and a prior distribution on the inputs to that channel we can
 calculate the _vulnerability_ of that channel. Written as $V(\pi)$ in the
 paper.
 
-> vuln :: Channel -> Prior -> Probability
-> vuln chan pi = maximum $ catMaybes $ map (flip lookup pi) [0..x']
+> vuln :: Prior -> Channel -> Probability
+> vuln pi chan = maximum $ catMaybes $ map (flip lookup pi) [0..x']
 >   where
 >     (x, _, _) = chan
 >     x'        = length x - 1
@@ -220,7 +220,7 @@ convert a vulnerability to a min-entrop (written $H_{\infty}(\pi)$ and
 $H_{\infty}(\pi, C)$ in the paper) we just take the $log_{2}$ of the
 vulnerability and negate it (to make it positive).
 
-> priorMinEntropy :: Channel -> Prior -> Entropy
+> priorMinEntropy :: Prior -> Channel -> Entropy
 > priorMinEntropy chan = (* (-1)) . logBase 2 . vuln chan
 
 > postMinEntropy :: Prior -> Channel -> Entropy
@@ -242,7 +242,7 @@ requires the supernum of a set involving _all_ prior distributions. Instead we
 define it in terms of a given set of priors.
 
 > minLeakage :: Prior -> Channel -> Entropy
-> minLeakage pi chan = logBase 2 $ pVuln pi chan / vuln chan pi
+> minLeakage pi chan = logBase 2 $ pVuln pi chan / vuln pi chan
 
 > minCapacity :: [Prior] -> Channel -> Entropy
 > minCapacity pis chan = maximum $ map (flip minLeakage chan) pis
@@ -281,8 +281,8 @@ size of our finite set).
 
 We now generalise vulnerability to accept $g$-functions
 
-> gVuln :: Channel -> GRep -> Prior -> Probability
-> gVuln chan (gs, g) pi = maximum $ map gMapped [0..g']
+> gVuln :: GRep -> Prior -> Channel -> Probability
+> gVuln (gs, g) pi chan = maximum $ map gMapped [0..g']
 >   where
 >     gMapped w = sum $ catMaybes $ map (\y -> fmap (* (g w y)) (lookup y pi)) [0..x']
 >     (x, _, _) = chan
@@ -317,8 +317,8 @@ Generalise all the things!
 For prior and posterior min-entropy we generalise, to $g$-entropy, in the
 straightforward way by adding an extra argument for the `GRep`.
 
-> gPriorMinEntropy :: GRep -> Channel -> Prior -> Entropy
-> gPriorMinEntropy grep chan = (* (-1)) . logBase 2 . gVuln chan grep
+> gPriorMinEntropy :: GRep -> Prior -> Channel -> Entropy
+> gPriorMinEntropy grep pi chan = (* (-1)) . logBase 2 $ gVuln grep pi chan
 
 > gPostMinEntropy :: GRep -> Prior -> Channel -> Entropy
 > gPostMinEntropy grep pi = (* (-1)) . logBase 2 . pGVuln grep pi
@@ -330,7 +330,7 @@ straightforward.
 $g$-leakage:
 
 > minGLeakage :: GRep -> Prior -> Channel -> Entropy
-> minGLeakage grep pi chan = logBase 2 $ pGVuln grep pi chan / gVuln chan grep pi
+> minGLeakage grep pi chan = logBase 2 $ pGVuln grep pi chan / gVuln grep pi chan
 
 $g$-capacity:
 
@@ -448,6 +448,11 @@ In our query language they take the form of conditional tests.
 >           ("o" := Int 1)
 >           ("o" := Int 0)
 
+> q5 :: Statement
+> q5 = IFTE (And (BOp LEQ (Var "i") (Int 55))
+>                (BOp GEQ (Var "i") (Int 54)))
+>           ("o" := Int 1)
+>           ("o" := Int 0)
 
 
 [1]: "Recent Developments in Quantitative Information Flow" Geoffrey Smith
