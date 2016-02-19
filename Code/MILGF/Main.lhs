@@ -214,6 +214,21 @@ The _posterior vulnerability_ ($V(\pi, C)$, in the paper) is written as
 >     xs        = [0..length x - 1]
 >     jointD o  = maximum $ map (\x' -> jointDist pi chan x' o) xs
 
+Posterior Vulnerability, as defined above, is a measure of the _expected_ risk
+due to answering a query. It turns out that expected risk is basically a function
+of the number of outputs for a deterministic channel over a uniform prior, thus
+not giving us much new information. Therefore we need to look at other possible
+metrics. One possibility is metric that reports the _maximum_ risk, regardless
+of how inprobable it might be. We can define such a metric as: 
+
+> pVulnMax :: Prior -> Channel -> Probability
+> pVulnMax pi chan = maximum $ map condP ys
+>   where
+>     (x, y, c) = chan
+>     ys        = [0..length y - 1]
+>     xs        = [0..length x - 1]
+>     condP o   = maximum $ map (\i -> condProbO pi chan i o) xs
+
 _min-entropy_ is the 'inverse' of vulnerability. Whereas vulnerability is a
 _probability_, min-entropy represents the number of _bits of uncertainty_.  To
 convert a vulnerability to a min-entrop (written $H_{\infty}(\pi)$ and
