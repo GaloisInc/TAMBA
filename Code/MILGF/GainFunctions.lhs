@@ -11,7 +11,7 @@ We begin with some boilerplate
 > module GainFunctions where
 
 > import Prelude hiding (lookup)
-> import Data.Map as M hiding (map)
+> import qualified Data.Map as M hiding (map)
 > import Data.List (nub, sort, genericLength)
 > import Data.List.Matrix
 > import Data.Maybe (catMaybes)
@@ -152,7 +152,7 @@ This leaves us with the following definition:
 >     (_, _, c) = chan
 >     pi' = case lookup i pi of
 >             Just v  -> v
->             Nothing -> error "out of bounds in prior lookup"
+>             Nothing -> error $ "out of bounds in prior lookup: " ++ show i
 
 With `jointDist` defined, we can now define a few other useful functions. The
 marginal probability calculates the probability for _any_ output given a specific

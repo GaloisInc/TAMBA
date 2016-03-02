@@ -4,7 +4,8 @@ titled "Quantifying Information-Flow with Beliefs".
 > module QueryCore where
 >
 > import Prelude hiding (LT, EQ, GT)
-> import Data.Map as M
+> import qualified Data.Map as M
+> import Data.Map hiding (lookup, insert, fromList)
 > import Data.Maybe (fromMaybe)
 > import Dist
 
@@ -84,7 +85,7 @@ information, our distribution is a function from a `State` to a measure of
 certainty about the secret information, represented as a Real number in range
 [0,1].
 
-> type StateDist = Dist State
+> type StateDist = M.Map State Double
 
 A 'point mass' is a probability distribution that maps a single `State` to 1
 and all others to 0.
@@ -137,7 +138,7 @@ In a deterministic semantics, assignment would be updating the value of one
 variable, like so
 
 > assignState :: Var -> ArithExp -> State -> State
-> assignState v exp s = insert v res s
+> assignState v exp s = M.insert v res s
 >   where
 >     res = semE exp s
 
