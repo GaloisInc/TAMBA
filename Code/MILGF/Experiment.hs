@@ -95,11 +95,11 @@ headerRPriors = concat $ intersperse "," $
 headerPWPriors :: String
 headerPWPriors = concat $ intersperse "," $
                       map show [ "query name"
-                               , "prior Vuln for piece-wise random prior"
-                               , "Traditional post-vuln for piece-wise rand Prior"
-                               , "Max-based post-vuln for piece-wise rand Prior"
-                               , "Leakage using trad. pvuln for p-wise rand prior"
-                               , "Leakage using max-based pvuln for p-wise prior"
+                               , "prior Vuln for piece-wise uniform prior"
+                               , "Traditional post-vuln for piece-wise uni Prior"
+                               , "Max-based post-vuln for piece-wise uni Prior"
+                               , "Leakage using trad. pvuln for p-wise uni prior"
+                               , "Leakage using max-based pvuln for p-wise uni prior"
                                ]
 {- 
     let randRes = zipWith5 R
