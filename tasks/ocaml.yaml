@@ -52,6 +52,11 @@
   become_user: vagrant
   command: opam install mlgmp -y
 
+- name: Install utop
+  become: yes
+  become_user: vagrant
+  command: opam install utop -y
+
 - name: Ensure OPAM env is set in bash profile
   shell: sh -c 'echo "eval \`opam config env\`" >> /home/vagrant/.profile' && touch /home/vagrant/.opam-config-profile
   args:
