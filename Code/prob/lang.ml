@@ -80,7 +80,7 @@ type stmt =
 
 type pstmt =
   | PSSubst of varid * aexp * pstmt
-  | PSInc of string * string * pstmt 
+  | PSInc of string * string * pstmt
   | PSStmt of stmt
 
 (*
@@ -115,14 +115,14 @@ let rec print_aexp e =
     | AEInt (v) -> print_string (string_of_int v)
     | AEVar (id) -> print_string (varid_to_string id)
     | AEBinop (binop, e1, e2) ->
-	let (name, op) = binop in
-	  print_string "(";
-	  print_aexp e1;
-	  print_string " ";
-	  print_string name;
-	  print_string " ";
-	  print_aexp e2;
-	  print_string ")"
+        let (name, op) = binop in
+          print_string "(";
+          print_aexp e1;
+          print_string " ";
+          print_string name;
+          print_string " ";
+          print_aexp e2;
+          print_string ")"
 
 (* print_lexp: lexp -> unit
    Prints the given logical expression. *)
@@ -130,91 +130,91 @@ let rec print_lexp e =
   match e with
     | LEBool (v) -> print_string (if v = 0 then "false" else "true")
     | LEBinop (binop, e1, e2) ->
-	let (name, op) = binop in
-	  print_string "(";
-	  print_lexp e1;
-	  print_string " ";
-	  print_string name;
-	  print_string " ";
-	  print_lexp e2;
-	  print_string ")"
+        let (name, op) = binop in
+          print_string "(";
+          print_lexp e1;
+          print_string " ";
+          print_string name;
+          print_string " ";
+          print_lexp e2;
+          print_string ")"
     | LEReln (binop, e1, e2) ->
-	let (name, op) = binop in
-	  print_string "(";
-	  print_aexp e1;
-	  print_string " ";
-	  print_string name;
-	  print_string " ";
-	  print_aexp e2;
-	  print_string ")"
+        let (name, op) = binop in
+          print_string "(";
+          print_aexp e1;
+          print_string " ";
+          print_string name;
+          print_string " ";
+          print_aexp e2;
+          print_string ")"
 
 (* print_stmt_pretty: stmt -> string -> unit
    Prints the given statement prettily, prepending the given string on each line, etc. *)
 let rec print_stmt_pretty s tabs =
   match s with
     | SSkip ->
-	print_string tabs;
-	print_string "skip"
+        print_string tabs;
+        print_string "skip"
     | SPSeq (s1, s2, p, n1, n2) ->
-	print_string tabs;
-	printf "pif %d : %d then\n" n1 n2;
-	print_stmt_pretty s1 (tabs ^ "  ");
-	print_string "\n";
-	print_string tabs;
-	print_string "else\n";
-	print_stmt_pretty s2 (tabs ^ "  ");
-	printf "\n";
-	print_string tabs;
-	print_string "endpif"
+        print_string tabs;
+        printf "pif %d : %d then\n" n1 n2;
+        print_stmt_pretty s1 (tabs ^ "  ");
+        print_string "\n";
+        print_string tabs;
+        print_string "else\n";
+        print_stmt_pretty s2 (tabs ^ "  ");
+        printf "\n";
+        print_string tabs;
+        print_string "endpif"
     | SAssign (name, ae1) ->
-	print_string tabs;
-	print_string (varid_to_string name);
-	printf " = ";
-	print_aexp ae1
+        print_string tabs;
+        print_string (varid_to_string name);
+        printf " = ";
+        print_aexp ae1
     | SIf (guardlexp, s1, s2) ->
-	print_string tabs;
-	printf "if ";
-	print_lexp guardlexp;
-	printf " then\n";
-	print_stmt_pretty s1 (tabs ^ "  ");
-	print_string "\n";
-	print_string tabs;
-	printf "else\n";
-	print_stmt_pretty s2 (tabs ^ "  ");
-	printf "\n";
-	print_string tabs;
-	print_string "endif"
+        print_string tabs;
+        printf "if ";
+        print_lexp guardlexp;
+        printf " then\n";
+        print_stmt_pretty s1 (tabs ^ "  ");
+        print_string "\n";
+        print_string tabs;
+        printf "else\n";
+        print_stmt_pretty s2 (tabs ^ "  ");
+        printf "\n";
+        print_string tabs;
+        print_string "endif"
     | SWhile (guardlexp, bodystmt) ->
-	print_string tabs;
-	printf "while ";
-	print_lexp guardlexp;
-	printf " do\n";
-	print_stmt_pretty bodystmt (tabs ^ "  ");
-	print_string "\n";
-	print_string tabs;
-	print_string "endwhile"
+        print_string tabs;
+        printf "while ";
+        print_lexp guardlexp;
+        printf " do\n";
+        print_stmt_pretty bodystmt (tabs ^ "  ");
+        print_string "\n";
+        print_string tabs;
+        print_string "endwhile"
     | SUniform (varid, blower, bupper) ->
-	print_string tabs;
-	printf "%s = uniform %d %d" (varid_to_string varid) blower bupper
+        print_string tabs;
+        printf "%s = uniform %d %d" (varid_to_string varid) blower bupper
     | SOutput (varid, agents) ->
-	print_string tabs;
-	printf "output %s to %s" (varid_to_string varid) (String.concat "," agents)
+        print_string tabs;
+        printf "output %s to %s" (varid_to_string varid) (String.concat "," agents)
     | SSeq (SDefine (varid1, vartype),
-	    SAssign (varid2, aaexp)) when varid1 = varid2 ->
-	print_string tabs;
-	printf "%s %s = " (render_datatype vartype) (varid_to_string varid1);
-	print_aexp aaexp
+            SAssign (varid2, aaexp)) when varid1 = varid2 ->
+        print_string tabs;
+        printf "%s %s = " (render_datatype vartype) (varid_to_string varid1);
+        print_aexp aaexp
     | SSeq (SDefine (varid1, vartype),
-	    SUniform (varid2, blower, bupper)) when varid1 = varid2 ->
-	print_string tabs;
-	printf "%s %s = uniform %d %d" (render_datatype vartype) (varid_to_string varid1) blower bupper
+            SUniform (varid2, blower, bupper)) when varid1 = varid2 ->
+        print_string tabs;
+        printf "%s %s = uniform %d %d" (render_datatype vartype) (varid_to_string varid1) blower bupper
     | SDefine (varid, vartype) ->
-	print_string tabs;
-	printf "%s %s" (render_datatype vartype) (varid_to_string varid)
+        print_string tabs;
+        printf "%s %s" (render_datatype vartype) (varid_to_string varid)
     | SSeq (s1, s2) ->
-	print_stmt_pretty s1 tabs;
-	print_string ";\n";
-	print_stmt_pretty s2 tabs
+        print_stmt_pretty s1 tabs;
+        print_string ";\n";
+        print_stmt_pretty s2 tabs
 
 ;;
 
@@ -244,29 +244,29 @@ let render_id_latex id =
       (render_name_latex name)
 ;;
 
-let rec render_aexp_latex e = 
+let rec render_aexp_latex e =
   match e with
     | AEInt (v) -> (string_of_int v)
     | AEVar (id) -> (render_id_latex id)
     | AEBinop (binop, e1, e2) ->
-	sprintf "\\ebinop{%s}{%s}{%s}"
-	  (_render_binop_latex binop) 
-	  (render_aexp_latex e1)
-	  (render_aexp_latex e2)
+        sprintf "\\ebinop{%s}{%s}{%s}"
+          (_render_binop_latex binop)
+          (render_aexp_latex e1)
+          (render_aexp_latex e2)
 
-let rec render_lexp_latex e = 
+let rec render_lexp_latex e =
   match e with
     | LEBool (v) -> (if v = 0 then "\\sfalse" else "\\strue")
     | LEBinop (binop, e1, e2) ->
-	sprintf "\\lbinop{%s}{%s}{%s}"
-	  (_render_binop_latex binop) 
-	  (render_lexp_latex e1)
-	  (render_lexp_latex e2)
+        sprintf "\\lbinop{%s}{%s}{%s}"
+          (_render_binop_latex binop)
+          (render_lexp_latex e1)
+          (render_lexp_latex e2)
     | LEReln (binop, e1, e2) ->
-	sprintf "\\lreln{%s}{%s}{%s}"
-	  (_render_binop_latex binop) 
-	  (render_aexp_latex e1)
-	  (render_aexp_latex e2)
+        sprintf "\\lreln{%s}{%s}{%s}"
+          (_render_binop_latex binop)
+          (render_aexp_latex e1)
+          (render_aexp_latex e2)
 
 let rec render_stmt_pretty_latex s tabs =
   let r = render_stmt_pretty_latex in
@@ -275,67 +275,67 @@ let rec render_stmt_pretty_latex s tabs =
   let ntabs = tabs ^ "\\;\\;\\;" in
   match s with
     | SSeq (SDefine (_, _), s) ->
-	render_stmt_pretty_latex s tabs
+        render_stmt_pretty_latex s tabs
     | SSeq (s, SDefine (_, _)) ->
-	render_stmt_pretty_latex s tabs
+        render_stmt_pretty_latex s tabs
     | SSkip ->
-	"\\sskip"
+        "\\sskip"
     | SPSeq (s1, SSkip, p, n1, n2) ->
-	sprintf "\\spifk\\; %d/%d \\; \\sthenk\\\\\n%s%s" n1 (n1 + n2) 
-	  ntabs
-	  (r s1 ntabs)
+        sprintf "\\spifk\\; %d/%d \\; \\sthenk\\\\\n%s%s" n1 (n1 + n2)
+          ntabs
+          (r s1 ntabs)
     | SPSeq (s1, s2, p, n1, n2) ->
-	sprintf "\\spifk\\; %d/%d \\; \\sthenk\\\\\n%s%s\\\\\n%s\\selsek\\\\\n%s%s" n1 (n1 + n2) 
-	  ntabs
-	  (r s1 ntabs)
-	  tabs
-	  ntabs
-	  (r s2 ntabs)
+        sprintf "\\spifk\\; %d/%d \\; \\sthenk\\\\\n%s%s\\\\\n%s\\selsek\\\\\n%s%s" n1 (n1 + n2)
+          ntabs
+          (r s1 ntabs)
+          tabs
+          ntabs
+          (r s2 ntabs)
     | SSeq (s1, s2) ->
-	sprintf "%s\\; ;\\\\\n%s%s"
-	  (r s1 (tabs ^ ""))
-	  tabs
-	  (r s2 (tabs ^ ""))
+        sprintf "%s\\; ;\\\\\n%s%s"
+          (r s1 (tabs ^ ""))
+          tabs
+          (r s2 (tabs ^ ""))
     | SAssign (name, ae1) ->
-	sprintf "\\sassign{%s}{%s}" (render_id_latex name) (raexp ae1)
+        sprintf "\\sassign{%s}{%s}" (render_id_latex name) (raexp ae1)
     | SIf (guardlexp, s1, SSkip) ->
-	sprintf "\\sifk \\; %s \\; \\sthenk\\\\\n%s%s"
-	  (rlexp guardlexp)
-	  ntabs
-	  (r s1 (tabs ^ "\\;"))
+        sprintf "\\sifk \\; %s \\; \\sthenk\\\\\n%s%s"
+          (rlexp guardlexp)
+          ntabs
+          (r s1 (tabs ^ "\\;"))
     | SIf (guardlexp, s1, s2) ->
-	sprintf "\\sifk \\; %s \\; \\sthenk\\\\\n%s%s\\\\\n%s\\selsek\\\\\n%s%s"
-	  (rlexp guardlexp)
-	  ntabs
-	  (r s1 (tabs ^ "\\;"))
-	  tabs
-	  ntabs
-	  (r s2 (tabs ^ "\\;"))
+        sprintf "\\sifk \\; %s \\; \\sthenk\\\\\n%s%s\\\\\n%s\\selsek\\\\\n%s%s"
+          (rlexp guardlexp)
+          ntabs
+          (r s1 (tabs ^ "\\;"))
+          tabs
+          ntabs
+          (r s2 (tabs ^ "\\;"))
     | SWhile (guardlexp, bodystmt) ->
-	sprintf "\\swhilek \\; %s \\; \\sdok\\\\\n%s%s"
-	  (rlexp guardlexp)
-	  ntabs
-	  (r bodystmt (tabs ^ "  "))
+        sprintf "\\swhilek \\; %s \\; \\sdok\\\\\n%s%s"
+          (rlexp guardlexp)
+          ntabs
+          (r bodystmt (tabs ^ "  "))
     | SUniform (varid, blower, bupper) ->
-	sprintf "\\suniform{%s}{%d}{%d}" (render_id_latex varid) blower bupper
+        sprintf "\\suniform{%s}{%d}{%d}" (render_id_latex varid) blower bupper
     | SDefine (varid, dt) ->
-	""
+        ""
     | _ -> raise (General_error "not implemented")
 ;;
 
 let rec render_pstmt_pretty_latex s tabs =
   match s with
     | PSSubst (id, withaexp, inpstmt) ->
-	sprintf "\\psdefine{%s}{%s}\\\\\n%s%s"
-	  (render_id_latex id)
-	  (render_aexp_latex withaexp)
-	  tabs
-	  (render_pstmt_pretty_latex inpstmt tabs)
-    | PSInc (filename, includedfrom, inpstmt) -> 
-	sprintf "\\psinclude{%s}\\\\\n%s%s"
-	  filename
-	  tabs
-	  (render_pstmt_pretty_latex inpstmt tabs)
+        sprintf "\\psdefine{%s}{%s}\\\\\n%s%s"
+          (render_id_latex id)
+          (render_aexp_latex withaexp)
+          tabs
+          (render_pstmt_pretty_latex inpstmt tabs)
+    | PSInc (filename, includedfrom, inpstmt) ->
+        sprintf "\\psinclude{%s}\\\\\n%s%s"
+          filename
+          tabs
+          (render_pstmt_pretty_latex inpstmt tabs)
     | PSStmt (astmt) -> render_stmt_pretty_latex astmt tabs
 ;;
 
@@ -352,33 +352,33 @@ let print_pstmt_latex s =
   print_string "}\n\\end{displaymath}\n"
 ;;
 
-let print_stmt_type s = 
+let print_stmt_type s =
   match s with
     | SSkip ->
-	printf "skip"
+        printf "skip"
     | SPSeq (_, _, _, _, _) ->
-	printf "pif"
+        printf "pif"
     | SSeq (_, _) ->
-	printf "seq"
+        printf "seq"
     | SAssign (_, _) ->
-	printf "assign"
+        printf "assign"
     | SIf (_, _, _) ->
-	printf "if"
+        printf "if"
     | SWhile (_, _) ->
-	printf "while"
+        printf "while"
     | SUniform (_, _, _) ->
-	printf "uniform"
+        printf "uniform"
     | SOutput (_, _) ->
-	printf "output"
+        printf "output"
     | SDefine (_, _) ->
-	printf "define"
+        printf "define"
 ;;
 
 (* print_stmt: stmt -> unit
    Prints the given statement. *)
 let rec print_stmt s = print_stmt_pretty s "\t";;
 
-let rec print_stmt_latex s = 
+let rec print_stmt_latex s =
   print_string "\\begin{displaymath}{\\small\n";
   print_string "\\begin{array}{l}\n";
   print_string "  ";
@@ -415,12 +415,12 @@ let rec collect_vars s =
     | SSeq (s1, s2) -> List.append (collect_vars s1) (collect_vars s2)
     | SPSeq (s1, s2, p, n1, n2) -> List.append (collect_vars s1) (collect_vars s2)
     | SIf (guardlexp, s1, s2) ->
-	List.append
-	  (collect_vars_lexp guardlexp)
-	  (List.append (collect_vars s1) (collect_vars s2))
+        List.append
+          (collect_vars_lexp guardlexp)
+          (List.append (collect_vars s1) (collect_vars s2))
     | SWhile (guardlexp, bodystmt) ->
-	List.append (collect_vars_lexp guardlexp)
-	  (collect_vars bodystmt)
+        List.append (collect_vars_lexp guardlexp)
+          (collect_vars bodystmt)
     | SUniform (avarid, blower, bupper) -> [avarid]
     | SDefine (avarid, datatype) -> [avarid]
     | SOutput (avarid, toagents) -> [avarid]
@@ -433,22 +433,22 @@ let all_vars s =
 
 let _sa_of_stmt_newname indices name =
   let (owner, anid) = name in
-    try 
+    try
       if Hashtbl.find indices name == 0 then
-	name
+        name
       else
-	(owner, "_" ^ anid ^ (string_of_int (Hashtbl.find indices name)))
+        (owner, "_" ^ anid ^ (string_of_int (Hashtbl.find indices name)))
     with Not_found ->
       raise (General_error ("name " ^ (varid_to_string name) ^ " not found"))
 ;;
-    
+
 let _sa_of_stmt_new_aexp indices name =
   let (owner, anid) = name in
     if Hashtbl.mem indices name then
       if Hashtbl.find indices name == 0 then
-	AEVar name
+        AEVar name
       else
-	AEVar (owner, "_" ^ anid ^ (string_of_int (Hashtbl.find indices name)))
+        AEVar (owner, "_" ^ anid ^ (string_of_int (Hashtbl.find indices name)))
     else
       AEInt (0)
 
@@ -465,9 +465,9 @@ let rec _sa_of_stmt_subst_lexp indices e : lexp =
   let rlexp = _sa_of_stmt_subst_lexp indices in
     match e with
       | LEBinop (b, exp1, exp2) ->
-	  LEBinop (b, rlexp exp1, rlexp exp2)
+          LEBinop (b, rlexp exp1, rlexp exp2)
       | LEReln (r, exp1, exp2) ->
-	  LEReln(r, raexp exp1, raexp exp2)
+          LEReln(r, raexp exp1, raexp exp2)
       | _ -> e
 ;;
 
@@ -480,33 +480,33 @@ let rec _sa_of_stmt_subst_join s1 s2 indices1 indices2 =
 
     Hashtbl.iter
       (fun varname index1 ->
-	 let index2 = _sa_of_stmt_subst_index indices2 varname in
-	   if index1 > index2 then set2 := varname :: (! set2))
+         let index2 = _sa_of_stmt_subst_index indices2 varname in
+           if index1 > index2 then set2 := varname :: (! set2))
       indices1;
     Hashtbl.iter
       (fun varname index2 ->
-	 let index1 = _sa_of_stmt_subst_index indices1 varname in
-	   if index1 < index2 then (
-	     set1 := varname :: (! set1);
-	     Hashtbl.replace newindices varname index2
-	   ))
+         let index1 = _sa_of_stmt_subst_index indices1 varname in
+           if index1 < index2 then (
+             set1 := varname :: (! set1);
+             Hashtbl.replace newindices varname index2
+           ))
       indices2;
     let rets1 = ref s1 in
     let rets2 = ref s2 in
       List.iter
-	(fun varname ->
-	   rets1 := SSeq (! rets1,
-			  SAssign (_sa_of_stmt_newname newindices varname,
-				   _sa_of_stmt_new_aexp indices1 varname)))
-	!set1;
+        (fun varname ->
+           rets1 := SSeq (! rets1,
+                          SAssign (_sa_of_stmt_newname newindices varname,
+                                   _sa_of_stmt_new_aexp indices1 varname)))
+        !set1;
       List.iter
-	(fun varname ->
-	   rets2 := SSeq (! rets2,
-			  SAssign (_sa_of_stmt_newname newindices varname,
-				   _sa_of_stmt_new_aexp indices2 varname)))
-	!set2;
+        (fun varname ->
+           rets2 := SSeq (! rets2,
+                          SAssign (_sa_of_stmt_newname newindices varname,
+                                   _sa_of_stmt_new_aexp indices2 varname)))
+        !set2;
       (!rets1, !rets2, newindices)
-;;      
+;;
 
 let rec _sa_of_stmt_subst_stmt indices s =
   let raexp = _sa_of_stmt_subst_aexp indices in
@@ -514,34 +514,34 @@ let rec _sa_of_stmt_subst_stmt indices s =
   let rstmt = _sa_of_stmt_subst_stmt indices in
     match s with
       | SAssign (name, varaexp) ->
-	  let newvaraexp = raexp varaexp in
-	  let newindices = Hashtbl.copy indices in
-	    Hashtbl.replace newindices name (1 + (_sa_of_stmt_subst_index indices name));
-	    (SAssign (_sa_of_stmt_newname newindices name, newvaraexp),
-	     newindices)
+          let newvaraexp = raexp varaexp in
+          let newindices = Hashtbl.copy indices in
+            Hashtbl.replace newindices name (1 + (_sa_of_stmt_subst_index indices name));
+            (SAssign (_sa_of_stmt_newname newindices name, newvaraexp),
+             newindices)
       | SSkip -> (s, indices)
       | SSeq (s1, s2) ->
-	  let (news1, newindices1) = rstmt s1 in
-	  let (news2, newindices2) = _sa_of_stmt_subst_stmt newindices1 s2 in
-	    (SSeq (news1, news2), newindices2)
-      | SPSeq (s1, s2, p, n1, n2) -> 
-	  let (news1, newindices1) = rstmt s1 in
-	  let (news2, newindices2) = rstmt s2 in
-	  let (finals1, finals2, finalindices) = _sa_of_stmt_subst_join news1 news2 newindices1 newindices2 in
-	    (SPSeq (finals1, finals2, p, n1, n2), finalindices)
+          let (news1, newindices1) = rstmt s1 in
+          let (news2, newindices2) = _sa_of_stmt_subst_stmt newindices1 s2 in
+            (SSeq (news1, news2), newindices2)
+      | SPSeq (s1, s2, p, n1, n2) ->
+          let (news1, newindices1) = rstmt s1 in
+          let (news2, newindices2) = rstmt s2 in
+          let (finals1, finals2, finalindices) = _sa_of_stmt_subst_join news1 news2 newindices1 newindices2 in
+            (SPSeq (finals1, finals2, p, n1, n2), finalindices)
       | SIf (guardlexp, s1, s2) ->
-	  let (news1, newindices1) = rstmt s1 in
-	  let (news2, newindices2) = rstmt s2 in
-	  let (finals1, finals2, finalindices) = _sa_of_stmt_subst_join news1 news2 newindices1 newindices2 in
-	    (SIf (rlexp guardlexp, finals1, finals2), finalindices)
-      | SWhile (guardlexp, bodystmt) -> 
-	  let (newstmt, newindices) = rstmt bodystmt in
-	    (SWhile (rlexp guardlexp, newstmt), newindices)
+          let (news1, newindices1) = rstmt s1 in
+          let (news2, newindices2) = rstmt s2 in
+          let (finals1, finals2, finalindices) = _sa_of_stmt_subst_join news1 news2 newindices1 newindices2 in
+            (SIf (rlexp guardlexp, finals1, finals2), finalindices)
+      | SWhile (guardlexp, bodystmt) ->
+          let (newstmt, newindices) = rstmt bodystmt in
+            (SWhile (rlexp guardlexp, newstmt), newindices)
       | SUniform (varid, blower, bupper) ->
-	  let newindices = Hashtbl.copy indices in
-	    Hashtbl.replace newindices varid (1 + (_sa_of_stmt_subst_index indices varid));
-	    (SUniform (_sa_of_stmt_newname newindices varid, blower, bupper),
-	     newindices)
+          let newindices = Hashtbl.copy indices in
+            Hashtbl.replace newindices varid (1 + (_sa_of_stmt_subst_index indices varid));
+            (SUniform (_sa_of_stmt_newname newindices varid, blower, bupper),
+             newindices)
       | SDefine (varid, vartype) -> (s, indices)
       | _ -> raise (General_error "not implemented")
 ;;
@@ -552,7 +552,7 @@ let sa_of_stmt s inputs outputs =
   let indices = Hashtbl.create 8 in
     List.iter
       (fun v ->
-	 Hashtbl.replace indices v 0;
+         Hashtbl.replace indices v 0;
       ) inputs;
 
   let itemp = Hashtbl.copy indices in
@@ -560,9 +560,9 @@ let sa_of_stmt s inputs outputs =
 
     List.iter
       (fun v ->
-	 if (Hashtbl.mem itemp v) &&
-	   (Hashtbl.find itemp v > 0) then
-	     Hashtbl.replace indices v 0)
+         if (Hashtbl.mem itemp v) &&
+           (Hashtbl.find itemp v > 0) then
+             Hashtbl.replace indices v 0)
       outputs;
 
     let (nexts, nextindices) = _sa_of_stmt_subst_stmt indices s in
@@ -570,12 +570,12 @@ let sa_of_stmt s inputs outputs =
     let news = ref nexts in
 
     List.iter
-	(fun v ->
-	   (if (Hashtbl.mem nextindices v) && 
-	      (Hashtbl.find nextindices v != 0) then 
-	      news := SSeq (!news, (SAssign (v, AEVar (_sa_of_stmt_newname nextindices v))))))
-	outputs;
-      
+        (fun v ->
+           (if (Hashtbl.mem nextindices v) &&
+              (Hashtbl.find nextindices v != 0) then
+              news := SSeq (!news, (SAssign (v, AEVar (_sa_of_stmt_newname nextindices v))))))
+        outputs;
+
       !news
 ;;
 
@@ -611,27 +611,27 @@ let rec fold_pstmt f apstmt a =
 
 let find_outputs_for astmt anagent =
   list_unique (fold_stmt (fun astmt acc -> match astmt with
-			    | SOutput (varid, agents) -> if List.mem anagent agents then varid :: acc else acc
-			    | _ -> [])
-		 astmt [])
+                            | SOutput (varid, agents) -> if List.mem anagent agents then varid :: acc else acc
+                            | _ -> [])
+                 astmt [])
 ;;
 
 let get_output_agents astmt =
   list_unique (fold_stmt (fun astmt acc -> match astmt with
-			    | SOutput (varid, agents) -> List.append agents acc
-			    | _ -> [])
-		 astmt [])
+                            | SOutput (varid, agents) -> List.append agents acc
+                            | _ -> [])
+                 astmt [])
 ;;
 
 exception Unchanged
 
 let rec transform_aexp f aaexp =
   let r = transform_aexp f in
-  let aaexp = 
+  let aaexp =
     match aaexp with
       | AEBinop (b, exp1, exp2) -> AEBinop (b, r exp1, r exp2)
       | _ -> aaexp in
-    try f aaexp 
+    try f aaexp
     with Unchanged -> aaexp
 ;;
 
@@ -643,7 +643,7 @@ let rec transform_lexp flexp faexp alexp =
     | LEReln (r, exp1, exp2) -> LEReln (r, raexp exp1, raexp exp2)
     | _ -> alexp in
     try flexp alexp with
-	Unchanged -> alexp  
+        Unchanged -> alexp
 ;;
 
 let rec transform_stmt fstmt flexp faexp astmt =

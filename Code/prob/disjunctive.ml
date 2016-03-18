@@ -19,7 +19,7 @@ module MakeDisjunctive
   (PSSM: PSTATESET_TYPE with type stateset = SSM.stateset
   )
   : (DISJUNCTIVE_TYPE with type stateset = SSM.stateset
-		      and type pstateset = PSSM.pstateset
+                      and type pstateset = PSSM.pstateset
     ) =
 struct
   module SS = SSM

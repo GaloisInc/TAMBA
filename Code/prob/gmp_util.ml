@@ -22,7 +22,7 @@ let qceil q =
     temp
 ;;
 
-let qfloor q = 
+let qfloor q =
   let temp = Z.fdiv_q (Q.get_num q) (Q.get_den q) in
     temp
 
@@ -31,7 +31,7 @@ let list_max_q l = list_ultimate (fun a b -> a >/ b) l (List.hd l)
 
 let list_min_q_fun f l = list_ultimate (fun a b -> f a </ f b) l (List.hd l)
 let list_max_q_fun f l = list_ultimate (fun a b -> f a >/ f b) l (List.hd l)
-  
+
 let rec zlist_range blower bupper =
   if blower >! bupper then
     []
@@ -44,12 +44,12 @@ let qcoeff_to_string q =
   ^
     (
       if Z.equal_int (Q.get_den q) 1 then
-	(Z.to_string (Q.get_num q))
+        (Z.to_string (Q.get_num q))
       else Q.to_string q
     )
 
 let qlist_sum ql = List.fold_left (fun a v -> a +/ v) qzero ql
-  
+
 let qsum f ibegin iend =
   List.fold_left
     (fun a i -> a +/ (f i))
@@ -144,10 +144,10 @@ let qmatrix_of_zmatrix zm =
 let qmatrix_of_intmatrix im =
   QMATRIX.of_ints (INTMATRIX.to_ints im)
 
-let intmatrix_rank im = 
+let intmatrix_rank im =
   QMATRIX.rank (qmatrix_of_intmatrix im)
 
-let zmatrix_rank im = 
+let zmatrix_rank im =
   QMATRIX.rank (qmatrix_of_zmatrix im)
 
 let intvector_of_qvector qv =

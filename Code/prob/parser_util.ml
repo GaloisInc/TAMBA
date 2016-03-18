@@ -13,12 +13,12 @@ let parse_buf_exn input lexbuf =
       let line = curr.Lexing.pos_lnum in
       let cnum = curr.Lexing.pos_cnum - curr.Lexing.pos_bol in
       let tok = Lexing.lexeme lexbuf in
-	printf "syntax error in %s on line %d character %d token %s\n"
-	  fname
-	  line
-	  cnum
-	  tok;
-	raise Parse_error
+        printf "syntax error in %s on line %d character %d token %s\n"
+          fname
+          line
+          cnum
+          tok;
+        raise Parse_error
     end
 
 let parse_file filename input =

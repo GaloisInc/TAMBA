@@ -27,7 +27,7 @@ ppl_Polyhedron_add_constraint p1 (Greater_Or_Equal (Minus (neg x, y) , neg (num 
 (* Our starting point for Gibbs Sampling
     x = 2
     y = 1
- *) 
+ *)
 let start_point = ppl_new_C_Polyhedron_from_space_dimension 2 Universe;;
 ppl_Polyhedron_add_constraint start_point (Equal (x , num 2));;
 ppl_Polyhedron_add_constraint start_point (Equal (y , num 1));;
@@ -44,7 +44,7 @@ let min_float = Q.to_float (Q.from_zs y_min1 y_min2);;
 let max_float = Q.to_float (Q.from_zs y_max1 y_max2);;
 
 (* Approximate min and max to line up with integer points *)
-let (hi, lo) = (ceil max_float, ceil min_float);; 
+let (hi, lo) = (ceil max_float, ceil min_float);;
 
 (* get a random y value on that line *)
 let our_val = int_of_float (floor (lo +. (Random.float (hi -. lo))));;

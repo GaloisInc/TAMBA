@@ -65,8 +65,8 @@ module Make_esys_pss
   (M: Pstateset.PSTATESET_TYPE with type stateset = S.stateset)
   (ME: Eval.EVALPSTATESET_TYPE with type pstateset = M.pstateset):
   (EVAL_SYSTEM with type srep = M.stateset
-	       and type psrep = M.pstateset
-	       and type psrep = ME.pstateset
+               and type psrep = M.pstateset
+               and type psrep = ME.pstateset
   ) = struct
   (* eval system for probabilistic statesets *)
 
@@ -83,7 +83,7 @@ module Make_esys_pss
   let srep_point astate = S.stateset_point astate
 
   let srep_copy s = S.stateset_copy s
-  let psrep_copy ps = M.copy ps 
+  let psrep_copy ps = M.copy ps
 
   let psrep_enum d = M.enum d
   let psrep_enum_on_vars d vars = M.enum_on_vars d vars

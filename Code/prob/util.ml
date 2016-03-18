@@ -8,7 +8,7 @@ exception Loop_exit;;
 exception Not_implemented;;
 exception Not_expected;;
 
-let debug s = 
+let debug s =
   prerr_string s;
   prerr_string "\n";
   flush Pervasives.stderr
@@ -47,14 +47,14 @@ let rec list_pairs l =
   match l with
     | [] -> []
     | h :: t ->
-	List.append
-	  (List.map (fun h2 -> (h, h2)) t)
-	  (list_pairs t)
+        List.append
+          (List.map (fun h2 -> (h, h2)) t)
+          (list_pairs t)
 
 let list_pairs_and_rest l =
   let pairs = list_pairs l in
     List.map (fun (i1, i2) ->
-		(i1, i2, List.filter (fun i3 -> i3 != i1 && i3 != i2) l))
+                (i1, i2, List.filter (fun i3 -> i3 != i1 && i3 != i2) l))
       pairs
 
 (*
@@ -67,22 +67,22 @@ let list_pairs_and_rest l =
       let i1 = Queue.pop q1 in
       let q2 = Queue.copy q1 in
       let qcdone = Queue.create in
-	while (not (Queue.is_empty qc)) do
-	  let i2 = Queue.pop qc in
-	    Queue.add (i, i2, List.append (list_of_queue qdone) (list_of_queue qcdone));
-	    Queue.add i2 qcdone
-	done;
+        while (not (Queue.is_empty qc)) do
+          let i2 = Queue.pop qc in
+            Queue.add (i, i2, List.append (list_of_queue qdone) (list_of_queue qcdone));
+            Queue.add i2 qcdone
+        done;
 
-	Queue.add i qdone;
+        Queue.add i qdone;
     done*)
 
 let rec list_prod_gen (l1: 'a list) (l2: 'a list) (c: 'a -> 'a -> 'a): 'a list =
   match l1 with
     | [] -> []
     | e1 :: t1 ->
-	List.append
-	  (List.map (fun e2 -> c e1 e2) l2)
-	  (list_prod_gen t1 l2 c)
+        List.append
+          (List.map (fun e2 -> c e1 e2) l2)
+          (list_prod_gen t1 l2 c)
 ;;
 
 (* list_prod: 'a list -> 'b list -> ('a * 'b) list
@@ -92,16 +92,16 @@ let rec list_prod l1 l2 = match l1 with
   | [] -> []
   | i1 :: t1 ->
       List.append
-	(List.map (fun x -> (i1,x)) l2)
-	(list_prod t1 l2)
+        (List.map (fun x -> (i1,x)) l2)
+        (list_prod t1 l2)
 ;;
 
 let rec list_prod_as_list l1 l2 = match l1 with
   | [] -> []
   | i1 :: t1 ->
       List.append
-	(List.map (fun x -> [i1 ; x]) l2)
-	(list_prod_as_list t1 l2)
+        (List.map (fun x -> [i1 ; x]) l2)
+        (list_prod_as_list t1 l2)
 ;;
 
 (* list_prod_list ('a list) list -> ('a list) list *)
@@ -111,11 +111,11 @@ let rec list_prod_list llist = match llist with
   | options :: tailoptions ->
       let tailcombinations = list_prod_list tailoptions in
       List.fold_left
-	(fun accum combination ->
-	   List.append
-	     accum
-	     (List.map (fun i -> i :: combination) options)
-	) [] tailcombinations
+        (fun accum combination ->
+           List.append
+             accum
+             (List.map (fun i -> i :: combination) options)
+        ) [] tailcombinations
 ;;
 
 let rec list_range blower bupper =
@@ -137,8 +137,8 @@ let rec list_ultimate_nonempty better_than l =
     | [] -> raise Not_found
     | h :: [] -> h
     | h :: t ->
-	let best_rest = list_ultimate_nonempty better_than t in
-	  if (better_than h best_rest) then h else best_rest
+        let best_rest = list_ultimate_nonempty better_than t in
+          if (better_than h best_rest) then h else best_rest
 
 let list_sum l = List.fold_left (fun accum i -> accum + i) 0 l
 let list_sum_float l = List.fold_left (fun accum i -> accum +. i) 0.0 l
@@ -157,7 +157,7 @@ let list_split_into i l =
   if i = 0 then ([], l)
   else if i = (List.length l) then (l, [])
   else list_take_and_rest i [] l
-  
+
 let rec list_split_into_blocks (bsize: int) (l: 'a list) : 'a list list =
   if List.length l <= bsize then [l]
   else
@@ -177,7 +177,7 @@ let rec list_of_lists_transpose ll =
     (match ll with
        | [] -> (List.rev afirsts, List.rev arests)
        | (h1::t1) :: t -> firsts_rests (h1 :: afirsts) (t1 :: arests) t
-       | ([]) :: t -> (List.rev afirsts, List.rev arests) 
+       | ([]) :: t -> (List.rev afirsts, List.rev arests)
     ) in
   let (firsts, rests) = firsts_rests [] [] ll in
     match firsts with
@@ -211,8 +211,8 @@ let array_permute a =
     Array.set b 0 (Array.get a 0);
     for i = 1 to l - 1 do
       let j = Random.int (i + 1) in
-	Array.set b i (Array.get b j);
-	Array.set b j (Array.get a i)
+        Array.set b i (Array.get b j);
+        Array.set b j (Array.get a i)
     done;
     b
 ;;
@@ -227,12 +227,12 @@ let rec array_splice_out a l =
 
 let rec array_resize s e l =
     let temp = Array.create s e in
-      (if (Array.length l >= s) then 
-	 Array.blit l 0 temp 0 s
+      (if (Array.length l >= s) then
+         Array.blit l 0 temp 0 s
        else
-	 Array.blit l 0 temp 0 (Array.length l));
+         Array.blit l 0 temp 0 (Array.length l));
       temp
-	
+
 let string_search r s =
   try Str.search_forward r s 0; true
   with Not_found -> false
@@ -243,8 +243,8 @@ let string_split s split_on =
 
 let string_map f s =
   let ret = ref "" in
-    String.iter (fun c -> 
-		   ret := !ret ^ (f (String.make 1 c)))
+    String.iter (fun c ->
+                   ret := !ret ^ (f (String.make 1 c)))
       s;
     !ret
 
@@ -260,17 +260,17 @@ let chan_read_all c =
   let s = String.create 4096 in
     try
       while true do
-	let did_read = input c s 0 4096 in
-	  if did_read = 0 then raise End_of_file;
-	  Buffer.add_substring b s 0 did_read
+        let did_read = input c s 0 4096 in
+          if did_read = 0 then raise End_of_file;
+          Buffer.add_substring b s 0 did_read
       done; ""
-    with End_of_file -> 
+    with End_of_file ->
       Buffer.contents b
 
 let exec_and_read_all cmd env =
   let (chan_in, chan_out, chan_err) =
     open_process_full cmd env in
-  let ret = 
+  let ret =
     (chan_read_all chan_in,
      chan_read_all chan_err) in
     close_process_full (chan_in, chan_out, chan_err);
@@ -279,9 +279,9 @@ let exec_and_read_all cmd env =
 let _chan_last_line chan : string * string =
   let all = ref "" in
   let line = ref "" in
-    (try 
+    (try
        while true do
-	 line := input_line chan;
+         line := input_line chan;
        done; (!line, !all)
      with
        | End_of_file -> (!line, !all)
@@ -295,14 +295,14 @@ let memoize1 isize f =
   let h = Hashtbl.create isize in
     fun k ->
       try
-	let temp = Hashtbl.find h k in
-	  temp
+        let temp = Hashtbl.find h k in
+          temp
       with
-	  Not_found ->
-	    (let temp = f k
-	     in
-	       Hashtbl.replace h k temp;
-	       temp)
+          Not_found ->
+            (let temp = f k
+             in
+               Hashtbl.replace h k temp;
+               temp)
 ;;
 
 let memoize2 isize f =
@@ -342,27 +342,27 @@ let graph_components gsize g : int list list =
     let path_to_root = fun d ->
       let path  = ref [] in
       let cnode = ref d in
-	while (Array.get comp !cnode) != !cnode do
-	  path := !cnode :: !path;
-	  cnode := Array.get comp !cnode
-	done;
-	!cnode :: !path in
-    let unify = fun d1 d2 -> 
+        while (Array.get comp !cnode) != !cnode do
+          path := !cnode :: !path;
+          cnode := Array.get comp !cnode
+        done;
+        !cnode :: !path in
+    let unify = fun d1 d2 ->
       let p1 = path_to_root d1 in
       let p2 = path_to_root d2 in
-	List.iter (fun anode ->
-		     Array.set comp anode
-		       (List.hd p1))
-	  (List.append p1 p2) in
+        List.iter (fun anode ->
+                     Array.set comp anode
+                       (List.hd p1))
+          (List.append p1 p2) in
     let rec make_comps (dims: int list) : int list list =
       match dims with
-	| [] -> []
-	| aroot :: rest ->
+        | [] -> []
+        | aroot :: rest ->
     let acomp = array_satisfying_indices (fun d -> d = aroot) comp in
-	      acomp :: (make_comps rest) in
+              acomp :: (make_comps rest) in
       List.iter (fun (d1, d2) -> unify d1 d2) g;
       let comp_roots = list_unique (Array.to_list comp) in
-	make_comps comp_roots
+        make_comps comp_roots
 
 let hash_keys h =
   Hashtbl.fold (fun k _ a -> k :: a) h []
@@ -377,11 +377,11 @@ let run_tests tl =
   List.iter
     (fun (tname, tfun) ->
        printf "===== running %s tests =====\n" tname;
-       (try tfun () 
-	with 
-	  | e ->
-	      printf "%s\n" (Printexc.to_string e);
-	      Printexc.print_backtrace Pervasives.stdout);
+       (try tfun ()
+        with
+          | e ->
+              printf "%s\n" (Printexc.to_string e);
+              Printexc.print_backtrace Pervasives.stdout);
        printf "===== done %s tests =====\n\n" tname;
        flush Pervasives.stdout
     ) tl
@@ -390,11 +390,11 @@ let rec _list_map_via_center (accum: 'a list) (before: 'b list) (after: 'b list)
   match after with
     | [] -> accum
     | h :: t ->
-	_list_map_via_center
-	  ((f before h t) :: accum)
-	  (h :: before)
-	  t
-	  f
+        _list_map_via_center
+          ((f before h t) :: accum)
+          (h :: before)
+          t
+          f
 
 let list_map_via_center f l =
   _list_map_via_center [] [] l f
@@ -413,17 +413,17 @@ let list_map_threaded f l =
     let results = Array.make num_blocks [] in
     let threads = Array.make num_blocks (Thread.self ()) in
       Array.iteri
-	(fun i ablock ->
-	   let t = Thread.create
-	     (fun i ->Array.set results i (List.map f ablock))
-	     i in
-	     Array.set threads i t)
-	blocks;
+        (fun i ablock ->
+           let t = Thread.create
+             (fun i ->Array.set results i (List.map f ablock))
+             i in
+             Array.set threads i t)
+        blocks;
       Array.iter (fun t -> Thread.join t) threads;
       Array.fold_left (fun ret resblock -> List.append ret resblock) [] results
-*)     
-      
-  
-  
-  
-  
+*)
+
+
+
+
+

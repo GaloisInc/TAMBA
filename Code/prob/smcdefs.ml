@@ -14,10 +14,10 @@ type tsecret = (string * Lang.pstmt)
 type tbelief = ((Lang.agent list) * (Lang.agent list) * Lang.pstmt)
 
 type tsmcmocksetup = {secrets: tsecret list;
-		      beliefs: tbelief list;
-		      policies: tpolicy list;
-		      querydefs: tquerydef list;
-		      queries: tquerynamed list}
+                      beliefs: tbelief list;
+                      policies: tpolicy list;
+                      querydefs: tquerydef list;
+                      queries: tquerynamed list}
 ;;
 
 let policy_record_label p = "" ^

@@ -10,17 +10,17 @@ class timer = object(self)
   method reset =
     time := -1.0;
     time_real := -1.0; ()
-    
-  method mark : float * float = 
+
+  method mark : float * float =
     let now = Unix.times () in
     let now_real = Unix.gettimeofday () in
     let newtime = now.tms_utime +. now.tms_stime +. now.tms_cutime +. now.tms_cstime in
-    let ret =       
+    let ret =
       if !time < 0.0 then
-	(0.0, 0.0)
+        (0.0, 0.0)
       else
-	(newtime -. !time,
-	 now_real -. !time_real)
+        (newtime -. !time,
+         now_real -. !time_real)
     in
       (*printf "timer reporting %f, time = %f utime = %f stime = %f\n" ret !time now.tms_utime now.tms_stime;*)
 
@@ -86,7 +86,7 @@ class bench = object(self)
     let (elapsed_old, elapsed_old_real) = Hashtbl.find time_current r in
     let (elapsed, elapsed_real) = temp_current#mark in
       Hashtbl.replace time_current r ((elapsed_old +. elapsed),
-				      (elapsed_old_real +. elapsed_real));
+                                      (elapsed_old_real +. elapsed_real));
       temp_current#reset
 
   method start_timer r =
@@ -97,8 +97,8 @@ class bench = object(self)
     self#stop_timer "_epoch";
     Hashtbl.fold
       (fun r (v,v_real) a ->
-	 let (temp_total, temp_total_real) = Hashtbl.find time_total r in
-	   Hashtbl.replace time_total r ((temp_total +. v), (temp_total_real +. v_real)))
+         let (temp_total, temp_total_real) = Hashtbl.find time_total r in
+           Hashtbl.replace time_total r ((temp_total +. v), (temp_total_real +. v_real)))
       time_current ();
 
   method next_epoch =
@@ -106,31 +106,31 @@ class bench = object(self)
       (fun r v a -> Hashtbl.replace time_current r (0.0,0.0))
       time_current ();
     ignore (List.map (fun r -> Hashtbl.replace records r
-			(Hashtbl.find records_init r))
-	      !record_names);
+                        (Hashtbl.find records_init r))
+              !record_names);
      self#start_timer "_epoch"
 
   method str_header: string = String.concat ","
     (lists_append
        [["_epoch #"];
-	!record_names;
-	(List.map (fun r -> r ^ " (s)") !time_names);
-	(List.map (fun r -> r ^ " (real s)") !time_names);
-	(List.map (fun r -> r ^ " total (s)") !time_names);
-	(List.map (fun r -> r ^ " total (real s)") !time_names)
+        !record_names;
+        (List.map (fun r -> r ^ " (s)") !time_names);
+        (List.map (fun r -> r ^ " (real s)") !time_names);
+        (List.map (fun r -> r ^ " total (s)") !time_names);
+        (List.map (fun r -> r ^ " total (real s)") !time_names)
        ]
     )
 
   method str_epoch: string =
     String.concat ","
       (lists_append
-	 [[string_of_int !epoch];
-	  (List.map (fun r -> Hashtbl.find records r) !record_names);
-	  (List.map (fun r -> string_of_float (pair_first (Hashtbl.find time_current r))) !time_names);
-	  (List.map (fun r -> string_of_float (pair_second (Hashtbl.find time_current r))) !time_names);
-	  (List.map (fun r -> string_of_float (pair_first (Hashtbl.find time_total r))) !time_names);
-	  (List.map (fun r -> string_of_float (pair_second (Hashtbl.find time_total r))) !time_names)
-	 ]
+         [[string_of_int !epoch];
+          (List.map (fun r -> Hashtbl.find records r) !record_names);
+          (List.map (fun r -> string_of_float (pair_first (Hashtbl.find time_current r))) !time_names);
+          (List.map (fun r -> string_of_float (pair_second (Hashtbl.find time_current r))) !time_names);
+          (List.map (fun r -> string_of_float (pair_first (Hashtbl.find time_total r))) !time_names);
+          (List.map (fun r -> string_of_float (pair_second (Hashtbl.find time_total r))) !time_names)
+         ]
       )
 
   method print_header =

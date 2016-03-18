@@ -37,10 +37,10 @@ let file_relative f = (* relative to starting envionment *)
 let file_abs f = (* assuming f is specified relative to new environment *)
   if Filename.is_relative f then
     (Unix.getcwd ()) ^ Filename.dir_sep ^ f
-  else 
+  else
     f
 
-let do_ifverbose f = 
+let do_ifverbose f =
   if !output_verbose then f ();;
 let do_ifdebug f =
   if !output_debug then f ();;
@@ -56,15 +56,15 @@ let set_bench_latte s =
 let timer_bench_latte = new timer;;
 let bench_latte_out_header () =
   do_ifbench_latte (fun () ->
-		      fprintf !chan_bench_latte "type,dimensions,constraints,time (s),time (real s)\n";
-		      flush !chan_bench_latte);;
+                      fprintf !chan_bench_latte "type,dimensions,constraints,time (s),time (real s)\n";
+                      flush !chan_bench_latte);;
 let bench_latte_start () =
   do_ifbench_latte (fun () -> ignore (timer_bench_latte#mark));;
 let bench_latte_end k d c =
   do_ifbench_latte (fun () ->
-		      let (t, tr) = timer_bench_latte#mark in
-			fprintf !chan_bench_latte "%s,%d,%d,%f,%f\n" k d c t tr;
-			flush !chan_bench_latte);;
+                      let (t, tr) = timer_bench_latte#mark in
+                        fprintf !chan_bench_latte "%s,%d,%d,%f,%f\n" k d c t tr;
+                        flush !chan_bench_latte);;
 let bench_latte_close () =
   do_ifbench_latte (fun () -> close_out !chan_bench_latte);;
 (* end of latte timing recording *)
@@ -103,7 +103,7 @@ new_record record_vertices;;
 
 let _memoize_common name =
   let record_hit = "memoize " ^ name ^ " hit" in
-  let record_fault = "memoize " ^ name ^ " fault" in  
+  let record_fault = "memoize " ^ name ^ " fault" in
   let h = Hashtbl.create 256 in
     new_record record_hit "0";
     new_record record_fault "0";
@@ -117,15 +117,15 @@ let memoize_named1 name f =
     fun k ->
     try
       let temp = Hashtbl.find h k in
-	bench_hit ();
-	temp
+        bench_hit ();
+        temp
     with
-	Not_found ->
-	  (let temp = f k
-	   in
-	     Hashtbl.replace h k temp;
-	     bench_fault ();
-	     temp)
+        Not_found ->
+          (let temp = f k
+           in
+             Hashtbl.replace h k temp;
+             bench_fault ();
+             temp)
 ;;
 
 let memoize_named2 name f =

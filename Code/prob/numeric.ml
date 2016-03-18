@@ -13,7 +13,7 @@ module type NUMBER_TYPE = sig
   val plus: t -> t -> t
   val sum: t list -> t
   val minus: t -> t -> t
-  val times: t -> t -> t 
+  val times: t -> t -> t
   val prod: t list -> t
   val div: t -> t -> t
 
@@ -122,8 +122,8 @@ module MATRIX
   let blit_vector vec jsource mat itarget jtarget len =
     let j2 = ref jtarget in
       for j = jsource to jsource + len - 1 do
-	mat.(itarget).(!j2) <- vec.(j);
-	j2 := !j2 + 1
+        mat.(itarget).(!j2) <- vec.(j);
+        j2 := !j2 + 1
       done;
       ()
 
@@ -131,10 +131,10 @@ module MATRIX
     let n = List.length il in
       if n = 0 then create 0 0
       else
-	(let m = List.length (List.hd il) in
-	   if m = 0 then create 0 0 else
-	     Array.of_list (List.map (fun row -> Array.of_list (List.map NM.of_int row)) il)
-	)
+        (let m = List.length (List.hd il) in
+           if m = 0 then create 0 0 else
+             Array.of_list (List.map (fun row -> Array.of_list (List.map NM.of_int row)) il)
+        )
 
   let to_ints m = List.map VM.to_ints (Array.to_list m)
 
@@ -148,50 +148,50 @@ module MATRIX
   let to_string mat =
     let (n, m) = size mat in
       sprintf "matrix (%d,%d):\n%s\n" n m
-	(String.concat "\n"
-	   (List.map
-	      (fun row -> (String.concat "\t" (List.map (fun v -> NM.to_string v) (Array.to_list row))))
-	      (Array.to_list mat)))
+        (String.concat "\n"
+           (List.map
+              (fun row -> (String.concat "\t" (List.map (fun v -> NM.to_string v) (Array.to_list row))))
+              (Array.to_list mat)))
 
   let except_cross i j mat =
     let (n, m) = size mat in
     let ret = create (n-1) (m-1) in
       for y = 0 to i-1 do
-	for x = 0 to j-1 do
-	  ret.(y).(x) <- mat.(y).(x)
-	done;
-	for x = j+1 to m-1 do
-	  ret.(y).(x-1) <- mat.(y).(x)
-	done
+        for x = 0 to j-1 do
+          ret.(y).(x) <- mat.(y).(x)
+        done;
+        for x = j+1 to m-1 do
+          ret.(y).(x-1) <- mat.(y).(x)
+        done
       done;
       for y = i+1 to n-1 do
-	for x = 0 to j - 1 do
-	  ret.(y-1).(x) <- mat.(y).(x)
-	done;
-	for x = j+1 to m-1 do
-	  ret.(y-1).(x-1) <- mat.(y).(x)
-	done
+        for x = 0 to j - 1 do
+          ret.(y-1).(x) <- mat.(y).(x)
+        done;
+        for x = j+1 to m-1 do
+          ret.(y-1).(x-1) <- mat.(y).(x)
+        done
       done;
       ret
 
-  let rec determinant mat = 
+  let rec determinant mat =
     assert_square mat;
     let (n, _) = size mat in
-      match n with 
-	| 0 -> NM.zero
-	| 1 -> mat.(0).(0)
-	| n ->
-	    let fac = ref NM.one in
-	    let ret = ref NM.zero in
-	      for i = 0 to n - 1 do
-		let temp = except_cross 0 i mat in
-		  ret := NM.plus !ret
-		    (NM.prod [!fac;
-			      mat.(0).(i);
-			      (determinant temp)]);
-		  fac := NM.negate !fac
-	      done;
-	      !ret
+      match n with
+        | 0 -> NM.zero
+        | 1 -> mat.(0).(0)
+        | n ->
+            let fac = ref NM.one in
+            let ret = ref NM.zero in
+              for i = 0 to n - 1 do
+                let temp = except_cross 0 i mat in
+                  ret := NM.plus !ret
+                    (NM.prod [!fac;
+                              mat.(0).(i);
+                              (determinant temp)]);
+                  fac := NM.negate !fac
+              done;
+              !ret
 
   let reduced_form mat =
     ifdebug (printf "reducing %s\n" (to_string mat));
@@ -201,43 +201,43 @@ module MATRIX
     let (m, n) = size mat in
     let find_max_row k start =
       let i = ref start in
-	while !i < m && NM.is_zero mat.(!i).(k) do
-	  i := !i + 1
-	done;
-	if !i < m then (!i, mat.(!i).(k)) else (0, NM.zero) in
+        while !i < m && NM.is_zero mat.(!i).(k) do
+          i := !i + 1
+        done;
+        if !i < m then (!i, mat.(!i).(k)) else (0, NM.zero) in
     let swap_rows r1 r2 =
       let temp = mat.(r1) in
-	mat.(r1) <- mat.(r2);
-	mat.(r2) <- temp in
+        mat.(r1) <- mat.(r2);
+        mat.(r2) <- temp in
     let k = ref (-1) in
     let good_k = ref (-1) in
       (try
       (while !k < n - 1 do
-	k := !k + 1;
-	let (i_max, i_max_val) = find_max_row !k (!good_k + 1) in
-	  (*printf "k = %d, i_max=%d\n" !k i_max;*)
-	  if (NM.sign i_max_val) <> 0 then
-	    (
-	      good_k := !good_k + 1;
-	      if !good_k >= m then raise Loop_exit;
-	      swap_rows !good_k i_max;
-	      for i = !good_k + 1 to m-1 do
-		for j = !k+1 to n-1 do
-		  mat.(i).(j) <- NM.minus mat.(i).(j)
-		    (
-		      NM.times mat.(!good_k).(j)
-			(
-			  NM.div mat.(i).(!k) mat.(!good_k).(!k)
-			)
-		    )
-		done;
-		mat.(i).(!k) <- NM.zero
-	      done)
+        k := !k + 1;
+        let (i_max, i_max_val) = find_max_row !k (!good_k + 1) in
+          (*printf "k = %d, i_max=%d\n" !k i_max;*)
+          if (NM.sign i_max_val) <> 0 then
+            (
+              good_k := !good_k + 1;
+              if !good_k >= m then raise Loop_exit;
+              swap_rows !good_k i_max;
+              for i = !good_k + 1 to m-1 do
+                for j = !k+1 to n-1 do
+                  mat.(i).(j) <- NM.minus mat.(i).(j)
+                    (
+                      NM.times mat.(!good_k).(j)
+                        (
+                          NM.div mat.(i).(!k) mat.(!good_k).(!k)
+                        )
+                    )
+                done;
+                mat.(i).(!k) <- NM.zero
+              done)
       done; ())
       with Loop_exit -> ());
       ifdebug (printf "reduced = %s\n" (to_string mat));
-	mat
-	
+        mat
+
   let is_zero m =
     List.for_all VM.is_zero (Array.to_list m)
 
@@ -246,7 +246,7 @@ module MATRIX
     let (rows, cols) = size m in
     let row = ref 0 in
       while (!row < rows) && not (VM.is_zero m.(!row)) do
-	row := !row + 1
+        row := !row + 1
       done;
       !row
 

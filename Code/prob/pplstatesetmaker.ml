@@ -46,15 +46,15 @@ struct
     dim = (List.length varlist);
     varmap = build_varmap varlist
   }
-   
-  let stateset_point astate = 
+
+  let stateset_point astate =
     let varlist = List.map Util.pair_first (astate#canon) in
     let aregion = P.make_point
       (list_zip
-	 (list_range 0 ((List.length varlist) - 1))
-	 (List.map
-	    (fun varid -> astate#get varid)
-	    varlist)) in
+         (list_range 0 ((List.length varlist) - 1))
+         (List.map
+            (fun varid -> astate#get varid)
+            varlist)) in
     let vmap = build_varmap varlist in
       {bound = aregion;
        size = zone;
@@ -63,7 +63,7 @@ struct
 
   let stateset_size aset = aset.size
 
-  let stateset_is_empty aset1 = Z.is_zero (stateset_size aset1) 
+  let stateset_is_empty aset1 = Z.is_zero (stateset_size aset1)
   let stateset_is_nonempty aset1 = not (Z.is_zero (stateset_size aset1))
 
   let _stateset_of_region p vmap =
@@ -107,10 +107,10 @@ struct
   let _stateset_extend_and_bound_dimensions ss1 (vars: Lang.varid list) =
     let dims = ref ss1.dim in
       List.iter
-	(fun avar ->
-	   (if not (Bimap.mem ss1.varmap avar) then
-	      raise (General_error ("conditioned on undefined variable " ^ (Lang.varid_to_string avar))))
-	) vars;
+        (fun avar ->
+           (if not (Bimap.mem ss1.varmap avar) then
+              raise (General_error ("conditioned on undefined variable " ^ (Lang.varid_to_string avar))))
+        ) vars;
       {bound = ss1.bound;
        dim = ! dims;
        size = P.region_size ss1.bound;
@@ -119,14 +119,14 @@ struct
   let _stateset_extend_dimensions ss1 vars =
     let dims = ref ss1.dim in
       List.iter
-	(fun avar ->
-	   if not (Bimap.mem ss1.varmap avar) then
-	     (Bimap.add ss1.varmap avar (!dims);
-	      P.add_dimensions ss1.bound 1;
-	      dims := (!dims) + 1
-	     )
-	)
-	vars;
+        (fun avar ->
+           if not (Bimap.mem ss1.varmap avar) then
+             (Bimap.add ss1.varmap avar (!dims);
+              P.add_dimensions ss1.bound 1;
+              dims := (!dims) + 1
+             )
+        )
+        vars;
       {bound = ss1.bound;
        dim = !dims;
        size = ss1.size; (* technically might be unbounded, but assumed to not stay long in this state *)
@@ -139,33 +139,33 @@ struct
     let ss2 = _stateset_extend_dimensions ss2 vars1 in
     let amap = List.map
       (fun varid ->
-	 let varnum2 = Bimap.find ss2.varmap varid in
-	 let temp = (Bimap.find ss1.varmap varid, varnum2) in
-	   Bimap.add ss1.varmap varid varnum2; temp)
+         let varnum2 = Bimap.find ss2.varmap varid in
+         let temp = (Bimap.find ss1.varmap varid, varnum2) in
+           Bimap.add ss1.varmap varid varnum2; temp)
       (Bimap.keys ss1.varmap) in
       P.map_dimensions ss1.bound amap;
       (ss1, ss2)
-      
+
   let _check_consistency ss =
     if (not (P.get_dimensions ss.bound = ss.dim)) or
       (not (ss.dim = Bimap.length ss.varmap)) then
-	(print_stateset ss; printf "\n";
-	 printf "space_dimension = %d\n" (P.get_dimensions ss.bound);
-	 printf "stateset dim = %d\n" ss.dim;
-	 raise (General_error "inconsistant stateset")) else
-	  ss
+        (print_stateset ss; printf "\n";
+         printf "space_dimension = %d\n" (P.get_dimensions ss.bound);
+         printf "stateset dim = %d\n" ss.dim;
+         raise (General_error "inconsistant stateset")) else
+          ss
 
   let stateset_on_vars_nocomp ss vl =
     let ss = stateset_copy ss in
     let dim = ref 0 in
     let newvarmap = Bimap.create 8 in
-    let amap = 
+    let amap =
       List.map
-	(fun varid ->
-	   let (map_from, map_to) = ((Bimap.find ss.varmap varid), !dim) in
-	     Bimap.add newvarmap varid map_to;
-	     let temp = (map_from, map_to) in
-	       dim := !dim + 1; temp) vl in
+        (fun varid ->
+           let (map_from, map_to) = ((Bimap.find ss.varmap varid), !dim) in
+             Bimap.add newvarmap varid map_to;
+             let temp = (map_from, map_to) in
+               dim := !dim + 1; temp) vl in
     let ss = stateset_copy ss in
       P.map_dimensions ss.bound amap;
       P.remove_higher_dimensions ss.bound !dim;
@@ -179,13 +179,13 @@ struct
     let ss = stateset_copy ss in
     let dim = ref 0 in
     let newvarmap = Bimap.create 8 in
-    let amap = 
+    let amap =
       List.map
-	(fun varid ->
-	   let (map_from, map_to) = ((Bimap.find ss.varmap varid), !dim) in
-	     Bimap.add newvarmap varid map_to;
-	     let temp = (map_from, map_to) in
-	       dim := !dim + 1; temp) vl in
+        (fun varid ->
+           let (map_from, map_to) = ((Bimap.find ss.varmap varid), !dim) in
+             Bimap.add newvarmap varid map_to;
+             let temp = (map_from, map_to) in
+               dim := !dim + 1; temp) vl in
     let ss = stateset_copy ss in
       P.map_dimensions ss.bound amap;
       P.remove_higher_dimensions ss.bound !dim;
@@ -206,11 +206,11 @@ struct
     let ss2 = stateset_copy ss2 in
     let (ss1, ss2) = _stateset_redimension ss1 ss2 in
       P.intersect_regions_assign ss1.bound ss2.bound;
-      _check_consistency 
-	{bound = ss1.bound;
-	 dim = ss1.dim;
-	 size = P.region_size ss1.bound;
-	 varmap = ss1.varmap}
+      _check_consistency
+        {bound = ss1.bound;
+         dim = ss1.dim;
+         size = P.region_size ss1.bound;
+         varmap = ss1.varmap}
 
   let _is_possible dims clist = not (List.mem (LETERM.term_false) clist)
 
@@ -221,26 +221,26 @@ struct
     (_filter_false dims (List.map (constraints_reduce dims) lclist))
 
   let _disjunct_negations dims clist =
-    _constraints_lists_reduce dims 
+    _constraints_lists_reduce dims
       (List.tl (list_prod_list (List.map (fun t -> (t :: (LETERM.term_negate t))) clist)))
 
   let _disjoint_negations dims tlist =
-    List.map 
+    List.map
       (fun clist -> (constraints_reduce dims (lists_append clist)))
       (list_prod_list
-	 (List.map (_disjunct_negations dims) tlist))
+         (List.map (_disjunct_negations dims) tlist))
 
   let rec _disjoint_dnf_lists dims llist =
     match llist with
       | [] -> []
       | al :: [] -> [al]
       | al :: rest ->
-	  List.append
-	    (_filter_false dims
-	       (List.map
-		  (fun clist -> (constraints_reduce dims (List.append al clist)))
-		  (_disjoint_negations dims rest)))
-	    (_disjoint_dnf_lists dims rest)
+          List.append
+            (_filter_false dims
+               (List.map
+                  (fun clist -> (constraints_reduce dims (List.append al clist)))
+                  (_disjoint_negations dims rest)))
+            (_disjoint_dnf_lists dims rest)
 
   let _partition_regions_poly dims vmap alexp =
     let alogical = (logical_of_lexp vmap alexp) in
@@ -251,7 +251,7 @@ struct
 
   let _region_of_ss ss = ss.bound
 
-  let stateset_split ss1 vars (sspins, sspouts) = 
+  let stateset_split ss1 vars (sspins, sspouts) =
     let ss1 = stateset_copy ss1 in
       (* let vars = Lang.collect_vars_lexp alexp in *)
     let ss1 = _stateset_extend_and_bound_dimensions ss1 vars in (* todo: why is this done? *)
@@ -265,18 +265,18 @@ struct
 
     let intersect_me =
       (fun region ->
-	 let region = P.intersect_region_poly ss1.bound region in
-	   {bound = region;
-	    dim = ss1.dim;
-	    size = P.region_size region;
-	    varmap = ss1.varmap}) in
+         let region = P.intersect_region_poly ss1.bound region in
+           {bound = region;
+            dim = ss1.dim;
+            size = P.region_size region;
+            varmap = ss1.varmap}) in
       (List.filter stateset_is_nonempty (List.map intersect_me sspins),
        List.filter stateset_is_nonempty (List.map intersect_me sspouts))
 
   let stateset_make_splitter ss1 alexp =
     let ss1 = stateset_copy ss1 in
-    let vars = Lang.collect_vars_lexp alexp in 
-    let ss1 = _stateset_extend_and_bound_dimensions ss1 vars in 
+    let vars = Lang.collect_vars_lexp alexp in
+    let ss1 = _stateset_extend_and_bound_dimensions ss1 vars in
 
       (*    let ssmaker = (fun x -> _stateset_of_region_nocomp x ss1.varmap) in*)
 
@@ -285,7 +285,7 @@ struct
       (*(List.map ssmaker pins,
        List.map ssmaker pouts) *)
 
-	(pins, pouts)
+        (pins, pouts)
 
   (* !!! untested !!! *)
   let stateset_addvar aset varid =
@@ -295,8 +295,8 @@ struct
       Bimap.add vmap varid (aset.dim);
       P.add_dimensions newregion 1;
       P.add_constraint newregion (Equal
-				    (Variable (aset.dim),
-				     Coefficient zzero));
+                                    (Variable (aset.dim),
+                                     Coefficient zzero));
       {bound = newregion;
        size = aset.size;
        varmap = vmap;
@@ -309,11 +309,11 @@ struct
     let newregion = P.copy_region aset.bound in
     let (tvar, dims) =
       if Bimap.mem vmap tvarname then
-	(Bimap.find vmap tvarname, dims)
+        (Bimap.find vmap tvarname, dims)
       else
-	(Bimap.add vmap tvarname dims; 
-	 P.add_dimensions newregion 1;
-	 (dims, dims + 1)) in
+        (Bimap.add vmap tvarname dims;
+         P.add_dimensions newregion 1;
+         (dims, dims + 1)) in
       P.affine_image newregion tvar tlexp;
       {bound = newregion;
        size = P.region_size newregion;
@@ -321,7 +321,7 @@ struct
        dim = dims}
 
   let _stateset_intersect_partition_polies (p1: region) (p2: region) =
-    let (inter, part_p2_polies) = P.partition_regions p1 p2 in 
+    let (inter, part_p2_polies) = P.partition_regions p1 p2 in
     let (inter, part_p1_polies) = P.partition_regions p2 p1 in
       (part_p1_polies,
        part_p2_polies,
@@ -336,7 +336,7 @@ struct
 
   let statesets_union_on_vars_list_nocomp ssl vars = (* assumes identical and same ordered dimensions *)
     (*    printf "unioning statesets:\n";
-	  List.iter (fun s -> printf "element:"; print_stateset s; printf "\n") ssl;*)
+          List.iter (fun s -> printf "element:"; print_stateset s; printf "\n") ssl;*)
     let ssl = List.map (fun s -> stateset_on_vars_nocomp s vars) ssl in
     let ssfirst = (List.hd ssl) in
     let p = P.copy_region ssfirst.bound in
@@ -361,17 +361,17 @@ struct
     let (ss1, ss2) = _stateset_redimension ss1 ss2 in
     let dim = ss1.dim in
       P.union_regions_assign ss1.bound ss2.bound;
-      let temp = 
-	{bound = ss1.bound;
-	 dim = dim;
-	 size = P.region_size ss1.bound;
-	 varmap = ss1.varmap} in
-	temp
+      let temp =
+        {bound = ss1.bound;
+         dim = dim;
+         size = P.region_size ss1.bound;
+         varmap = ss1.varmap} in
+        temp
 
   let _statesets_intersect_partition_hull dim regionl =
     let ptemp = P.make_empty dim in
       List.iter
-	(fun p -> P.union_regions_assign ptemp p) regionl;
+        (fun p -> P.union_regions_assign ptemp p) regionl;
       ptemp
 
   exception Break_loop
@@ -382,41 +382,41 @@ struct
     let queue_done = (Queue.create ()) in
       List.iter (fun (i, note) -> Queue.add (i.bound, [note]) !queue) ssl;
       while (not (Queue.is_empty !queue)) do
-	let expandedref = ref false in
-	let (p1temp, notes1temp) = Queue.pop !queue in
-	let p1ref = ref p1temp in
-	let notes1ref = ref notes1temp in
-	  while (not (Queue.is_empty !queue)) do
-	    (*printf "queue = %d, queue copy = %d, queue done = %d\n"
-	      (Queue.length !queue)
-	      (Queue.length !queue_copy)
-	      (Queue.length queue_done);
-	    printf "p1ref = \n"; P.print_region !p1ref;
-	    printf "queue=\n";
-	    List.iter (fun (p, n) -> printf "(%d): " (List.length n); P.print_region p; printf "\n") (list_of_queue !queue);
-	    flush Pervasives.stdout;*)
+        let expandedref = ref false in
+        let (p1temp, notes1temp) = Queue.pop !queue in
+        let p1ref = ref p1temp in
+        let notes1ref = ref notes1temp in
+          while (not (Queue.is_empty !queue)) do
+            (*printf "queue = %d, queue copy = %d, queue done = %d\n"
+              (Queue.length !queue)
+              (Queue.length !queue_copy)
+              (Queue.length queue_done);
+            printf "p1ref = \n"; P.print_region !p1ref;
+            printf "queue=\n";
+            List.iter (fun (p, n) -> printf "(%d): " (List.length n); P.print_region p; printf "\n") (list_of_queue !queue);
+            flush Pervasives.stdout;*)
 
-	    let (p2, notes2) = Queue.pop !queue in
-	      if P.regions_are_disjoint !p1ref p2 then
-		Queue.add (p2, notes2) !queue_copy
-	      else
-		(let (inp1, inp2, inboth) = _stateset_intersect_partition_polies !p1ref p2 in
-		   List.iter
-		     (fun p -> Queue.add (p, !notes1ref) !queue_copy
-		     ) inp1;
-		   List.iter
-		     (fun p -> Queue.add (p, notes2) !queue_copy
-		     ) inp2;
-		   p1ref := inboth;
-		   notes1ref := List.append !notes1ref notes2;
-		   expandedref := true)
-	  done;
-	  Queue.add !notes1ref queue_done;
-	  (*printf "done (contains pieces from %d polies):\n" (List.length !notes1ref);
-	  P.print_region !p1ref;*)
-	  let queue_temp = !queue in
-	    queue := !queue_copy;
-	    queue_copy := queue_temp
+            let (p2, notes2) = Queue.pop !queue in
+              if P.regions_are_disjoint !p1ref p2 then
+                Queue.add (p2, notes2) !queue_copy
+              else
+                (let (inp1, inp2, inboth) = _stateset_intersect_partition_polies !p1ref p2 in
+                   List.iter
+                     (fun p -> Queue.add (p, !notes1ref) !queue_copy
+                     ) inp1;
+                   List.iter
+                     (fun p -> Queue.add (p, notes2) !queue_copy
+                     ) inp2;
+                   p1ref := inboth;
+                   notes1ref := List.append !notes1ref notes2;
+                   expandedref := true)
+          done;
+          Queue.add !notes1ref queue_done;
+          (*printf "done (contains pieces from %d polies):\n" (List.length !notes1ref);
+          P.print_region !p1ref;*)
+          let queue_temp = !queue in
+            queue := !queue_copy;
+            queue_copy := queue_temp
       done;
       list_of_queue queue_done
 
@@ -431,26 +431,26 @@ struct
     let queue_done = (Queue.create ()) in
       List.iter (fun (i, note) -> Queue.add (i.bound, [note]) !queue) ssl;
       while (not (Queue.is_empty !queue)) do
-	let expandedref = ref false in
-	let (p1temp, notes1temp) = Queue.pop !queue in
-	let p1ref = ref p1temp in
-	let notes1ref = ref notes1temp in
-	  while (not (Queue.is_empty !queue)) do
-	    let (p2, notes2) = Queue.pop !queue in
-	      if P.regions_are_disjoint !p1ref p2 then
-		Queue.add (p2, notes2) !queue_copy
-	      else
-		(p1ref := _union_and_return !p1ref p2;
-		 notes1ref := List.append !notes1ref notes2;
-		 expandedref := true)
-	  done;
-	  (if !expandedref then
-	     Queue.add (!p1ref, !notes1ref) !queue_copy
-	   else 
-	     Queue.add !notes1ref queue_done);
-	  let queue_temp = !queue in
-	    queue := !queue_copy;
-	    queue_copy := queue_temp
+        let expandedref = ref false in
+        let (p1temp, notes1temp) = Queue.pop !queue in
+        let p1ref = ref p1temp in
+        let notes1ref = ref notes1temp in
+          while (not (Queue.is_empty !queue)) do
+            let (p2, notes2) = Queue.pop !queue in
+              if P.regions_are_disjoint !p1ref p2 then
+                Queue.add (p2, notes2) !queue_copy
+              else
+                (p1ref := _union_and_return !p1ref p2;
+                 notes1ref := List.append !notes1ref notes2;
+                 expandedref := true)
+          done;
+          (if !expandedref then
+             Queue.add (!p1ref, !notes1ref) !queue_copy
+           else
+             Queue.add !notes1ref queue_done);
+          let queue_temp = !queue in
+            queue := !queue_copy;
+            queue_copy := queue_temp
       done;
       list_of_queue queue_done
 
@@ -462,60 +462,60 @@ struct
       | (_, []) -> (ssl1, [], [])
       | (_, _) ->
     let tri_of_pair (ss, x) = (ss.bound, x, ss) in
-    let region_of_pair (ss, x) = ss.bound in 
+    let region_of_pair (ss, x) = ss.bound in
     let pl1 = List.map tri_of_pair ssl1 in
     let pl2 = List.map tri_of_pair ssl2 in
     let list_ref_non_empty lr = not (List.length !lr = 0) in
     let list_ref_pop lr = (let ret = List.hd !lr in
-			     lr := List.tl !lr; ret) in
+                             lr := List.tl !lr; ret) in
     let list_ref_push lr a = (lr := a :: !lr) in
     let list_ref_append lr l = (lr := List.append !lr l) in
 
     let vmap = (pair_first (List.hd ssl1)).varmap in
     let dim = (pair_first (List.hd ssl1)).dim in
-      
+
     let hull1 = _statesets_intersect_partition_hull dim (List.map region_of_pair ssl1) in
     let hull2 = _statesets_intersect_partition_hull dim (List.map region_of_pair ssl2) in
 
       if P.regions_are_disjoint hull1 hull2 then
-	(ssl1, ssl2, [])
+        (ssl1, ssl2, [])
       else
-	let retA = ref [] in
-	let retB = ref [] in
-	let retC = ref [] in
-	let ppA = ref pl1 in
-	let ppB = ref pl2 in
-	  while (list_ref_non_empty ppA) do
-	    try 
-	      let a = list_ref_pop ppA in
-	      let ppBp = ref [] in
-		while (list_ref_non_empty ppB) do
-		  let b = list_ref_pop ppB in
-		  let (al, bl, c) = _stateset_intersect_partition_polies (triple_first a) (triple_first b) in
-		    if (P.region_is_nonempty c) then
-		      (
-			list_ref_push retC (c, triple_second a, triple_second b, triple_third a, triple_third b);
-			list_ref_append ppA (List.map (fun x -> (x, triple_second a, triple_third a)) al);
-			ppB := List.append
-			  (List.append !ppB !ppBp)
-			  (List.map (fun x -> (x, triple_second b, triple_third b)) bl);
-			raise Break_loop
-		      )
-		    else
-		      (
-			list_ref_push ppBp b
-		      )
-		done;
-		list_ref_push retA a;
-		ppB := !ppBp
-	    with Break_loop -> ()
-	  done;
-	  retB := !ppB;
-	  let make_ret (p, x, sp) = (_stateset_of_region p vmap, x) in
-	  let make_ret2 (p, x, y, sp1, sp2) = (_stateset_of_region p vmap, x, y) in
-	    (List.map make_ret !retA,
-	     List.map make_ret !retB,
-	     List.map make_ret2 !retC)
+        let retA = ref [] in
+        let retB = ref [] in
+        let retC = ref [] in
+        let ppA = ref pl1 in
+        let ppB = ref pl2 in
+          while (list_ref_non_empty ppA) do
+            try
+              let a = list_ref_pop ppA in
+              let ppBp = ref [] in
+                while (list_ref_non_empty ppB) do
+                  let b = list_ref_pop ppB in
+                  let (al, bl, c) = _stateset_intersect_partition_polies (triple_first a) (triple_first b) in
+                    if (P.region_is_nonempty c) then
+                      (
+                        list_ref_push retC (c, triple_second a, triple_second b, triple_third a, triple_third b);
+                        list_ref_append ppA (List.map (fun x -> (x, triple_second a, triple_third a)) al);
+                        ppB := List.append
+                          (List.append !ppB !ppBp)
+                          (List.map (fun x -> (x, triple_second b, triple_third b)) bl);
+                        raise Break_loop
+                      )
+                    else
+                      (
+                        list_ref_push ppBp b
+                      )
+                done;
+                list_ref_push retA a;
+                ppB := !ppBp
+            with Break_loop -> ()
+          done;
+          retB := !ppB;
+          let make_ret (p, x, sp) = (_stateset_of_region p vmap, x) in
+          let make_ret2 (p, x, y, sp1, sp2) = (_stateset_of_region p vmap, x, y) in
+            (List.map make_ret !retA,
+             List.map make_ret !retB,
+             List.map make_ret2 !retC)
 
   let stateset_prod ss1 ss2 =
     (* todo: make sure variables are disjoint *)
@@ -523,10 +523,10 @@ struct
     let newvarmap = Bimap.copy ss1.varmap in
       P.product_regions_assign newregion ss2.bound;
       Bimap.iter
-	(fun varid varval ->
-	   Bimap.add newvarmap varid (varval + ss1.dim)
-	)
-	ss2.varmap;
+        (fun varid varval ->
+           Bimap.add newvarmap varid (varval + ss1.dim)
+        )
+        ss2.varmap;
       {bound = newregion;
        size = Z.mul ss1.size ss2.size (* todo: is this correct? *);
        dim = ss1.dim + ss2.dim;
@@ -539,18 +539,18 @@ struct
     let new_vals = ref [] in
     let dims = ref ss.dim in
       List.iter
-	(fun (avar, aval) ->
-	   if not (Bimap.mem new_vmap avar) then
-	     (Bimap.add new_vmap avar (!dims);
-	      (*ppl_Region_add_space_dimensions_and_embed new_region 1;
-		ppl_Region_add_constraint new_region
-		(Equal (Variable (!dims), Coefficient (Z.of_int aval))); *)
-	      new_vals := (!dims, Z.of_int aval) :: !new_vals;
-	      dims := (!dims) + 1)
-	   else
-	     raise (General_error "attempting to set a variable that already exists in stateset")
-	)
-	sl;
+        (fun (avar, aval) ->
+           if not (Bimap.mem new_vmap avar) then
+             (Bimap.add new_vmap avar (!dims);
+              (*ppl_Region_add_space_dimensions_and_embed new_region 1;
+                ppl_Region_add_constraint new_region
+                (Equal (Variable (!dims), Coefficient (Z.of_int aval))); *)
+              new_vals := (!dims, Z.of_int aval) :: !new_vals;
+              dims := (!dims) + 1)
+           else
+             raise (General_error "attempting to set a variable that already exists in stateset")
+        )
+        sl;
       P.add_dimensions_and_set new_region !new_vals;
       {bound = new_region;
        dim = ! dims;
@@ -568,12 +568,12 @@ struct
     let ids = List.sort compare (Bimap.vals (ssov.varmap)) in
     let names = List.map (fun index -> (Hashtbl.find (Bimap.get_bmap ssov.varmap) index)) ids in
       List.map
-	(fun vec ->
-	   let empty = new state_empty in
-	     (empty#set_list (list_zip names vec);
-	      empty)
-	)
-	vecs
+        (fun vec ->
+           let empty = new state_empty in
+             (empty#set_list (list_zip names vec);
+              empty)
+        )
+        vecs
 
   let stateset_union ss1 ss2 = _statesets_hull ss1 ss2
 

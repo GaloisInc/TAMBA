@@ -23,7 +23,7 @@ module type PSTATESET_TYPE =
     val make_point: state -> pstateset
     val make_point_of_stateset: stateset -> pstateset
 
-    val make_new: Lang.varid list -> pstateset 
+    val make_new: Lang.varid list -> pstateset
 
     val addvar: pstateset -> Lang.varid -> pstateset
 

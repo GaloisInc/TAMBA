@@ -1,4 +1,4 @@
-type complexity = 
+type complexity =
     {
       max_z: float;   (* max complexity of any integer in use *)
       max_q: float;   (* any rational in use *)
@@ -17,10 +17,10 @@ type subprecise =
   | Bounded of float
 
 type proj_goodness = float
-    
+
 type proj_method =
   | AllPancake (* project onto removed dimensions, find size,
-		  all removed dimensions are removed at the same time *)
+                  all removed dimensions are removed at the same time *)
   | OneLP (* dimensions removed one at a time, width determined using LP *)
 
 type plus_goodness = float

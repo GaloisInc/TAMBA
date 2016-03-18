@@ -1,5 +1,5 @@
 type ('a, 'b) bmap = {fmap: ('a, 'b) Hashtbl.t;
-		      bmap: ('b, 'a) Hashtbl.t}
+                      bmap: ('b, 'a) Hashtbl.t}
 
 type ('a, 'b) t = ('a, 'b) bmap
 
@@ -49,7 +49,7 @@ let filter bm f =
   let ks = keys bm in
     List.iter
       (fun k ->
-	 let v = find bm k in
-	   if not (f k v) then remove bm k) ks
-	 
-		 
+         let v = find bm k in
+           if not (f k v) then remove bm k) ks
+
+

@@ -18,18 +18,18 @@ EXTEND
       ]
 (*  |
       [ "letmem"; e1 = expr; fid = patt; argid = patt ->
-	  <:expr< 
-	    let rec $lid:fid$ $lid:argid$ =
-	      (let h = Hashtbl.create 32 in
-		 (fun $lid:argid$ ->
-		    try Hashtbl.find h $lid:argid$
-		    with Not_found ->
-		      (let temp = 42 in
-			 (*Hashtbl.replace h $lid:argid$ temp;*)
-			 temp)))
-	    in 
-	      42
-		    >>	    
+          <:expr<
+            let rec $lid:fid$ $lid:argid$ =
+              (let h = Hashtbl.create 32 in
+                 (fun $lid:argid$ ->
+                    try Hashtbl.find h $lid:argid$
+                    with Not_found ->
+                      (let temp = 42 in
+                         (*Hashtbl.replace h $lid:argid$ temp;*)
+                         temp)))
+            in
+              42
+                    >>
       ]*)
   ]
 ;

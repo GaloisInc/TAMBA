@@ -27,9 +27,9 @@ struct
   let print_stateset aset =
     printf "Stateset of %d\n" (stateset_size aset);
     List.iter (fun a ->
-		 printf "\t";
-		 S.print_state a;
-		 printf "\n")
+                 printf "\t";
+                 S.print_state a;
+                 printf "\n")
       aset
 
   let stateset_uniform varid blower bupper =
@@ -41,29 +41,29 @@ struct
   let stateset_intersect aset1 aset2 =
     List.filter
       (fun s1 ->
-	 List.exists (fun s2 -> S.state_eq_weak s1 s2) aset2)
+         List.exists (fun s2 -> S.state_eq_weak s1 s2) aset2)
       aset1
 
   let stateset_exclude aset1 aset2 =
     List.filter
       (fun s1 ->
-	 not (List.exists (fun s2 -> S.state_eq s1 s2) aset2))
-      aset1      
+         not (List.exists (fun s2 -> S.state_eq s1 s2) aset2))
+      aset1
 
   let stateset_split ss1 alexp =
     List.fold_left
       (fun (slin, slout) astate ->
-	 (match ES.eval_lexp alexp astate with
-	    | 0 -> (slin, astate :: slout)
-	    | 1 -> (astate :: slin, slout)
-	    | _ -> raise (General_error "logical expression evaluated to something other than 0 or 1")))
+         (match ES.eval_lexp alexp astate with
+            | 0 -> (slin, astate :: slout)
+            | 1 -> (astate :: slin, slout)
+            | _ -> raise (General_error "logical expression evaluated to something other than 0 or 1")))
       ([], []) ss1
 
   let stateset_transform aset astmt =
     List.map
       (fun s ->
-	 let (aval, astate) = ESM.eval astmt s in
-	   astate)
+         let (aval, astate) = ESM.eval astmt s in
+           astate)
       aset
 
   let stateset_intersect_partition aset1 aset2 =
