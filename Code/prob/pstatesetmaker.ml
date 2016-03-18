@@ -460,6 +460,7 @@ module MakePStateset(* create pstateset from a stateset *)
       else if _hit_max pss then qone
       else (
 	let (massin, massout) = _opt_estimate_max_in_min_out pss.est in
+    printf "massin: %s\nmassout: %s\n\n" (Gmp.Q.to_string massin) (Gmp.Q.to_string massout);
 	  massin // massout)
 
     let stateset_hull pss = pss.ss

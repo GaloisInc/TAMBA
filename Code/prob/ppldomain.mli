@@ -52,4 +52,16 @@ sig
 
   val enum_region: region -> int list list
 
+  (* Use sampling to improve the bounds on a region.
+   *
+   * We take the regioin in question and the number of samples we want[1]
+   * and return a pair consisting of:
+   *  1: number of samples that cause the query to return True
+   *  2: number of samples that cause the query to return False 
+   *
+   * [1]: TODO eventually we also want to pass the desired confidence
+   *)
+  val sample_region: region -> int -> (int,int)
+  val update_bounds: region -> (int,int) -> ()
+
 end;;

@@ -2,6 +2,7 @@ open State
 open Util
 open Esys
 open Lang
+open List
 open Printf
 open Gmp
 open Gmp.Q.Infixes
@@ -76,25 +77,19 @@ module MAKE_PSYSTEM (ESYS: EVAL_SYSTEM) = struct
     (* let onvars = ESYS.psrep_on_vars distout outputs in *)
     let outstates = ESYS.psrep_enum_on_vars distout outputs in
       list_max (List.map
-		  (fun s -> 
-		     ifverbose (printf "-- possible output = "; s#print; printf "\n";
-				flush stdout);
-		     (let revised =
-			(ESYS.psrep_on_vars
-			   (ESYS.psrep_given_state distout s)
-			   pvars) in
-			(
-
-			  let m = ESYS.psrep_max_belief revised in
-			    ifverbose (
-			      printf "revised belief for this output:\n";
-			      ESYS.print_psrep revised;
-			      printf "max belief for this output= %s\n" (Q.to_string m);
-			      flush stdout);
-			    m
-			)
-		     ))
-		  outstates)
+                   (fun s ->
+                      ifverbose (printf "-- possible output = "; s#print; printf "\n";
+                                 flush stdout);
+                      (let revised = (ESYS.psrep_on_vars (ESYS.psrep_given_state distout s) pvars) in
+                      (let m = ESYS.psrep_max_belief revised in
+                      ifverbose (
+                         printf "revised belief for this output:\n";
+                         ESYS.print_psrep revised;
+                         printf "max belief for this output= %s\n" (Q.to_string m);
+                         flush stdout);
+                      m
+                      )))
+		           outstates)
 
   let policy_eval
       (p: policy)
@@ -123,7 +118,7 @@ module MAKE_PSYSTEM (ESYS: EVAL_SYSTEM) = struct
 	    let outstates = ESYS.psrep_enum onvars in
 	      (try
 		 (List.iter
-		    (fun s -> 
+		    (fun s ->
 		       (let revised =
 			  (ESYS.psrep_on_vars
 			     (ESYS.psrep_given_state distout s)
@@ -154,6 +149,11 @@ module MAKE_PSYSTEM (ESYS: EVAL_SYSTEM) = struct
       (distactual: ESYS.psrep)
       (outputs: Lang.varid list)
       : string option =
+	  (* let max_prob = find_max_belief distout outputs policies.pvars in *)
+    printf "Number of policies: %d\n" (List.length policies);
+    printf "Max belief of distout: %s\n" (Gmp.Q.to_string (ESYS.psrep_max_belief distout));
+    printf "Max belief of revised: %s\n" (Gmp.Q.to_string (ESYS.psrep_max_belief distbelief));
+    printf "Max belief of distactual: %s\n" (Gmp.Q.to_string (ESYS.psrep_max_belief distactual));
     match policies with
       | [] -> None
       | p :: r ->

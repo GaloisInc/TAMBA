@@ -9,6 +9,7 @@ open Gmp.Z.Infixes
 open Gmp.Q.Infixes
 open Gmp_util
 open Util
+open Random
 open Printf
 
 module Ppldomainbox: (PPLDOMAIN_TYPE with type region = rational_box) =
@@ -151,6 +152,23 @@ module Ppldomainbox: (PPLDOMAIN_TYPE with type region = rational_box) =
 		       vmax.(d) <- Some b) bounds;
 	(Array.map (fun (Some (v)) -> Z.to_int (qceil v)) vmin, 
 	 Array.map (fun (Some (v)) -> Z.to_int (qfloor v)) vmax)
+
+      let _sample_bounds (min_bounds, max_bounds) =
+          raise (General_error "_sample_bounds not yet implemented")
+
+      let sample_region p n =
+          let bounds = _bounds_of_box p in
+          let  f (yes,no) = if yes + no >= n
+                            then (yes,no)
+                            else let sample = _sample_bounds bounds in
+                                 let ret_val = eval_query sample in
+                                     match ret_val with
+                                        | true -> f (yes + 1, no)
+                                        | false -> f (yes, no + 1) in
+          f (0,0)
+         
+          
+
 
 (*	(Array.map (fun (Some (v)) -> Z.to_int (Q.get_num v)) vmin, 
 	 Array.map (fun (Some (v)) -> Z.to_int (Q.get_num v)) vmax)*)
