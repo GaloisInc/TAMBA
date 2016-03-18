@@ -153,8 +153,14 @@ module Ppldomainbox: (PPLDOMAIN_TYPE with type region = rational_box) =
         (Array.map (fun (Some (v)) -> Z.to_int (qceil v)) vmin,
          Array.map (fun (Some (v)) -> Z.to_int (qfloor v)) vmax)
 
-      let _sample_bounds (min_bounds, max_bounds) =
-          raise (General_error "_sample_bounds not yet implemented")
+      let _sample_bounds (lo, hi) = 
+        let f j = lo.(j) + Random.int (hi.(j) - lo.(j) + 1) in
+        Array.init (Array.length lo) f;; 
+      
+      let _volume_bounds (lo, hi) =
+        let f j = hi.(j) - lo.(j) + 1 in
+        let ranges = Array.init (Array.length lo) f in
+        Array.fold_left ( * ) 1 ranges;;
 
       let sample_region p n =
           let bounds = _bounds_of_box p in
