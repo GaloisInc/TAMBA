@@ -31,6 +31,8 @@ type lreln  = (string * (int -> int -> int))
 
 let varid_belongs_to anagent (owner, id) = anagent = owner;;
 
+type record = Record of (string * string) list
+
 (* arithmetic expression *)
 type aexp =
   | AEVar   of varid
