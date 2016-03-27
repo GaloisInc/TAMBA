@@ -6,6 +6,7 @@
 let digit = ['0'-'9']
 rule token = parse
   | "bool"      { TBOOL }
+  | "record"    { TRECORD }
   | "int" (digit+ as size) { TINT (int_of_string size) }
   | "int"       { TINTDEF }
   | "="         { ASSIGN }

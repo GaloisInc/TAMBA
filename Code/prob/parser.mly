@@ -29,6 +29,7 @@
 %token <int> TINT
 %token TINTDEF
 %token TBOOL
+%token TRECORD
 %token ASSIGN
 
 %left SEMICOLON
@@ -65,14 +66,14 @@
 
 varid:
 | VAR DOT VAR { ($1, $3) }
-| VAR { ("", $1) } 
+| VAR { ("", $1) }
 ;
 
 lbinop :
 | LAND    { ("and", Lang.logical_and) }
 | LOR     { ("or", Lang.logical_or) }
 ;
- 
+
 lreln :
 | LEQ     { ("<=", Lang.leq) }
 | GEQ     { (">=", Lang.geq) }
@@ -107,6 +108,7 @@ aexp :
 | LP aexp RP { $2 }
 ;
 
+
 pstmt :
 | DEFINE varid ASSIGN aexp IN pstmt { Lang.PSSubst ($2, $4, $6) }
 | INCLUDE STRING IN pstmt { Lang.PSInc ($2, ! Globals.currently_parsing, $4) }
@@ -135,8 +137,17 @@ nonemptyagentlist:
 | agent COMMA agentlist { $1 :: $3 }
 ;
 
+record_body :
+| datatype varid ASSIGN aexp SEMICOLON record_body { failwith "unimplmented" }
+| datatype varid ASSIGN aexp { failwith "Unimplemented" }
+| datatype varid ASSIGN UNIFORM INT INT  {failwith "Unimplemented" }
+| datatype varid ASSIGN UNIFORM INT INT SEMCOLON record_body {failwith "Unimplemented" }
+
 stmt :
 | stmt SEMICOLON stmt { Lang.SSeq ($1, $3) }
+
+| TRECORD varid ASSIGN RB record_body LB { failwith "Unimplemented" }
+
 | datatype varid ASSIGN aexp { Lang.SSeq (Lang.SDefine ($2, $1),
 					  Lang.SAssign ($2, $4))}
 | datatype varid ASSIGN UNIFORM INT INT { Lang.SSeq (Lang.SDefine ($2, $1),
@@ -189,7 +200,7 @@ secretlist :
 | secret secretlist { $1 :: $2 }
 ;
 
-belief : 
+belief :
 | BELIEF COLON pstmt { ([], [], $3) }
 | BELIEF agentlist ABOUT agentlist COLON pstmt { ($2, $4, $6) }
 ;
@@ -198,13 +209,13 @@ belieflist :
 | { [] }
 | belief belieflist { $1 :: $2 }
 ;
-  
+
 querylist :
 | { [] }
 | query querylist { $1 :: $2 }
 ;
 
-query : 
+query :
 | QUERY COLON pstmt { $3 }
 ;
 
