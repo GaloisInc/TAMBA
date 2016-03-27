@@ -5,14 +5,17 @@ open Gmp
 type datatype =
   | TBool
   | TInt of int
+  | TRecord of (string * datatype) list
 
 let datatype_size dt = match dt with
   | TInt (i) -> i
   | TBool -> 1
+  | TRecord _ -> failwith "Unimplemented"
 
 let render_datatype t = match t with
   | TBool -> "bool"
   | TInt (size) -> sprintf "int%d" size
+  | TRecord _ -> failwith "Unimplemented"
 
 type agent = string
 type varid = agent * string
