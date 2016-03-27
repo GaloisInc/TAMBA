@@ -12,6 +12,7 @@ let rec subst_aexp aaexp (varid: Lang.varid) aaexp2 =
           if (id = varid) then aaexp2 else AEVar (id)
       | AEBinop (b, exp1, exp2) ->
           AEBinop (b, r exp1, r exp2)
+      | AERecord (r) -> AERecord (r)
 ;;
 
 let rec subst_lexp alexp (varid: Lang.varid) aaexp =

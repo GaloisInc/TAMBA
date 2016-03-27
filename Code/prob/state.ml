@@ -21,6 +21,7 @@ end;;
 
 class state_hashed h : state = object (self)
   val mutable vals: (Lang.varid, int) Hashtbl.t = h
+  val mutable records: (Lang.varid, Lang.record) Hashtbl.t = Hashtbl.create 10
 
   method set_vals h =
     ignore(vals <- h)
@@ -37,10 +38,27 @@ class state_hashed h : state = object (self)
     else
       raise (General_error ("undefined variable " ^ (Lang.varid_to_string varname)))
 
+  method set_record (varname : varid) (r : Lang.record) : unit =
+    if Hashtbl.mem records varname then
+      Hashtbl.replace vals varname r
+    else
+      raise (General_error ("undefined record " ^ (Lang.varid_to_string varname)))
+
   method get varname: int =
-    try
-      Hashtbl.find vals varname
-    with
+    let name_str = varid_to_string varname in
+
+    if (String.contains name_str '.') then
+      let dot_ind = String.index name_str '.' in
+      let record_name = String.sub name_str 0 dot_ind in
+      let field_name = String.sub name_str (dot_ind+1) (String.length-dot_ind-1) in
+      try
+        List.assoc field_name (Hashtbl.find records record_name)
+      with _ ->
+        failwith "Record/record field not found"
+    else
+      try
+        Hashtbl.find vals varname
+      with
       | Not_found -> raise (General_error ("undefined variable " ^ (Lang.varid_to_string varname)))
 
   method vars: (Lang.varid list) = Hashtbl.fold (fun k v accum -> k :: accum ) vals []

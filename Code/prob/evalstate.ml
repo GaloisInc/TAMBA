@@ -9,17 +9,18 @@ exception Eval_error of string;;
 
   (* eval_aexp: aexp -> state -> int *)
   (* evaluates aexp caexp on given state cstate *)
-  let rec eval_aexp caexp (cstate: state) =
+  let rec eval_aexp caexp (cstate: state) : int =
     match caexp with
       | AEVar (id) -> cstate#get id
       | AEBinop (op, aexp1, aexp2) ->
           let (bname, beval) = op in
             beval (eval_aexp aexp1 cstate) (eval_aexp aexp2 cstate)
       | AEInt (v) -> v
+      | AERecord _ -> failwith "Cannot evaluate records to ints"
 
   (* eval_lexp: lexp -> state -> int *)
   (* evaluates lexp clexp on given state cstate *)
-  let rec eval_lexp clexp (cstate: state) =
+  let rec eval_lexp clexp (cstate: state) : int =
     match clexp with
       | LEBinop (op, lexp1, lexp2) ->
           let (bname, beval) = op in
@@ -28,6 +29,13 @@ exception Eval_error of string;;
           let (bname, beval) = op in
             beval (eval_aexp aexp1 cstate) (eval_aexp aexp2 cstate)
       | LEBool (v) -> v
+
+  let rec eval_aexp_assign (caexp : aexp) (name : string)
+      (cstate : state) : (int * state) =
+    match caexp with
+      | AERecord record -> (cstate#set_record name record) ; (-1, cstate)
+      | _ -> let varval = eval_aexp varaexp cstate in
+        (varval, (cstate#set name varval; cstate))
 
   (* eval: stmt -> state -> (int * state)
      Evaluate stmt cstmt within state cstate, raise Eval_error if expression cannot be evaluated
@@ -38,8 +46,9 @@ exception Eval_error of string;;
         | SDefine (name, datatype) ->
             (0, (cstate#addvar name; cstate))
         | SAssign (name, varaexp) ->
-            let varval = eval_aexp varaexp cstate in
-              (varval, (cstate#set name varval; cstate))
+          eval_aexp_assign varaexp name cstate
+            (*let varval = eval_aexp varaexp cstate in*)
+              (*(varval, (cstate#set name varval; cstate))*)
         | SPSeq (s1, s2, p, n1, n2) ->
             if (Random.float 1.0) < (Q.to_float p) then
               eval s1 cstate

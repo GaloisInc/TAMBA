@@ -169,7 +169,7 @@ stmt :
            stmt::stmts)
       ) ([],[],[]) fields in
     let record_type = Lang.TRecord(typedef) in
-    let record_data = Lang.Record (field_id_map) in
+    let record_data = Lang.AERecord (field_id_map) in
     let record_assign =
       Lang.SSeq(Lang.SDefine($2, record_type), Lang.SAssign($2, record_data)) in
 

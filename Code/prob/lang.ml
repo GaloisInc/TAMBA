@@ -10,12 +10,12 @@ type datatype =
 let datatype_size dt = match dt with
   | TInt (i) -> i
   | TBool -> 1
-  | TRecord _ -> failwith "Unimplemented"
+  | TRecord _ -> failwith "TRecord size Unimplemented"
 
 let render_datatype t = match t with
   | TBool -> "bool"
   | TInt (size) -> sprintf "int%d" size
-  | TRecord _ -> failwith "Unimplemented"
+  | TRecord _ -> failwith "Render TRecord Unimplemented"
 
 type agent = string
 type varid = agent * string
@@ -29,15 +29,17 @@ type abinop = (string * (int -> int -> int))
 type lbinop = (string * (int -> int -> int))
 type lreln  = (string * (int -> int -> int))
 
+
 let varid_belongs_to anagent (owner, id) = anagent = owner;;
 
-type record = Record of (string * string) list
+type record = (string * string) list
 
 (* arithmetic expression *)
 type aexp =
   | AEVar   of varid
   | AEInt   of int
   | AEBinop of abinop * aexp * aexp
+  | AERecord of record (* Maps from true field names to assigned variable names*)
 
 (*
   match aexp with
@@ -128,6 +130,7 @@ let rec print_aexp e =
           print_string " ";
           print_aexp e2;
           print_string ")"
+    | AERecord _ -> failwith "Print AERecord Unimplemented"
 
 (* print_lexp: lexp -> unit
    Prints the given logical expression. *)
@@ -258,6 +261,7 @@ let rec render_aexp_latex e =
           (_render_binop_latex binop)
           (render_aexp_latex e1)
           (render_aexp_latex e2)
+    | AERecord _ -> failwith "Unimplmeneted"
 
 let rec render_lexp_latex e =
   match e with
@@ -400,6 +404,7 @@ let rec collect_vars_aexp e =
   | AEInt (v) -> []
   | AEVar (id) -> [id]
   | AEBinop (b, exp1, exp2) -> List.append (collect_vars_aexp exp1) (collect_vars_aexp exp2)
+  | AERecord _ -> failwith "Collect vars AERecord Unimplemented"
 ;;
 
 (* collect_vars_lexp: lexp -> string list
@@ -589,6 +594,7 @@ let rec fold_aexp f aaexp a =
     | AEInt (v) -> f aaexp a
     | AEVar (id) -> f aaexp a
     | AEBinop (b, exp1, exp2) -> (fold_aexp f exp2 (fold_aexp f exp1 (f aaexp a)))
+    | AERecord _ -> failwith "Fold AERecord Unimplemented"
 
 let rec fold_lexp f alexp a =
     match alexp with
