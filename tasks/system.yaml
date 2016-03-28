@@ -8,6 +8,9 @@
 - name: install C++ compiler
   apt: name=g++ state=present
 
+- name: install pkg-config
+  apt: name=pkg-config state=present
+
 - name: install vim
   apt: name=vim state=present
 
