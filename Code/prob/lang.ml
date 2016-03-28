@@ -409,7 +409,7 @@ let rec collect_vars_aexp e =
   | AEInt (v) -> []
   | AEVar (id) -> [id]
   | AEBinop (b, exp1, exp2) -> List.append (collect_vars_aexp exp1) (collect_vars_aexp exp2)
-  | AERecord _ -> failwith "Collect vars AERecord Unimplemented"
+  | AERecord _ -> []
 ;;
 
 (* collect_vars_lexp: lexp -> string list

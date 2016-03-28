@@ -32,6 +32,8 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
 
         let querytuple = List.assoc queryname querydefs  in
         let (inlist, outlist, progstmt) = querytuple in
+        (* ISSUE: For record arguments, how to recognize its a record,
+         * then get the corresponding variables *)
 
         let secretvars = ESYS.psrep_vars ps.PSYS.belief in
         let sa_progstmt = (sa_of_stmt progstmt (List.append secretvars inlist) outlist) in

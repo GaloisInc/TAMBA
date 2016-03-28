@@ -149,13 +149,24 @@ record_body :
   let agent_gen_var_name = ("", var_name) in
   [($1, $2, var_name, Lang.SSeq(Lang.SDefine(agent_gen_var_name, $1), Lang.SAssign(agent_gen_var_name, $4)))]
   }
-| datatype varid ASSIGN UNIFORM INT INT  {failwith "Unimplemented" }
-| datatype varid ASSIGN UNIFORM INT INT SEMICOLON record_body {failwith "Unimplemented" }
+| datatype varid ASSIGN UNIFORM INT INT  {
+  let time = Sys.time() in
+  let var_name = string_of_int (Hashtbl.hash time) in
+  let agent_gen_var_name = ("", var_name) in
+  [($1, $2, var_name, Lang.SSeq(Lang.SDefine(agent_gen_var_name, $1), Lang.SUniform(agent_gen_var_name, $5, $6)))]
+
+}
+| datatype varid ASSIGN UNIFORM INT INT SEMICOLON record_body {
+  let time = Sys.time() in
+  let var_name = string_of_int (Hashtbl.hash time) in
+  let agent_gen_var_name = ("", var_name) in
+  ($1, $2, var_name, Lang.SSeq(Lang.SDefine(agent_gen_var_name, $1), Lang.SUniform(agent_gen_var_name, $5, $6)))::($8)
+
+}
 
 stmt :
 | stmt SEMICOLON stmt { Lang.SSeq ($1, $3) }
-
-| TRECORD varid ASSIGN RB record_body LB {
+| TRECORD varid ASSIGN LB record_body RB {
     let fields = $5 in
     let (typedef, field_id_map, stmts) =
       List.fold_left (
@@ -176,7 +187,6 @@ stmt :
 
     Lang.SSeq(record_assign, nested_stmts)
   }
-
 | datatype varid ASSIGN aexp { Lang.SSeq (Lang.SDefine ($2, $1),
 					  Lang.SAssign ($2, $4))}
 | datatype varid ASSIGN UNIFORM INT INT { Lang.SSeq (Lang.SDefine ($2, $1),

@@ -40,9 +40,13 @@ class state_hashed h : state = object (self)
       raise (General_error ("undefined variable " ^ (Lang.varid_to_string varname)))
 
   method set_record (varname : Lang.varid) (r : Lang.record) : unit =
-    if Hashtbl.mem records varname then
+    (* ISSUE: Typing? *)
+    if Hashtbl.mem vals varname && ((Hashtbl.find vals varname) = 0) then
       Hashtbl.replace records varname r
     else
+
+      (*raise (General_error (error_str^"undefined record " ^ (Lang.varid_to_string varname)))*)
+
       raise (General_error ("undefined record " ^ (Lang.varid_to_string varname)))
 
   method get (varname : Lang.varid) : int =
@@ -73,6 +77,7 @@ class state_hashed h : state = object (self)
 
   method iter f = Hashtbl.iter f vals
 
+  (* TODO: Update to handle records *)
   method to_string =
     "[" ^
       (String.concat ", "

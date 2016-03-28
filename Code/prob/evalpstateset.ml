@@ -36,6 +36,7 @@ struct
       | SOutput (name, toagent) -> p
 
       | SAssign (name, varaexp) ->
+        (* Assigning a record *)
           PSS.transform p cstmt
             (* change eventually, don't want to be sending cstmt *)
 
