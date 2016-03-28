@@ -140,14 +140,14 @@ nonemptyagentlist:
 record_body :
 | datatype varid ASSIGN aexp SEMICOLON record_body {
   let time = Sys.time() in
-  let var_name = string_of_int (Hashtbl.hash time) in
-  let agent_var_name = ("", var_name) in
-  ($1, $2, var_name, Lang.SSeq(Lang.SDefine(agent_var_name, $1), Lang.SAssign(agent_var_name, $4)))::($6) }
+  let gen_var_name = string_of_int (Hashtbl.hash time) in
+  let agent_gen_var_name = ("", gen_var_name) in
+  ($1, $2, gen_var_name, Lang.SSeq(Lang.SDefine(agent_gen_var_name, $1), Lang.SAssign(agent_gen_var_name, $4)))::($6) }
 | datatype varid ASSIGN aexp {
   let time = Sys.time() in
   let var_name = string_of_int (Hashtbl.hash time) in
-  let agent_var_name = ("", var_name) in
-  [($1, $2, var_name, Lang.SSeq(Lang.SDefine(agent_var_name, $1), Lang.SAssign(agent_var_name, $4)))]
+  let agent_gen_var_name = ("", var_name) in
+  [($1, $2, var_name, Lang.SSeq(Lang.SDefine(agent_gen_var_name, $1), Lang.SAssign(agent_gen_var_name, $4)))]
   }
 | datatype varid ASSIGN UNIFORM INT INT  {failwith "Unimplemented" }
 | datatype varid ASSIGN UNIFORM INT INT SEMICOLON record_body {failwith "Unimplemented" }
@@ -159,11 +159,11 @@ stmt :
     let fields = $5 in
     let (typedef, field_id_map, stmts) =
       List.fold_left (
-        fun (typedefs, ids, stmts) (datatype, varid, stmt) ->
-          let ("", field_id, gen_id) = varid in
+        fun (typedefs, ids, stmts) (datatype, varid, gen_var_name, stmt) ->
+          let ("", field_id) = varid in
 
           ((field_id, datatype)::typedefs,
-           (field_id, gen_id)::ids,
+           (field_id, gen_var_name)::ids,
            stmt::stmts)
       ) ([],[],[]) fields in
     let record_type = Lang.TRecord(typedef) in

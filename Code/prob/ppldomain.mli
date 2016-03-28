@@ -60,8 +60,8 @@ sig
    *  2: number of samples that cause the query to return False
    *
    * [1]: TODO eventually we also want to pass the desired confidence
-   *)
-  val sample_region: region -> int -> (int,int)
+  val sample_region: region -> int ->  (int list -> bool )-> (int,int)
   val update_bounds: region -> (int,int) -> ()
+   *)
 
 end;;

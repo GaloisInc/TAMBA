@@ -162,6 +162,7 @@ module Ppldomainbox: (PPLDOMAIN_TYPE with type region = rational_box) =
         let ranges = Array.init (Array.length lo) f in
         Array.fold_left ( * ) 1 ranges;;
 
+(*
       let sample_region p n =
           let bounds = _bounds_of_box p in
           let  f (yes,no) = if yes + no >= n
@@ -172,6 +173,7 @@ module Ppldomainbox: (PPLDOMAIN_TYPE with type region = rational_box) =
                                         | true -> f (yes + 1, no)
                                         | false -> f (yes, no + 1) in
           f (0,0)
+*)
 
 
 

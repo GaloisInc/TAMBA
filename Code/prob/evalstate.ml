@@ -30,11 +30,11 @@ exception Eval_error of string;;
             beval (eval_aexp aexp1 cstate) (eval_aexp aexp2 cstate)
       | LEBool (v) -> v
 
-  let rec eval_aexp_assign (caexp : aexp) (name : string)
+  let rec eval_aexp_assign (caexp : aexp) (name : Lang.varid)
       (cstate : state) : (int * state) =
     match caexp with
       | AERecord record -> (cstate#set_record name record) ; (-1, cstate)
-      | _ -> let varval = eval_aexp varaexp cstate in
+      | _ -> let varval = eval_aexp caexp cstate in
         (varval, (cstate#set name varval; cstate))
 
   (* eval: stmt -> state -> (int * state)
