@@ -1,3 +1,5 @@
 *.pdf
 *.swp
 qif/
+*.cmi
+*.cmo
