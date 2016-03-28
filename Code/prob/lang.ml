@@ -130,7 +130,12 @@ let rec print_aexp e =
           print_string " ";
           print_aexp e2;
           print_string ")"
-    | AERecord _ -> failwith "Print AERecord Unimplemented"
+    | AERecord r ->
+      print_string "{ ";
+      List.iter (fun (field_name, map_name) ->
+          print_string (field_name^" ")
+        ) r;
+      print_string "}"
 
 (* print_lexp: lexp -> unit
    Prints the given logical expression. *)

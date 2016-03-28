@@ -4,6 +4,7 @@ class type state = object
   method canon: (Lang.varid * int) list
   method addvar: Lang.varid -> unit
   method set: Lang.varid -> int -> unit
+  method set_record: Lang.varid -> Lang.record -> unit
   method get: Lang.varid -> int
   method vars: Lang.varid list
   method iter: (Lang.varid -> int -> unit) -> unit
@@ -38,21 +39,23 @@ class state_hashed h : state = object (self)
     else
       raise (General_error ("undefined variable " ^ (Lang.varid_to_string varname)))
 
-  method set_record (varname : varid) (r : Lang.record) : unit =
+  method set_record (varname : Lang.varid) (r : Lang.record) : unit =
     if Hashtbl.mem records varname then
-      Hashtbl.replace vals varname r
+      Hashtbl.replace records varname r
     else
       raise (General_error ("undefined record " ^ (Lang.varid_to_string varname)))
 
   method get varname: int =
-    let name_str = varid_to_string varname in
+    let name_str = Lang.varid_to_string varname in
+    let (agent, _) = varname in
 
     if (String.contains name_str '.') then
+      (* CHANGE: Maybe allow for further nesting later *)
       let dot_ind = String.index name_str '.' in
       let record_name = String.sub name_str 0 dot_ind in
-      let field_name = String.sub name_str (dot_ind+1) (String.length-dot_ind-1) in
+      let field_name = String.sub name_str (dot_ind+1) ((String.length name_str) -dot_ind-1) in
       try
-        List.assoc field_name (Hashtbl.find records record_name)
+        Hashtbl.find vals (agent, (List.assoc field_name (Hashtbl.find records (agent, record_name))))
       with _ ->
         failwith "Record/record field not found"
     else

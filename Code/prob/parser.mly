@@ -142,17 +142,15 @@ record_body :
   let time = Sys.time() in
   let var_name = string_of_int (Hashtbl.hash time) in
   let agent_var_name = ("", var_name) in
-  ($1, $2, var_name, Lang.SSeq(Lang.SDefine(agent_var_name, $1), Lang.SAssign(agent_var_name, $4)))::($6)
-
+  ($1, $2, var_name, Lang.SSeq(Lang.SDefine(agent_var_name, $1), Lang.SAssign(agent_var_name, $4)))::($6) }
 | datatype varid ASSIGN aexp {
   let time = Sys.time() in
   let var_name = string_of_int (Hashtbl.hash time) in
   let agent_var_name = ("", var_name) in
   [($1, $2, var_name, Lang.SSeq(Lang.SDefine(agent_var_name, $1), Lang.SAssign(agent_var_name, $4)))]
   }
-
 | datatype varid ASSIGN UNIFORM INT INT  {failwith "Unimplemented" }
-| datatype varid ASSIGN UNIFORM INT INT SEMCOLON record_body {failwith "Unimplemented" }
+| datatype varid ASSIGN UNIFORM INT INT SEMICOLON record_body {failwith "Unimplemented" }
 
 stmt :
 | stmt SEMICOLON stmt { Lang.SSeq ($1, $3) }
