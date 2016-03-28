@@ -45,17 +45,22 @@ class state_hashed h : state = object (self)
     else
       raise (General_error ("undefined record " ^ (Lang.varid_to_string varname)))
 
-  method get varname: int =
+  method get (varname : Lang.varid) : int =
     let name_str = Lang.varid_to_string varname in
     let (agent, _) = varname in
 
     if (String.contains name_str '.') then
       (* CHANGE: Maybe allow for further nesting later *)
+      (* ISSUE: Does agent handling work? *)
       let dot_ind = String.index name_str '.' in
       let record_name = String.sub name_str 0 dot_ind in
-      let field_name = String.sub name_str (dot_ind+1) ((String.length name_str) -dot_ind-1) in
+      let field_len = (String.length name_str)-(String.length record_name)-1 in
+      let field_name = String.sub name_str (dot_ind+1) field_len in
+
       try
-        Hashtbl.find vals (agent, (List.assoc field_name (Hashtbl.find records (agent, record_name))))
+        let record = Hashtbl.find records (agent, record_name) in
+        let var_gen_id = List.assoc field_name record in
+        Hashtbl.find vals (agent, var_gen_id)
       with _ ->
         failwith "Record/record field not found"
     else
