@@ -172,23 +172,33 @@ module MAKE_PSYSTEM (ESYS: EVAL_SYSTEM) = struct
     let (inlist, outlist, querystmt) = query in
     let secretvars = ESYS.psrep_vars ps.belief in
 
-    let sa_querystmt = if !Globals.use_dsa then
-        (sa_of_stmt querystmt (List.append secretvars inlist) outlist)
-      else
-        querystmt in
 
+    (*print_endline "###################################";*)
     let (ignored, inputstate_temp) = Evalstate.eval queryinput_stmt (new state_empty) in
+    (*print_endline (string_of_bool (inputstate_temp#is_record (("","target_location"))));*)
+    (*print_endline "###################################";*)
 
     let expanded_inlist =
       List.fold_left (fun a varname ->
-          if inputstate_temp#is_record (varname) then
-            (inputstate_temp#get_vals (varname))@a
+          if (inputstate_temp#is_record (varname)) then
+            let (_, varname_str) = varname in
+            (List.map (fun (agent, field) -> (agent, varname_str^"."^field)) (inputstate_temp#get_vals (varname)))@a
           else varname::a) [] inlist in
+
+    let sa_querystmt = if !Globals.use_dsa then
+        (sa_of_stmt querystmt (List.append secretvars expanded_inlist) outlist)
+      else
+        querystmt in
+
+    print_endline "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%";
+    List.iter (fun (_, a) -> print_endline a) expanded_inlist;
+    print_endline "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%";
 
     (* TODO: Handle print statements for records (i.e. map names correctly) *)
 
     let inputstate = inputstate_temp#copy in
     inputstate#project expanded_inlist;
+    inputstate#print_vals();
     let inputstate_full = inputstate#copy in
     let sa_querystmt = Preeval.predefine_as_state sa_querystmt inputstate expanded_inlist in
     ifdebug (printf "predefined is \n";
@@ -202,6 +212,7 @@ module MAKE_PSYSTEM (ESYS: EVAL_SYSTEM) = struct
     (*let inputdist = ESYS.psrep_set_all ps.belief inputstate in *) (* inputs are now substituted above using Preeval.predefine *)
     let inputdist = ps.belief in
 
+    (*ISSUE: Maybe remove record from valcache *)
     let secretdist = ESYS.psrep_point (ESYS.srep_point ps.valcache) in
 
     printf "\ninput belief:\n"; ESYS.print_psrep inputdist;

@@ -19,22 +19,38 @@ class type state = object
   method project: Lang.varid list -> unit
   method set_vals: (Lang.varid, int) Hashtbl.t -> unit
   method is_record: (Lang.varid) -> bool
-  method get_keys: (Lang.varid) -> Lang.varid list
+  (*method get_keys: (Lang.varid) -> Lang.varid list*)
   method get_vals: (Lang.varid) -> Lang.varid list
+  method print_records: unit -> unit
+  method print_vals: unit -> unit
 end;;
 
-class state_hashed h : state = object (self)
-  val mutable vals: (Lang.varid, int) Hashtbl.t = h
-  val mutable records: (Lang.varid, Lang.record) Hashtbl.t = Hashtbl.create 10
+class state_hashed hv hr : state = object (self)
+  val mutable vals: (Lang.varid, int) Hashtbl.t = hv
+  val mutable records: (Lang.varid, Lang.record) Hashtbl.t = hr
+
+  method print_records unit : unit =
+    print_endline "++++++++++++++++++++++++++++++++";
+    Hashtbl.iter  (fun (_,name) _ -> print_endline name) records;
+    print_endline "++++++++++++++++++++++++++++++++";
+
+  method print_vals unit : unit =
+    print_endline "+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+    Hashtbl.iter  (fun (_,name) _ -> print_endline name) vals;
+    print_endline "-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
 
   method is_record (r:Lang.varid) : bool  =
+    (*print_endline "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@";*)
+    (*Hashtbl.iter (fun (_,k) v -> print_int v; print_endline (" "^k)) vals;*)
+    (*Hashtbl.iter (fun (_,k) _ -> print_endline (" "^k)) records;*)
+    (*print_endline "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@";*)
     Hashtbl.mem records r
 
-  method get_keys (r:Lang.varid) : Lang.varid list=
-    List.fold_left (fun a (k,v) -> ("", k)::a) [] (Hashtbl.find records r)
+  (*method get_keys (r:Lang.varid) : Lang.varid list=*)
+    (*List.fold_left (fun a (k,v) -> ("", k)::a) [] (Hashtbl.find records r)*)
 
   method get_vals (r:Lang.varid) : Lang.varid list =
-    List.fold_left (fun a (k,v) -> ("",v)::a) [] (Hashtbl.find records r)
+    List.map (fun name -> ("", name)) (Hashtbl.find records r)
 
   method set_vals h =
     ignore(vals <- h)
@@ -54,32 +70,35 @@ class state_hashed h : state = object (self)
   method set_record (varname : Lang.varid) (r : Lang.record) : unit =
     (* ISSUE: Typing? *)
     if Hashtbl.mem vals varname && ((Hashtbl.find vals varname) = 0) then
-      Hashtbl.replace records varname r
+      (let (agent,strname) = varname in
+      print_endline (strname^" SET AGENT: "^agent^".");
+      (print_endline (string_of_bool (Hashtbl.mem records varname));
+       Hashtbl.replace records varname r;print_endline (string_of_bool (self#is_record(varname)))))
     else
-
+      (
       (*raise (General_error (error_str^"undefined record " ^ (Lang.varid_to_string varname)))*)
 
-      raise (General_error ("undefined record " ^ (Lang.varid_to_string varname)))
+      raise (General_error ("undefined record " ^ (Lang.varid_to_string varname))))
 
   method get (varname : Lang.varid) : int =
     let name_str = Lang.varid_to_string varname in
     let (agent, _) = varname in
 
-    if (String.contains name_str '.') then
-      (* CHANGE: Maybe allow for further nesting later *)
-      (* ISSUE: Does agent handling work? *)
-      let dot_ind = String.index name_str '.' in
-      let record_name = String.sub name_str 0 dot_ind in
-      let field_len = (String.length name_str)-(String.length record_name)-1 in
-      let field_name = String.sub name_str (dot_ind+1) field_len in
+    (*if (String.contains name_str '.') then*)
+       (*CHANGE: Maybe allow for further nesting later *)
+       (*ISSUE: Does agent handling work? *)
+      (*let dot_ind = String.index name_str '.' in*)
+      (*let record_name = String.sub name_str 0 dot_ind in*)
+      (*let field_len = (String.length name_str)-(String.length record_name)-1 in*)
+      (*let field_name = String.sub name_str (dot_ind+1) field_len in*)
 
-      try
-        let record = Hashtbl.find records (agent, record_name) in
-        let var_gen_id = List.assoc field_name record in
-        Hashtbl.find vals (agent, var_gen_id)
-      with _ ->
-        failwith "Record/record field not found"
-    else
+      (*try*)
+        (*let record = Hashtbl.find records (agent, record_name) in*)
+        (*let var_gen_id = List.assoc field_name record in*)
+        (*Hashtbl.find vals (agent, var_gen_id)*)
+      (*with _ ->*)
+        (*failwith "Record/record field not found"*)
+    (*else*)
       try
         Hashtbl.find vals varname
       with
@@ -103,7 +122,7 @@ class state_hashed h : state = object (self)
   method set_list sl =
     List.iter (fun (vname, vval) -> ignore (self#addvar vname; self#set vname vval)) sl
 
-  method copy = new state_hashed (Hashtbl.copy vals)
+  method copy = new state_hashed (Hashtbl.copy vals) (Hashtbl.copy records)
 
   method eq (s: state) =
     let s1 = self#canon in
@@ -132,7 +151,7 @@ class state_hashed h : state = object (self)
 end;;
 
 class state_empty = object
-  inherit state_hashed (Hashtbl.create 4)
+  inherit state_hashed (Hashtbl.create 4) (Hashtbl.create 4)
 end;;
 
 class state_default vars =
@@ -141,7 +160,7 @@ class state_default vars =
       (List.iter (fun varid -> ignore (Hashtbl.replace h varid 0)) vars);
        h) in
 object
-  inherit state_hashed h
+  inherit state_hashed h (Hashtbl.create 4)
 end;;
 
 let rec states_merge sl1 sl2 =

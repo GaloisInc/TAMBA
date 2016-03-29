@@ -13,7 +13,6 @@ rule token = parse
   | "about"     { ABOUT }
   | "output"    { OUTPUT }
   | "to"        { TO }
-  | "."         { DOT }
   | ","         { COMMA }
   | "querydef"  { QUERYDEF }
   | "policy"    { POLICY }
@@ -63,7 +62,7 @@ rule token = parse
       { INT (int_of_string num) }
   | "\"" (['A'-'Z''a'-'z']['a'-'z''A'-'Z''0'-'9''_''.']* as s) "\""
       { STRING s }
-  | ['A'-'Z''a'-'z']['a'-'z''A'-'Z''0'-'9''_']* as id
+  | ['A'-'Z''a'-'z']['a'-'z''A'-'Z''0'-'9''_''.']* as id
       { VAR id }
   | [' ' '\t']	{ token lexbuf }
   | ['\n']	{ Lexing.new_line lexbuf; token lexbuf }

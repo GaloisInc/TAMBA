@@ -32,7 +32,7 @@ type lreln  = (string * (int -> int -> int))
 
 let varid_belongs_to anagent (owner, id) = anagent = owner;;
 
-type record = (string * string) list
+type record = (string) list
 
 (* arithmetic expression *)
 type aexp =
@@ -132,7 +132,7 @@ let rec print_aexp e =
           print_string ")"
     | AERecord r ->
       print_string "{ ";
-      List.iter (fun (field_name, map_name) ->
+      List.iter (fun (field_name) ->
           print_string (field_name^" ")
         ) r;
       print_string "}"
@@ -409,7 +409,7 @@ let rec collect_vars_aexp e =
   | AEInt (v) -> []
   | AEVar (id) -> [id]
   | AEBinop (b, exp1, exp2) -> List.append (collect_vars_aexp exp1) (collect_vars_aexp exp2)
-  | AERecord r -> List.map (fun (field_name, gen_name) -> print_endline (field_name^","^gen_name);("", gen_name)) r
+  | AERecord r -> []
 ;;
 
 (* collect_vars_lexp: lexp -> string list

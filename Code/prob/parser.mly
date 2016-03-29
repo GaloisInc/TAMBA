@@ -65,7 +65,6 @@
 /* lang */
 
 varid:
-| VAR DOT VAR { ($1, $3) }
 | VAR { ("", $1) }
 ;
 
@@ -139,42 +138,43 @@ nonemptyagentlist:
 
 record_body :
 | datatype varid ASSIGN aexp SEMICOLON record_body {
-  ($1, $2, Some($4))::($6) }
+  ($1, $2, Some($4), None)::($6) }
 | datatype varid ASSIGN aexp {
-  [($1, $2, Some($4))]
+  [($1, $2, Some($4), None)]
   }
 | datatype varid ASSIGN UNIFORM INT INT  {
-  [($1, $2, None, Some(SUniform ($2, $5, $6)))]
-
+  [($1, $2, None, Some($5, $6))]
 }
 | datatype varid ASSIGN UNIFORM INT INT SEMICOLON record_body {
-  ($1, $2, None, Some(SUniform ($2, $5, $6)))::$8
+  ($1, $2, None, Some($5, $6))::$8
 }
 
 stmt :
 | stmt SEMICOLON stmt { Lang.SSeq ($1, $3) }
 | TRECORD varid ASSIGN LB record_body RB {
     let fields = $5 in
-    let (record_varid_agent, record_varid_str) = varid in
+    let (record_varid_agent, record_varid_str) = $2 in
     let (typedef, field_ids, stmts) =
       List.fold_left (
-        fun (typedefs, ids, stmts) (datatype, field_varid, varval, stmt) ->
+        fun (datatypes, ids, stmts) (datatype, field_varid, val_opt, dist_opt) ->
           let (varid_agent, varid_str) = field_varid in
-          match varval with
+          match val_opt with
           | Some (value) ->
-              let new_var_name = varid_agent, record_var_str^"."^varid_str in
-              let define_var_stmt = Lang.SDefine((new_var_name),stmt) in
-              let assign_var_stmt = Lang.SAssign ((new_var_name), value)
+              let new_var_name = varid_agent, record_varid_str^"."^varid_str in
+
+              let define_var_stmt = Lang.SDefine((new_var_name), datatype) in
+              let assign_var_stmt = Lang.SAssign ((new_var_name), value) in
               let curr_stmt =Lang.SSeq(define_var_stmt, assign_var_stmt) in
-              ((varid_str, datatype)::typedefs, field_varid::ids, (Lang.SSeq(curr_stmt, stmts)))
+              ((varid_str, datatype)::datatypes, varid_str::ids, (Lang.SSeq(curr_stmt, stmts)))
           | None ->
-            (match stmt with
-            | Some (stmt) ->
-              let new_var_name = varid_agent, record_var_str^"."^varid_str in
-              let define_var_stmt = Lang.SDefine((new_var_name),stmt) in
-              let curr_stmt =Lang.SSeq(define_var_stmt, stmt) in
-              ((varid_str, datatype)::typedefs, field_varid::ids, (Lang.SSeq(curr_stmt, stmts))
-            | None -> failwith "variable not assigned anything"))
+            (match dist_opt with
+            | Some (low_b, up_b) ->
+              let new_var_name = varid_agent, record_varid_str^"."^varid_str in
+              let dist_stmt = Lang.SUniform (new_var_name, low_b, up_b) in
+              let define_var_stmt = Lang.SDefine((new_var_name), datatype) in
+              let curr_stmt =Lang.SSeq(define_var_stmt, dist_stmt) in
+              ((varid_str, datatype)::datatypes, varid_str::ids, (Lang.SSeq(curr_stmt, stmts)))
+            | None -> failwith "variable not assigned anything")
       ) ([],[],Lang.SSkip) fields in
     let record_type = Lang.TRecord(typedef) in
     let record_data = Lang.AERecord (field_ids) in

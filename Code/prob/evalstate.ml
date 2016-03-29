@@ -33,8 +33,13 @@ exception Eval_error of string;;
   let rec eval_aexp_assign (caexp : aexp) (name : Lang.varid)
       (cstate : state) : (int * state) =
     match caexp with
-      | AERecord record -> (cstate#set_record name record) ; (-1, cstate)
+    | AERecord record -> let (_, namestr) = name in  (*print_endline (namestr^"!!!!!!!!!!!!!!!!!!!!!!!!!!!!");*)
+      (cstate#set_record name record) ;
+      print_endline ("[][][][][][] IS RECORD: "^(string_of_bool (cstate#is_record name)));
+      (0, cstate)
       | _ -> let varval = eval_aexp caexp cstate in
+        (*print_endline "T";*)
+        (*cstate#print_records();*)
         (varval, (cstate#set name varval; cstate))
 
   (* eval: stmt -> state -> (int * state)
@@ -44,13 +49,20 @@ exception Eval_error of string;;
     let cstate = cstate#copy in
       match cstmt with
         | SDefine (name, datatype) ->
-          (*let (_, name_str) = name in*)
+          let (_, name_str) = name in
+          (*print_endline ("DEFINING "^name_str);*)
           (*print_endline ("Defining "^name_str) ;*)
+          (*cstate#print_records();*)
             (0, (cstate#addvar name; cstate))
         | SAssign (name, varaexp) ->
+          let (_, name_str) = name in
+          (*print_endline ("ASSIGNING "^name_str);*)
           (*let (_, name_str) = name in*)
           (*print_endline ("Assigning "^name_str) ;*)
-          eval_aexp_assign varaexp name cstate
+          let ret = eval_aexp_assign varaexp name cstate in
+          (*print_endline ("()()()()() IS RECORD: "^(string_of_bool (cstate#is_record name)));*)
+          (*cstate#print_records();*)
+          ret
             (*let varval = eval_aexp varaexp cstate in*)
               (*(varval, (cstate#set name varval; cstate))*)
         | SPSeq (s1, s2, p, n1, n2) ->
@@ -59,8 +71,15 @@ exception Eval_error of string;;
             else
               eval s2 cstate
         | SSeq (stmt1, stmt2) ->
+          (*print_endline "SEQ1";*)
             let (val1, state1) = eval stmt1 cstate in
+          (*state1#print_records();*)
+          (*print_endline "END SEQ1";*)
+            (*print_endline "SEQ2";*)
+          (*state1#print_records();*)
             let (val2, state2) = eval stmt2 state1 in
+          (*state2#print_records();*)
+            (*print_endline "END SEQ2";*)
               (val2, state2)
         | SIf (guardlexp, stmt1, stmt2) ->
             (match (eval_lexp guardlexp cstate) with
