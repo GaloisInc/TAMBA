@@ -8,7 +8,7 @@ secret:
   int ship2_berths = 100;
   int ship3_berths = 300;
   int ship4_berths = 200;
-  int ship5_berths = 500;
+  int ship5_berths = 500
 
 belief:
   int ship1_loc = uniform 0 1000;
@@ -25,24 +25,24 @@ belief:
 querydef enough_berths ship dest berths -> result :
   int ship_loc = 0;
   int ship_berths = 0;
-  if ship = 1 then
-    ship_loc    = ship1_loc
+  if ship == 1 then
+    ship_loc    = ship1_loc;
     ship_berths = ship1_berths
   endif;
-  if ship = 2 then
-    ship_loc = ship2_loc
+  if ship == 2 then
+    ship_loc = ship2_loc;
     ship_berths = ship2_berths
   endif;
-  if ship = 3 then
-    ship_loc = ship3_loc
+  if ship == 3 then
+    ship_loc = ship3_loc;
     ship_berths = ship3_berths
   endif;
-  if ship = 4 then
-    ship_loc = ship4_loc
+  if ship == 4 then
+    ship_loc = ship4_loc;
     ship_berths = ship4_berths
   endif;
-  if ship = 5 then
-    ship_loc = ship5_loc
+  if ship == 5 then
+    ship_loc = ship5_loc;
     ship_berths = ship5_berths
   endif;
 
@@ -52,7 +52,7 @@ querydef enough_berths ship dest berths -> result :
   endif;
 
   int result = 0;
-  if (dest <= 200) & (ship_berths >= berths) then
+  if (dest <= 200) and (ship_berths >= berths) then
     result = 1
   endif;
 
