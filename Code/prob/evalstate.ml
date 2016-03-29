@@ -44,8 +44,12 @@ exception Eval_error of string;;
     let cstate = cstate#copy in
       match cstmt with
         | SDefine (name, datatype) ->
+          (*let (_, name_str) = name in*)
+          (*print_endline ("Defining "^name_str) ;*)
             (0, (cstate#addvar name; cstate))
         | SAssign (name, varaexp) ->
+          (*let (_, name_str) = name in*)
+          (*print_endline ("Assigning "^name_str) ;*)
           eval_aexp_assign varaexp name cstate
             (*let varval = eval_aexp varaexp cstate in*)
               (*(varval, (cstate#set name varval; cstate))*)

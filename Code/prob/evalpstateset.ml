@@ -31,6 +31,8 @@ struct
       | SSkip -> p
 
       | SDefine (name, datatype) ->
+          let (_,a)  = name in
+          print_endline a;
           PSS.addvar p name
 
       | SOutput (name, toagent) -> p

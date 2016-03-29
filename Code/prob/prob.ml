@@ -34,10 +34,19 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
         let (inlist, outlist, progstmt) = querytuple in
         (* ISSUE: For record arguments, how to recognize its a record,
          * then get the corresponding variables *)
+        print_endline "Start inlist query print";
+        List.iter (fun (_,a) -> print_endline a) inlist;
+        print_endline "End inlist query print";
 
         let secretvars = ESYS.psrep_vars ps.PSYS.belief in
-        let sa_progstmt = (sa_of_stmt progstmt (List.append secretvars inlist) outlist) in
-        let sa_progstmt = (if !Globals.use_dsa then sa_progstmt else progstmt) in
+        print_endline "Start secret_vars query print";
+        List.iter (fun (_,a) -> print_endline a) inlist;
+        print_endline "End secret_vars query print";
+
+        (* ISSUE: Single assignment not working with records *)
+        (*let sa_progstmt = (sa_of_stmt progstmt (List.append secretvars inlist) outlist) in
+        let sa_progstmt = (if !Globals.use_dsa then sa_progstmt else progstmt) in*)
+        let sa_progstmt = progstmt in (* Temporary *)
 
           printf "-------------------------------------------------\n";
           printf "query %s from %s to %s\n"
@@ -87,14 +96,22 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
         asetup.queries in
       let policies  = asetup.policies in
 
+      print_endline "Start secret stmt";
       let (ignored, secretstate) = Evalstate.eval secretstmt (new state_empty) in
+      print_endline "End secret stmt";
 
+      (* ISSUE: Expand records? *)
       let secretvars = Lang.all_vars beliefstmt in
+      print_endline "Start Secret vars";
+      List.iter (fun (_,a) -> print_endline a) secretvars;
+      print_endline "End Secret vars";
 
       let sa_beliefstmt = (sa_of_stmt beliefstmt [] secretvars) in
       let sa_beliefstmt = (if !Globals.use_dsa then sa_beliefstmt else beliefstmt) in
 
+      print_endline "starting with start";
       let startdist = ESYS.peval_start sa_beliefstmt in
+      print_endline "done with start";
 
       (*let secretdist = ESYS.psrep_point (ESYS.srep_point secretstate) in*)
       (*let startrelent = ESYS.psrep_relative_entropy startdist secretdist in*)

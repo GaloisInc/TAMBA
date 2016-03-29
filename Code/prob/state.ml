@@ -18,11 +18,23 @@ class type state = object
   method remove: Lang.varid -> unit
   method project: Lang.varid list -> unit
   method set_vals: (Lang.varid, int) Hashtbl.t -> unit
+  method is_record: (Lang.varid) -> bool
+  method get_keys: (Lang.varid) -> Lang.varid list
+  method get_vals: (Lang.varid) -> Lang.varid list
 end;;
 
 class state_hashed h : state = object (self)
   val mutable vals: (Lang.varid, int) Hashtbl.t = h
   val mutable records: (Lang.varid, Lang.record) Hashtbl.t = Hashtbl.create 10
+
+  method is_record (r:Lang.varid) : bool  =
+    Hashtbl.mem records r
+
+  method get_keys (r:Lang.varid) : Lang.varid list=
+    List.fold_left (fun a (k,v) -> ("", k)::a) [] (Hashtbl.find records r)
+
+  method get_vals (r:Lang.varid) : Lang.varid list =
+    List.fold_left (fun a (k,v) -> ("",v)::a) [] (Hashtbl.find records r)
 
   method set_vals h =
     ignore(vals <- h)

@@ -163,6 +163,7 @@ module MAKE_PSYSTEM (ESYS: EVAL_SYSTEM) = struct
       else
         policysystem_check_policies r distout distbelief distactual outputs
 
+
   let policysystem_answer (ps: policysystem) (query: (Lang.varid list * Lang.varid list * Lang.stmt)) (queryinput_stmt: Lang.stmt) :  policysystemresult =
     (* todo: simplify some of this query preparation, factor out to someplace else, also done repeatedly in prob.ml *)
 
@@ -177,18 +178,19 @@ module MAKE_PSYSTEM (ESYS: EVAL_SYSTEM) = struct
         querystmt in
 
     let (ignored, inputstate_temp) = Evalstate.eval queryinput_stmt (new state_empty) in
-    (* TODO: Extract fields from records in inputstate_temp and create substitute inlist *)
-    (* Something like: rec expand_records varlist state= match varlist with
-     * [] -> []
-     * hd::tl -> if state#is_record hd then state#get_keys hd @ expand_records
-     * else hd::expand_records varlist state. Need to make new state methods *)
-    (* Then use that list instead of inlist *)
+
+    let expanded_inlist =
+      List.fold_left (fun a varname ->
+          if inputstate_temp#is_record (varname) then
+            (inputstate_temp#get_vals (varname))@a
+          else varname::a) [] inlist in
+
     (* TODO: Handle print statements for records (i.e. map names correctly) *)
 
     let inputstate = inputstate_temp#copy in
-    inputstate#project inlist;
+    inputstate#project expanded_inlist;
     let inputstate_full = inputstate#copy in
-    let sa_querystmt = Preeval.predefine_as_state sa_querystmt inputstate inlist in
+    let sa_querystmt = Preeval.predefine_as_state sa_querystmt inputstate expanded_inlist in
     ifdebug (printf "predefined is \n";
              Lang.print_stmt_pretty sa_querystmt "";
              printf "--- end of predefined ---\n");
