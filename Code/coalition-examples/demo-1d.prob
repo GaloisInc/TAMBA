@@ -22,7 +22,7 @@ belief:
   int ship4_berths = uniform 0 1000;
   int ship5_berths = uniform 0 1000;
 
-querydef enough_berths ship dest berths -> result :
+querydef enough_berths ship dest berths_needed -> result :
   int ship_loc = 0;
   int ship_berths = 0;
   if ship == 1 then
@@ -52,11 +52,11 @@ querydef enough_berths ship dest berths -> result :
   endif;
 
   int result = 0;
-  if (dest <= 200) and (ship_berths >= berths) then
+  if (dest <= 200) and (ship_berths >= berths_needed) then
     result = 1
   endif;
 
 query enough_berths:
   int ship = 1;
   int dest = 250;
-  int berths = 500;
+  int berths_needed = 500;
