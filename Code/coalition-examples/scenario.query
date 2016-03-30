@@ -1,0 +1,7 @@
+int in_range = 0;
+
+if lincoln_loc >= target_range_min then
+  if lincoln_loc <= target_range_max then
+    in_range = 1;
+  endif;
+endif;
