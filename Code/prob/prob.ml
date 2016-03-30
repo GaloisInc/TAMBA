@@ -32,6 +32,8 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
 
         let querytuple = List.assoc queryname querydefs  in
         let (inlist, outlist, progstmt) = querytuple in
+        printf "Outlist: ";
+        printf "%s\n" (varid_list_to_string outlist);
 
         let secretvars = ESYS.psrep_vars ps.PSYS.belief in
         let sa_progstmt = (sa_of_stmt progstmt (List.append secretvars inlist) outlist) in
@@ -59,6 +61,23 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
                    (printf "*** query was rejected due to: %s\n" reason;
                     printf "*** belief will not be updated as a result of this query\n"))
             ;
+
+          printf "-------------------------------------------------\n";
+          printf "Sample from enddist\n";
+
+          let enddist = ans.PSYS.update.newbelief in
+          printf "\nans.PSYS.update: ";
+          ESYS.print_psrep enddist;
+          printf "Query for sampling : ";
+          print_stmt progstmt;
+          let (ignored, inputstate_temp) = Evalstate.eval querystmt (new state_empty) in
+          inputstate_temp#merge ps.valcache;
+          printf "\n\n------------------------------\nState before sampling: %s\n" inputstate_temp#to_string;
+          let (a, b) = list_first (ESYS.psrep_sample enddist 10 inputstate_temp (Evalstate.eval progstmt) (list_first outlist)) in
+          printf "a: %d, b: %d\n" a b;
+          
+
+
 
             ifbench (
               Globals.stop_timer Globals.timer_query;
@@ -109,6 +128,7 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
                   PSYS.belief = startdist;
                   PSYS.valcache = secretstate} in
 
+          printf "\n\nBefore pmock_queries\n\n";
           pmock_queries queries querydefs ps
   (*with
       | e ->
@@ -206,7 +226,9 @@ let main () =
                   | 3 -> (module EVALS_PPSS_POLY: EXP_SYSTEM)
                   | 4 -> (module EVALS_PPSS_OCTALATTE: EXP_SYSTEM)
                   | _ -> raise Not_expected): EXP_SYSTEM) in
+          printf "\n\nBefore pmock\n\n";
           E.pmock aexperiment;
+          printf "\n\nAfter pmock\n\n";
           ifdebug (printf "maximum complexity encountered = %d\n" !Globals.max_complexity);
           ifbench (Globals.close_bench ());
           Globals.bench_latte_close ();

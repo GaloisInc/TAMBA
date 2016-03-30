@@ -29,6 +29,8 @@ let triple_third (a, b, c) = c
 let list_first a = List.hd a
 let list_second a = List.hd (List.tl a)
 
+let flip f a b = f b a
+
 let fabs a = if a > 0.0 then a else (-1.0) *. a
 ;;
 

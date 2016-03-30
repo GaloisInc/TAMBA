@@ -79,4 +79,6 @@ module type PSTATESET_TYPE =
     val is_possible: pstateset -> bool
 
     val stateset_hull: pstateset -> stateset
+
+    val sample_pstateset: pstateset -> int -> state -> (state -> (int * state)) -> varid -> (int * int) list
   end;;

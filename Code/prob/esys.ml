@@ -54,6 +54,8 @@ module type EVAL_SYSTEM = sig
   val psrep_given_state: psrep -> state -> psrep
   val psrep_vars: psrep -> Lang.varid list
 
+  val psrep_sample: psrep -> int -> state -> (state -> (int * state)) -> varid -> (int * int) list
+
   val psrep_max_belief: psrep -> Q.t
 
   val print_srep: srep -> unit
@@ -99,6 +101,7 @@ module Make_esys_pss
 
   let psrep_vars d = M.vars d
 
+  let psrep_sample = M.sample_pstateset 
   let psrep_max_belief d = (M.max_belief d)
 
   let print_srep ass = S.print_stateset ass

@@ -229,6 +229,10 @@ module Ppldomainpoly: (PPLDOMAIN_TYPE with type region = polyhedron) =
         intersect_regions_assign point_region r;
         not (ppl_Polyhedron_is_empty point_region)
 
+    let sample_region p t f = raise (General_error "sample_region not yet implemented for polyhedron domain")
+
+    let update_bounds p t = raise (General_error "update_bounds not yet implemented for polyhedron domain")
+
     let enum_region p =
       let vs = List.map Array.to_list (vectors_of_poly p) in
       let (vec_min, vec_max) = list_of_lists_bounds vs in

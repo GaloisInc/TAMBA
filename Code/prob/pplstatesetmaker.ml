@@ -7,6 +7,7 @@ open Util
 open Lang
 open Logical
 open Latte
+open Array
 
 open Ppl_ocaml
 open Ppl_util
@@ -40,6 +41,8 @@ struct
 
   let _var_lookup ss varid = Bimap.find ss.varmap varid
 
+  let lookup_dim ss dim = Bimap.find_bm ss.varmap dim
+
   let stateset_new varlist = {
     bound = P.make_new (List.length varlist);
     size = zone; (* ambiguous here, really we are representing 0 dimensions at first *)
@@ -65,6 +68,8 @@ struct
 
   let stateset_is_empty aset1 = Z.is_zero (stateset_size aset1)
   let stateset_is_nonempty aset1 = not (Z.is_zero (stateset_size aset1))
+
+  let sample_region aset = P.sample_region aset.bound
 
   let _stateset_of_region p vmap =
     {bound = p;
@@ -289,6 +294,7 @@ struct
 
   (* !!! untested !!! *)
   let stateset_addvar aset varid =
+    printf "In stateset_addvar: %s\n\n" (Lang.varid_to_string varid);
     if Bimap.mem aset.varmap varid then raise (General_error ("variable " ^ (varid_to_string varid) ^ " already defined"));
     let vmap = Bimap.copy aset.varmap in
     let newregion = P.copy_region aset.bound in

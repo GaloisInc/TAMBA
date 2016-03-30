@@ -297,6 +297,10 @@ module Ppldomainoctalatte: (PPLDOMAIN_TYPE with type region = octagonal_shape_mp
         done;
         !ret
 
+    let sample_region p t f = raise (General_error "sample_region not yet implemented for octalatte domain")
+
+    let update_bounds p t = raise (General_error "update_bounds not yet implemented for octalatte domain")
+
     let rec _find_in_point (vmin, vmax) points =
       match points with
         | apoint :: restpoints ->

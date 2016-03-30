@@ -293,5 +293,6 @@ struct
                  pss2))
          [] pss1)
 
-end
+  let sample_pstateset ps n s f i = List.concat (List.map (fun p -> PSS.sample_pstateset p n s f i) ps)
 
+end;;
