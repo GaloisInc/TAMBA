@@ -5,5 +5,8 @@
 - name: install libmpfr
   apt: name=libmpfr-dev state=present
 
+- name: install GSL-dev
+  apt: name=libgsl0-dev
+
 #- name: install PPL
 #  apt: name=ppl-dev state=present

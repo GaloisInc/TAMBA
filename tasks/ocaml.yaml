@@ -52,6 +52,16 @@
   become_user: vagrant
   command: opam install mlgmp -y
 
+- name: Install ocaml GSL-bindings
+  become: yes
+  become_user: vagrant
+  command: opam install gsl -y
+
+- name: Install pareto
+  become: yes
+  become_user: vagrant
+  command: opam install pareto -y
+
 - name: Install utop
   become: yes
   become_user: vagrant
