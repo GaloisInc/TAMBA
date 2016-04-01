@@ -565,10 +565,10 @@ let sa_of_stmt s inputs outputs =
   (* todo: last assignment of an output var needs not to be rewritten *)
 
   let indices = Hashtbl.create 8 in
-    List.iter
-      (fun v ->
-         Hashtbl.replace indices v 0;
-      ) inputs;
+  List.iter
+    (fun v ->
+       Hashtbl.replace indices v 0;
+    ) inputs;
 
   let itemp = Hashtbl.copy indices in
   let (ignore, itemp) = _sa_of_stmt_subst_stmt itemp s in

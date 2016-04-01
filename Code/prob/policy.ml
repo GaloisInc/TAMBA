@@ -173,10 +173,7 @@ module MAKE_PSYSTEM (ESYS: EVAL_SYSTEM) = struct
     let secretvars = ESYS.psrep_vars ps.belief in
 
 
-    (*print_endline "###################################";*)
     let (ignored, inputstate_temp) = Evalstate.eval queryinput_stmt (new state_empty) in
-    (*print_endline (string_of_bool (inputstate_temp#is_record (("","target_location"))));*)
-    (*print_endline "###################################";*)
 
     let expanded_inlist =
       List.fold_left (fun a varname ->
@@ -190,15 +187,9 @@ module MAKE_PSYSTEM (ESYS: EVAL_SYSTEM) = struct
       else
         querystmt in
 
-    print_endline "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%";
-    List.iter (fun (_, a) -> print_endline a) expanded_inlist;
-    print_endline "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%";
-
-    (* TODO: Handle print statements for records (i.e. map names correctly) *)
 
     let inputstate = inputstate_temp#copy in
     inputstate#project expanded_inlist;
-    inputstate#print_vals();
     let inputstate_full = inputstate#copy in
     let sa_querystmt = Preeval.predefine_as_state sa_querystmt inputstate expanded_inlist in
     ifdebug (printf "predefined is \n";

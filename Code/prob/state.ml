@@ -40,10 +40,6 @@ class state_hashed hv hr : state = object (self)
     print_endline "-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
 
   method is_record (r:Lang.varid) : bool  =
-    (*print_endline "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@";*)
-    (*Hashtbl.iter (fun (_,k) v -> print_int v; print_endline (" "^k)) vals;*)
-    (*Hashtbl.iter (fun (_,k) _ -> print_endline (" "^k)) records;*)
-    (*print_endline "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@";*)
     Hashtbl.mem records r
 
   (*method get_keys (r:Lang.varid) : Lang.varid list=*)
@@ -68,41 +64,18 @@ class state_hashed hv hr : state = object (self)
       raise (General_error ("undefined variable " ^ (Lang.varid_to_string varname)))
 
   method set_record (varname : Lang.varid) (r : Lang.record) : unit =
-    (* ISSUE: Typing? *)
+    (* TODO: Typing? *)
     if Hashtbl.mem vals varname && ((Hashtbl.find vals varname) = 0) then
-      (let (agent,strname) = varname in
-      print_endline (strname^" SET AGENT: "^agent^".");
-      (print_endline (string_of_bool (Hashtbl.mem records varname));
-       Hashtbl.replace records varname r;print_endline (string_of_bool (self#is_record(varname)))))
+       Hashtbl.replace records varname r
     else
       (
-      (*raise (General_error (error_str^"undefined record " ^ (Lang.varid_to_string varname)))*)
-
       raise (General_error ("undefined record " ^ (Lang.varid_to_string varname))))
 
   method get (varname : Lang.varid) : int =
-    let name_str = Lang.varid_to_string varname in
-    let (agent, _) = varname in
-
-    (*if (String.contains name_str '.') then*)
-       (*CHANGE: Maybe allow for further nesting later *)
-       (*ISSUE: Does agent handling work? *)
-      (*let dot_ind = String.index name_str '.' in*)
-      (*let record_name = String.sub name_str 0 dot_ind in*)
-      (*let field_len = (String.length name_str)-(String.length record_name)-1 in*)
-      (*let field_name = String.sub name_str (dot_ind+1) field_len in*)
-
-      (*try*)
-        (*let record = Hashtbl.find records (agent, record_name) in*)
-        (*let var_gen_id = List.assoc field_name record in*)
-        (*Hashtbl.find vals (agent, var_gen_id)*)
-      (*with _ ->*)
-        (*failwith "Record/record field not found"*)
-    (*else*)
-      try
-        Hashtbl.find vals varname
-      with
-      | Not_found -> raise (General_error ("undefined variable " ^ (Lang.varid_to_string varname)))
+    try
+      Hashtbl.find vals varname
+    with
+    | Not_found -> raise (General_error ("undefined variable " ^ (Lang.varid_to_string varname)))
 
   method vars: (Lang.varid list) = Hashtbl.fold (fun k v accum -> k :: accum ) vals []
 

@@ -31,29 +31,19 @@ struct
       | SSkip -> p
 
       | SDefine (name, datatype) ->
-        print_endline "DEFINING:";
-          let (_,a)  = name in
-          print_endline a;
           PSS.addvar p name
 
       | SOutput (name, toagent) -> p
       | SAssign (name, AERecord _) ->
-        print_endline "ASSIGNING RECORD:";
-          let (_,a)  = name in
-          print_endline a;
         p
 
       | SAssign (name, varaexp) ->
         (* Assigning a record? *)
-        print_endline "ASSIGNING VARIABLE:";
-          let (_,a)  = name in
-        print_endline a;
 
           PSS.transform p cstmt
             (* change eventually, don't want to be sending cstmt *)
 
       | SSeq (stmt1, stmt2) ->
-        print_endline "SEQ";
           let p1 = peval stmt1 p in
             peval stmt2 p1
 
@@ -80,9 +70,6 @@ struct
             !pssret
 
       | SUniform (varid, blower, bupper) ->
-        print_endline "SUNIFORM: ";
-          let (_,a)  = varid in
-        print_endline a;
           let vars_remain = list_subtract (PSS.vars p) [varid] in
           let p = PSS.project p vars_remain in
             PSS.prod
