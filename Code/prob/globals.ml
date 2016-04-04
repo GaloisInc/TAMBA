@@ -9,6 +9,7 @@ let currently_parsing = ref "";;
 
 let precision = ref 0;;
 let simplifier = ref 0;;
+let sample_count = ref 0;;
 
 let use_latte_minmax = ref false;;
 let split_uniforms_factor = ref 1;;
@@ -48,6 +49,8 @@ let do_ifbench f =
   if !output_bench then f ();;
 let do_ifbench_latte f =
   if !output_bench_latte then f ();;
+let do_ifsampling f =
+  if !sample_count > 0 then f ();;
 
 (* latte timing recording *)
 let chan_bench_latte = ref Pervasives.stdout;;

@@ -62,19 +62,21 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
                     printf "*** belief will not be updated as a result of this query\n"))
             ;
 
-          printf "-------------------------------------------------\n";
-          printf "Sample from enddist\n";
+          ifsampling (
+            printf "-------------------------------------------------\n";
+            printf "Sample from enddist\n";
 
-          let enddist = ans.PSYS.update.newbelief in
-          printf "\nans.PSYS.update: ";
-          ESYS.print_psrep enddist;
-          printf "Query for sampling : ";
-          print_stmt progstmt;
-          let (ignored, inputstate_temp) = Evalstate.eval querystmt (new state_empty) in
-          inputstate_temp#merge ps.valcache;
-          printf "\n\n------------------------------\nState before sampling: %s\n" inputstate_temp#to_string;
-          let (a, b) = list_first (ESYS.psrep_sample enddist 10 inputstate_temp (Evalstate.eval progstmt) (list_first outlist)) in
-          printf "a: %d, b: %d\n" a b;
+            let enddist = ans.PSYS.update.newbelief in
+            printf "\nans.PSYS.update: ";
+            ESYS.print_psrep enddist;
+            printf "Query for sampling : ";
+            print_stmt progstmt;
+            let (ignored, inputstate_temp) = Evalstate.eval querystmt (new state_empty) in
+            inputstate_temp#merge ps.valcache;
+            printf "\n\n------------------------------\nState before sampling: %s\n" inputstate_temp#to_string;
+            let (a, b) = list_first (ESYS.psrep_sample enddist !Globals.sample_count inputstate_temp (Evalstate.eval progstmt) (list_first outlist)) in
+            printf "a: %d, b: %d\n" a b;
+          );
           
 
 
@@ -159,6 +161,9 @@ let main () =
       ("--precision",
        Arg.Set_int Globals.precision,
        "set the precision");
+      ("--samples",
+       Arg.Set_int Globals.sample_count,
+       "set the number of samples to use");
       ("--split-factor",
        Arg.Set_int Globals.split_uniforms_factor,
        "set the uniforms split factor, default = 1");

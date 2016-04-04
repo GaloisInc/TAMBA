@@ -16,6 +16,10 @@ EXTEND
       [ "ifbench"; e1 = expr ->
           <:expr< Globals.do_ifbench (fun () -> $e1$) >>
       ]
+  |
+      [ "ifsampling"; e1 = expr ->
+          <:expr< Globals.do_ifsampling (fun () -> $e1$) >>
+      ]
 (*  |
       [ "letmem"; e1 = expr; fid = patt; argid = patt ->
           <:expr<
