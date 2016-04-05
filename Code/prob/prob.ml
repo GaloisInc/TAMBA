@@ -88,6 +88,7 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
               Globals.next_epoch ()
             );
 
+            flush stdout;
             pmock_queries t querydefs ps
 
   let pmock asetup =

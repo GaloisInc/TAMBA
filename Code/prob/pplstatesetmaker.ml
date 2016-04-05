@@ -294,7 +294,7 @@ struct
 
   (* !!! untested !!! *)
   let stateset_addvar aset varid =
-    printf "In stateset_addvar: %s\n\n" (Lang.varid_to_string varid);
+    (* printf "In stateset_addvar: %s\n\n" (Lang.varid_to_string varid); *)
     if Bimap.mem aset.varmap varid then raise (General_error ("variable " ^ (varid_to_string varid) ^ " already defined"));
     let vmap = Bimap.copy aset.varmap in
     let newregion = P.copy_region aset.bound in
