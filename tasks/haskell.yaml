@@ -17,3 +17,10 @@
 
 - name: Install Pandoc optional dependencies
   apt: name=texlive state=present
+
+- name: Install Criterion
+  become: yes
+  become_user: vagrant
+  command: cabal install criterion
+  args:
+    creates: /home/vagrant/.cabal/packages/hackage.haskell.org/criterion/1.1.0.0/criterion-1.1.0.0.tar.gz
