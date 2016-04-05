@@ -293,6 +293,24 @@ struct
                  pss2))
          [] pss1)
 
-  let sample_pstateset ps n s f i = List.concat (List.map (fun p -> PSS.sample_pstateset p n s f i) ps)
+      (*
+        val sample_pstateset: pstateset -> int -> state -> (state -> (int * state)) -> varid -> (int * int) list
+        
+        in the current implementation,....
+        val sample_pstateset: pstateset list -> int -> state -> (state -> (int * state)) -> varid -> (int * int) list
+    
+        PSS.size p
+
+      *)
+  let sample_pstateset ps n s f i = 
+    let sizes = List.map PSS.size ps in
+    let total =
+      List.fold_left
+        (fun accum n -> accum +! n)
+        zzero
+        sizes in
+    let ns = List.map (fun x -> int_of_float (x /. Gmp.Z.to_float total *. float_of_int n)) (List.map Gmp.Z.to_float sizes) in
+    let sampleOne p n = PSS.sample_pstateset p n s f i in
+    List.concat (List.map2 sampleOne ps ns)
 
 end;;
