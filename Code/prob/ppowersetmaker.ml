@@ -310,7 +310,7 @@ struct
         zzero
         sizes in
     let ns = List.map (fun x -> int_of_float (x /. Gmp.Z.to_float total *. float_of_int n)) (List.map Gmp.Z.to_float sizes) in
-    let sampleOne p n = PSS.sample_pstateset p n s f i in
-    List.concat (List.map2 sampleOne ps ns)
+    let sampleRegion p n = PSS.sample_pstateset p n s f i in
+    List.concat (List.map2 sampleRegion ps ns)
 
 end;;
