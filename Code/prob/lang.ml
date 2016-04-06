@@ -7,15 +7,20 @@ type datatype =
   | TInt of int
   | TRecord of (string * datatype) list
 
-let datatype_size dt = match dt with
+let rec datatype_size (dt:datatype) : int = match dt with
   | TInt (i) -> i
   | TBool -> 1
-  | TRecord _ -> failwith "TRecord size Unimplemented"
+  | TRecord r -> List.fold_left (fun a (_, dt') -> a+(datatype_size dt')) 0 r
 
-let render_datatype t = match t with
+let rec render_datatype (t:datatype) : string = match t with
   | TBool -> "bool"
   | TInt (size) -> sprintf "int%d" size
-  | TRecord _ -> failwith "Render TRecord Unimplemented"
+  | TRecord (r) ->
+    let rendered_fields = List.map (
+        fun (field, dt) ->field^":"^(render_datatype dt)) r in
+    let rendered_body = String.concat ";" rendered_fields in
+    "{"^rendered_body^"}"
+  | _ -> failwith "Invalid datatype"
 
 type agent = string
 type varid = agent * string

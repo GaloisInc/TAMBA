@@ -1,5 +1,12 @@
 open Util
 
+(* Records stored in state's "records" hashtbl that maps record variable ids
+ * to records (lists of field_name*datatype). Record fields implemented as
+ * ordinary variables with "<record name>." prefix. Storing records separately
+ * in state allows records passed in as query parameters to be expanded into
+ * their field variables.
+ * *)
+
 class type state = object
   method canon: (Lang.varid * int) list
   method addvar: Lang.varid -> unit
@@ -19,7 +26,6 @@ class type state = object
   method project: Lang.varid list -> unit
   method set_vals: (Lang.varid, int) Hashtbl.t -> unit
   method is_record: (Lang.varid) -> bool
-  (*method get_keys: (Lang.varid) -> Lang.varid list*)
   method get_vals: (Lang.varid) -> Lang.varid list
   method print_records: unit -> unit
   method print_vals: unit -> unit
@@ -42,9 +48,6 @@ class state_hashed hv hr : state = object (self)
   method is_record (r:Lang.varid) : bool  =
     Hashtbl.mem records r
 
-  (*method get_keys (r:Lang.varid) : Lang.varid list=*)
-    (*List.fold_left (fun a (k,v) -> ("", k)::a) [] (Hashtbl.find records r)*)
-
   method get_vals (r:Lang.varid) : Lang.varid list =
     List.map (fun name -> ("", name)) (Hashtbl.find records r)
 
@@ -64,7 +67,6 @@ class state_hashed hv hr : state = object (self)
       raise (General_error ("undefined variable " ^ (Lang.varid_to_string varname)))
 
   method set_record (varname : Lang.varid) (r : Lang.record) : unit =
-    (* TODO: Typing? *)
     if Hashtbl.mem vals varname && ((Hashtbl.find vals varname) = 0) then
        Hashtbl.replace records varname r
     else
@@ -81,7 +83,6 @@ class state_hashed hv hr : state = object (self)
 
   method iter f = Hashtbl.iter f vals
 
-  (* TODO: Update to handle records *)
   method to_string =
     "[" ^
       (String.concat ", "

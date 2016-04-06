@@ -172,7 +172,6 @@ module MAKE_PSYSTEM (ESYS: EVAL_SYSTEM) = struct
     let (inlist, outlist, querystmt) = query in
     let secretvars = ESYS.psrep_vars ps.belief in
 
-
     let (ignored, inputstate_temp) = Evalstate.eval queryinput_stmt (new state_empty) in
 
     let expanded_inlist =
