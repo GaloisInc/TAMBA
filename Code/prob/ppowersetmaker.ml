@@ -219,15 +219,15 @@ struct
 
   let abstract_plus pss1 pss2 =
     (* This function performs an abstract plus for the powerset domain
-       by divide-and-conquer on the 2 input subcomponents. The strange
-       arithmetic in the main case is an attempt to allocate number of
-       disjuncts to the two recursive invocations in a good way. When
-       both inputs have the same number of disjuncts, each is reduced
-       to a smaller set so that the total overall number of disjuncts
-       is maxpolies (precision input). There are various cases where
-       the two inputs have differing number of inputs where we still
-       want to allocate as many total resulting disjuncts as possible
-       in the end of the recursion *)
+       by reducing the number of disjuncts in the 2 input
+       subcomponents. The strange arithmetic in the main case is an
+       attempt to allocate number of disjuncts to the two
+       sub-invocations invocations in a good way. When both inputs
+       have the same number of disjuncts, each is reduced to smaller
+       sets with half of max disjuncts (precision input). There are
+       various cases where the two inputs have differing number of
+       inputs where we still want to allocate as many total resulting
+       disjuncts as possible. *)
     let (pssSmaller, pssBigger) = if (List.length(pss1) <= List.length(pss2)) then (pss1, pss2) else (pss2, pss1) in
     let numSmaller = List.length pssSmaller in
     let numBigger  = List.length pssBigger in
