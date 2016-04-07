@@ -1,0 +1,24 @@
+secret:
+  record troop_loc = { int lat = 33252456 ; int long = 44371639 }
+
+belief:
+  record troop_loc = { int lat = uniform 29267245 36332852 ; int long = uniform 41483216 46405563 }
+
+policy:	max_prob_output [troop_loc.lat troop_loc.long] 999/1
+
+querydef is_target_close target_location dist -> is_close :
+  bool is_close = 0;
+
+  int dist_lat = troop_loc.lat - target_location.lat;
+  int dist_long = troop_loc.long - target_location.long;
+
+  if dist_lat < 0 then dist_lat = -1 * dist_lat endif;
+  if dist_long < 0 then dist_long = -1 * dist_long endif;
+
+  if dist_lat + dist_long <= dist then is_close = 1 endif
+
+  (* returns is_close *)
+
+query is_target_close:
+  record target_location = { int lat = 32639375; int long = 44002991 };
+  int dist = 1000
