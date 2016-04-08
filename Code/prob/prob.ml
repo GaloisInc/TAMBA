@@ -27,10 +27,12 @@ end;;
 module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
   module PSYS = MAKE_PSYSTEM(ESYS)
 
-  let rec pmock_queries queries querydefs ps = match queries with
+  let rec pmock_queries queries querydefs ps_in = match queries with
     | [] -> ()
     | (queryname, querystmt) :: t ->
         ifbench Globals.start_timer Globals.timer_query;
+
+        let ps = ps_in in
 
         let querytuple = List.assoc queryname querydefs  in
         let (inlist, outlist, progstmt) = querytuple in
@@ -113,7 +115,10 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
             );
 
             flush stdout;
-            pmock_queries t querydefs ps
+
+            let ps_out = if !Globals.black_box then ps_in else ps in
+
+            pmock_queries t querydefs ps_out
 
   let pmock asetup =
     Printexc.record_backtrace true;
@@ -189,6 +194,9 @@ let main () =
       ("--samples",
        Arg.Set_int Globals.sample_count,
        "set the number of samples to use");
+      ("--blackbox",
+       Arg.Set Globals.black_box,
+       "reset the belief to uniform between each query");
       ("--split-factor",
        Arg.Set_int Globals.split_uniforms_factor,
        "set the uniforms split factor, default = 1");
