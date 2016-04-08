@@ -89,12 +89,13 @@ makeResult s = Result (read a) (read b) (read c) (read d) (read e)
 --     putChar '\n'
 
 byPrec = do
-  putStrLn "precision, samples, time, smin, smax"
+  putStrLn "precision, samples, time, lo, hi"
   forM_ precisions $ \pr -> do
     forM_ samples $ \n -> do
       (output, t) <- time $ readProcess "bash" ["-c", makeCommand "support.pol" pr n] ""
       --putStrLn output
       let result = makeResult output
-      printf "%d, %d, %.2f, %d, %d\n" pr n t (smin result) (smax result)
+      let (lo, hi) = bounds result
+      printf "%d, %d, %.2f, %d, %d\n" pr n t lo hi
 
 main = byPrec
