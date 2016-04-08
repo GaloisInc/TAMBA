@@ -13,7 +13,7 @@ time :: IO String -> IO  (String, Double)
 time action = do
   t0 <- getCPUTime
   x <- action
-  rnf x `pseq` return ()
+  rnf x `seq` return ()
   t1 <- getCPUTime
   return (x, t1 - t0)
 
@@ -37,7 +37,7 @@ precisions :: [Int]
 precisions = [1..10]
 
 samples :: [Int]
-samples = 0 : map (10^) [5,6,7,8]
+samples = 0 : map (10^) [1..6]
 
 
 -- Parsing is currently baked into the command line, using unix tricks.
@@ -92,13 +92,13 @@ makeResult s = Result (read a) (read b) (read c) (read d) (read e)
 --     putChar '\n'
 
 byPrec = do
-  putStrLn "precision, samples, time, lo, hi"
+  putStrLn "precision, samples, time, lo, hi, size"
   forM_ precisions $ \pr -> do
     forM_ samples $ \n -> do
       (output, t) <- time $ readProcess "bash" ["-c", makeCommand "support.pol" pr n] ""
       --putStrLn output
       let result = makeResult output
       let (lo, hi) = bounds result
-      printf "%d, %d, %.2f, %.1f, %.1f\n" pr n t lo hi
+      printf "%d, %.3e, %.5f, %.3e, %.3e, %.3e\n" pr (fromIntegral n :: Double) t lo hi (size result)
 
 main = byPrec
