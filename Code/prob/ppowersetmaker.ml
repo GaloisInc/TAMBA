@@ -320,6 +320,8 @@ struct
         sizes in
     let ns = List.map (fun x -> int_of_float (x /. Gmp.Z.to_float total *. float_of_int n)) (List.map Gmp.Z.to_float sizes) in
     let sampleOne p n = PSS.sample_pstateset p n s f i in
-    List.concat (List.map2 sampleOne ps ns)
+    List.map2 sampleOne ps ns
+
+  let get_alpha_beta ps = List.fold_left (fun (ay,an) (y,n) -> (ay + y, an + n)) (0,0) (List.map PSS.get_alpha_beta ps)
 
 end;;
