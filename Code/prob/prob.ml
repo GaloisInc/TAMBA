@@ -91,9 +91,15 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
 
             let size_z = Z.to_float (ESYS.psrep_size enddist) in
             printf "size_z = %f\n" size_z;
-            let (mi, ma) = ESYS.psrep_smin_smax enddist in
-            printf "smin = %s\n" (Z.string_from mi);
-            printf "smax = %s\n" (Z.string_from ma);
+            let (pmi, pma) = ESYS.psrep_pmin_pmax enddist in
+            let (smi, sma) = ESYS.psrep_smin_smax enddist in
+            let (mmi, mma) = ESYS.psrep_mmin_mmax enddist in
+            printf "pmin = %f\n" (Q.float_from pmi);
+            printf "pmax = %f\n" (Q.float_from pma);
+            printf "smin = %s\n" (Z.string_from smi);
+            printf "smax = %s\n" (Z.string_from sma);
+            printf "pmin = %f\n" (Q.float_from mmi);
+            printf "pmax = %f\n" (Q.float_from mma);
             printf "sample_true = %d\nsample_false = %d\n" y n;
           
 

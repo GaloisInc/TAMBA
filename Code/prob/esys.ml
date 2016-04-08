@@ -60,6 +60,8 @@ module type EVAL_SYSTEM = sig
 
   val psrep_size: psrep -> Z.t
   val psrep_smin_smax: psrep -> (Z.t * Z.t)
+  val psrep_pmin_pmax: psrep -> (Q.t * Q.t)
+  val psrep_mmin_mmax: psrep -> (Q.t * Q.t)
 
   val psrep_max_belief: psrep -> Q.t
 
@@ -110,6 +112,8 @@ module Make_esys_pss
   let psrep_sample = M.sample_pstateset 
   let psrep_size = M.size
   let psrep_smin_smax = M.prob_smin_smax
+  let psrep_pmin_pmax = M.prob_pmin_pmax
+  let psrep_mmin_mmax = M.prob_mmin_mmax
 
   let psrep_max_belief d = (M.max_belief d)
 

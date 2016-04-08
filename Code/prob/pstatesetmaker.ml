@@ -467,6 +467,8 @@ module MakePStateset(* create pstateset from a stateset *)
       _opt_estimate_max_in_min_out pss.est
 
     let prob_smin_smax pss = (pss.est.smin, pss.est.smax)
+    let prob_pmin_pmax pss = (pss.est.pmin, pss.est.pmax)
+    let prob_mmin_mmax pss = (pss.est.mmin, pss.est.mmax)
 
     let prob_scale pss scalar = {ss = pss.ss;
                                  est = estimator_prob_scale pss.est scalar}

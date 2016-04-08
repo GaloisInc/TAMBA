@@ -216,6 +216,12 @@ struct
   let prob_smin_smax pss = List.fold_left (fun (imin, imax) (min,max) -> (imin +! min, imax +! max)) (zzero, zzero)
                                           (List.map PSS.prob_smin_smax pss)
 
+  let prob_pmin_pmax pss = Util.fold_left1 (fun (imin, imax) (min,max) -> (min_q imin min, max_q imax max))
+                                           (List.map PSS.prob_pmin_pmax pss)
+
+  let prob_mmin_mmax pss = List.fold_left (fun (imin, imax) (min,max) -> (imin +/ min, imax +/ max)) (qzero, qzero)
+                                          (List.map PSS.prob_mmin_mmax pss)
+
   let prob_scale pss s = List.map (fun apss -> PSS.prob_scale apss s) pss
 
   let make_point_of_stateset ss = [PSS.make_point_of_stateset ss]

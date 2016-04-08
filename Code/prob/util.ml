@@ -1,6 +1,9 @@
 open Printf
 open Unix
 open Str
+open List
+open Gmp
+open Gmp.Q
 
 exception General_error of string;;
 exception Not_applicable;;
@@ -19,6 +22,9 @@ let lg n =
   (log n) /. (log 2.0)
 ;;
 
+let min_q a b = if Q.compare a b < 0 then a else b
+let max_q a b = if Q.compare a b > 0 then a else b
+
 let pair_first (a, b) = a
 let pair_second (a, b) = b
 
@@ -36,6 +42,8 @@ let fabs a = if a > 0.0 then a else (-1.0) *. a
 
 let list_empty = function [] -> true | _ -> false
 let list_nonempty = function [] -> false | _ -> true
+
+let fold_left1 f (x::xs) = List.fold_left f x xs
 
 let list_of_queue q =
   Queue.fold (fun accum i -> i :: accum) [] q

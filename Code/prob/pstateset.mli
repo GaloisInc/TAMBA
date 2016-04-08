@@ -73,6 +73,8 @@ module type PSTATESET_TYPE =
     val prob_max_min: pstateset -> (Q.t * Q.t)
 
     val prob_smin_smax: pstateset -> (Z.t * Z.t)
+    val prob_pmin_pmax: pstateset -> (Q.t * Q.t)
+    val prob_mmin_mmax: pstateset -> (Q.t * Q.t)
 
     val min_mass: pstateset -> Q.t
 
