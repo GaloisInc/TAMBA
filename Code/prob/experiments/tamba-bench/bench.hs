@@ -96,6 +96,6 @@ byPrec = do
       --putStrLn output
       let result = makeResult output
       let (lo, hi) = bounds result
-      printf "%d, %d, %.2f, %d, %d\n" pr n t lo hi
+      printf "%d, %d, %.2f, %.1f, %.1f\n" pr n t lo hi
 
 main = byPrec
