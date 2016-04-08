@@ -80,5 +80,7 @@ module type PSTATESET_TYPE =
 
     val stateset_hull: pstateset -> stateset
 
-    val sample_pstateset: pstateset -> int -> state -> (state -> (int * state)) -> varid -> (int * int) list
+    val get_alpha_beta: pstateset -> (int * int)
+
+    val sample_pstateset: pstateset -> int -> state -> (state -> (int * state)) -> varid -> pstateset
   end;;

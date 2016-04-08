@@ -54,7 +54,11 @@ module type EVAL_SYSTEM = sig
   val psrep_given_state: psrep -> state -> psrep
   val psrep_vars: psrep -> Lang.varid list
 
-  val psrep_sample: psrep -> int -> state -> (state -> (int * state)) -> varid -> (int * int) list
+  val psrep_sample: psrep -> int -> state -> (state -> (int * state)) -> varid -> psrep
+
+  val get_alpha_beta: psrep -> (int * int)
+
+  val psrep_size: psrep -> Z.t
 
   val psrep_max_belief: psrep -> Q.t
 
@@ -101,7 +105,10 @@ module Make_esys_pss
 
   let psrep_vars d = M.vars d
 
+  let get_alpha_beta = M.get_alpha_beta
   let psrep_sample = M.sample_pstateset 
+  let psrep_size = M.size
+
   let psrep_max_belief d = (M.max_belief d)
 
   let print_srep ass = S.print_stateset ass

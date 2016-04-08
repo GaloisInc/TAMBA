@@ -8,6 +8,8 @@ open Util
 open Preeval
 open Globals
 open Parser_util
+open Pareto.Distributions
+open Pareto.Distributions.Beta
 
 open Maths
 open Gmp
@@ -62,11 +64,11 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
                     printf "*** belief will not be updated as a result of this query\n"))
             ;
 
+          let enddist = ans.PSYS.update.newbelief in
           ifsampling (
             printf "-------------------------------------------------\n";
             printf "Sample from enddist\n";
 
-            let enddist = ans.PSYS.update.newbelief in
             printf "\nans.PSYS.update: ";
             ESYS.print_psrep enddist;
             printf "Query for sampling : ";
@@ -74,8 +76,21 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
             let (ignored, inputstate_temp) = Evalstate.eval querystmt (new state_empty) in
             inputstate_temp#merge ps.valcache;
             printf "\n\n------------------------------\nState before sampling: %s\n" inputstate_temp#to_string;
-            let (a, b) = list_first (ESYS.psrep_sample enddist !Globals.sample_count inputstate_temp (Evalstate.eval progstmt) (list_first outlist)) in
-            printf "a: %d, b: %d\n" a b;
+            let (y,n) = ESYS.get_alpha_beta
+                          (ESYS.psrep_sample
+                                  enddist
+                                  !Globals.sample_count
+                                  inputstate_temp
+                                  (Evalstate.eval progstmt)
+                                  (list_first outlist)) in
+            let y = y + 1 in
+            let n = n + 1 in
+            let b_dist = beta (float_of_int y) (float_of_int n) in
+            let { beta_alpha; beta_beta } = b_dist in
+            printf "alpha: %f, beta: %f\n" beta_alpha beta_beta;
+            printf "smin: %f\n" ((quantile b_dist 0.001) *. (Z.to_float (ESYS.psrep_size enddist)));
+            printf "smax: %f\n" ((quantile b_dist 0.999) *. (Z.to_float (ESYS.psrep_size enddist)));
+            printf "sample_true = %d\nsample_false = %d\n" y n;
           );
           
 
@@ -131,7 +146,7 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
                   PSYS.belief = startdist;
                   PSYS.valcache = secretstate} in
 
-          printf "\n\nBefore pmock_queries\n\n";
+          ifdebug (printf "\n\nBefore pmock_queries\n\n");
           pmock_queries queries querydefs ps
   (*with
       | e ->
@@ -232,9 +247,9 @@ let main () =
                   | 3 -> (module EVALS_PPSS_POLY: EXP_SYSTEM)
                   | 4 -> (module EVALS_PPSS_OCTALATTE: EXP_SYSTEM)
                   | _ -> raise Not_expected): EXP_SYSTEM) in
-          printf "\n\nBefore pmock\n\n";
+          ifdebug (printf "\n\nBefore pmock\n\n");
           E.pmock aexperiment;
-          printf "\n\nAfter pmock\n\n";
+          ifdebug (printf "\n\nAfter pmock\n\n");
           ifdebug (printf "maximum complexity encountered = %d\n" !Globals.max_complexity);
           ifbench (Globals.close_bench ());
           Globals.bench_latte_close ();
