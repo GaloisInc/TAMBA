@@ -31,10 +31,10 @@ policies =
 
 
 precisions :: [Int]
-precisions = 0:[2..10]
+precisions = [0,1,2]--0:[2..10]
 
 samples :: [Int]
-samples = 0 : map (10^) [1..5]
+samples = [0,20,200]--0 : map (10^) [1..5]
 
 
 -- Parsing is currently baked into the command line, using unix tricks.
@@ -44,10 +44,10 @@ makeCommand pol prec samp =
 
 data Result = Result
   { size    :: Double
-  , smin    :: Int
-  , smax    :: Int
-  , trues   :: Int
-  , falses  :: Int
+  , smin    :: Integer
+  , smax    :: Integer
+  , trues   :: Integer
+  , falses  :: Integer
   }
 
 bounds :: Result -> (Double, Double)
@@ -99,8 +99,8 @@ byPrec = do
   forM_ precisions $ \pr -> do
     forM_ samples $ \n -> do
       (output, t) <- time $ readProcess "bash" ["-c", makeCommand "support.pol" pr n] ""
-      putStrLn output
+      --putStrLn output
       let result = makeResult output
-      printf "%d, %d, %.2f, %d, %d" pr n t (smin result) (smax result)
+      printf "%d, %d, %.2f, %d, %d\n" pr n t (smin result) (smax result)
 
 main = byPrec
