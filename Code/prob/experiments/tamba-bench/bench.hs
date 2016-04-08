@@ -31,10 +31,10 @@ policies =
 
 
 precisions :: [Int]
-precisions = [0,1,2]--0:[2..10]
+precisions = 0:[2..10]
 
 samples :: [Int]
-samples = [0,20,200]--0 : map (10^) [1..5]
+samples = 0 : map (10^) [1..5]
 
 
 -- Parsing is currently baked into the command line, using unix tricks.
