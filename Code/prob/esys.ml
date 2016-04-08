@@ -59,6 +59,7 @@ module type EVAL_SYSTEM = sig
   val get_alpha_beta: psrep -> (int * int)
 
   val psrep_size: psrep -> Z.t
+  val psrep_smin_smax: psrep -> (Z.t * Z.t)
 
   val psrep_max_belief: psrep -> Q.t
 
@@ -108,6 +109,7 @@ module Make_esys_pss
   let get_alpha_beta = M.get_alpha_beta
   let psrep_sample = M.sample_pstateset 
   let psrep_size = M.size
+  let psrep_smin_smax = M.prob_smin_smax
 
   let psrep_max_belief d = (M.max_belief d)
 

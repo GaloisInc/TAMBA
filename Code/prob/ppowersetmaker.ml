@@ -213,6 +213,9 @@ struct
                         (inmass +/ morein, outmass +/ moreout))
       (qzero, qzero) pss
 
+  let prob_smin_smax pss = List.fold_left (fun (imin, imax) (min,max) -> (imin +! min, imax +! max)) (zzero, zzero)
+                                          (List.map PSS.prob_smin_smax pss)
+
   let prob_scale pss s = List.map (fun apss -> PSS.prob_scale apss s) pss
 
   let make_point_of_stateset ss = [PSS.make_point_of_stateset ss]

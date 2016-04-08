@@ -88,9 +88,12 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
             let b_dist = beta (float_of_int y) (float_of_int n) in
             let { beta_alpha; beta_beta } = b_dist in
             printf "alpha: %f, beta: %f\n" beta_alpha beta_beta;
-            printf "smin: %f\n" ((quantile b_dist 0.001) *. (Z.to_float (ESYS.psrep_size enddist)));
-            printf "smax: %f\n" ((quantile b_dist 0.999) *. (Z.to_float (ESYS.psrep_size enddist)));
-            printf "sample_true = %d\nsample_false = %d\n" y n;
+            let size_z = Z.to_float (ESYS.psrep_size enddist) in
+            printf "size_z = %f\n" size_z;
+            let (mi, ma) = ESYS.psrep_smin_smax enddist in
+            printf "smin = %s\n" (Z.string_from mi);
+            printf "smax = %s\n" (Z.string_from ma);
+            printf "sample_true = %d\nsample_false = %d\n" (y - 1) (n - 1);
           );
           
 

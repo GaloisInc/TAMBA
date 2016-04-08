@@ -466,6 +466,8 @@ module MakePStateset(* create pstateset from a stateset *)
     let prob_max_min pss =
       _opt_estimate_max_in_min_out pss.est
 
+    let prob_smin_smax pss = (pss.est.smin, pss.est.smax)
+
     let prob_scale pss scalar = {ss = pss.ss;
                                  est = estimator_prob_scale pss.est scalar}
 
@@ -490,7 +492,7 @@ module MakePStateset(* create pstateset from a stateset *)
     let sample_pstateset pset n state (eval_q : state -> (int * state)) vid =
         ifdebug (printf "sample_pstateset vid: %s\nstate: %s\n\n" (varid_to_string vid) state#to_string);
         let aset = pset.ss in
-        let n = min n (Z.to_int (SS.stateset_size aset)) in
+        (* let n = min n (Z.to_int (SS.stateset_size aset)) in *)
         let setstate i v = let vid = SS.lookup_dim aset i in
                            ifdebug (printf "vid_dim: %s\n" (varid_to_string vid));
                            state#set vid v in
