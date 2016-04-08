@@ -5,12 +5,15 @@ import Criterion.Measurement (getCPUTime)
 import Data.List (isPrefixOf)
 import Statistics.Distribution.Beta
 import Statistics.Distribution (quantile)
+import Control.Parallel
+import Control.DeepSeq
 import Debug.Trace
 
-time :: IO a -> IO  (a, Double)
+time :: IO String -> IO  (String, Double)
 time action = do
   t0 <- getCPUTime
   x <- action
+  rnf x `pseq` return ()
   t1 <- getCPUTime
   return (x, t1 - t0)
 
