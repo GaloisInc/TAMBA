@@ -68,12 +68,6 @@ betaHi a b = quantile d (1 - eps)
   where
   d = betaDistr a b
 
-traceString :: String -> String 
-traceString s = trace s s
-
-traceStrings s = trace (unlines s) s
-
-
 makeResult :: String -> Result
 makeResult s = Result (read a) (read b) (read c) (read d) (read e)
   where
