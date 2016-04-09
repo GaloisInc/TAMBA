@@ -23,7 +23,7 @@ time action = do
 policies :: [String]
 policies = 
   [ 
-  "demo-1d-5.prob"
+  "coalition-1.prob"
   ]
 
 leave :: Int -> [a] -> [a]
@@ -61,6 +61,10 @@ bounds result = (lo, hi)
   where
   a = fromIntegral $ 1 + trues result
   b = fromIntegral $ 1 + falses result
+  -- Compute the updated bounds, subject to some constraints:
+  -- the new lower bound should be >= the deterministic lower bound
+  -- the new lower bound should be <= the deterministic upper bound
+  -- ... and similar for the upper bound
   lo = min (fromIntegral $ smax result) . max (fromIntegral $ smin result) $ (size result * betaLo a b)
   hi = max (fromIntegral $ smin result) . min (fromIntegral $ smax result) $ (size result * betaHi a b)
 
@@ -109,6 +113,5 @@ byPrec = do
         let result = makeResult output
         let (lo, hi) = bounds result
         printf "%d, %.3e, %.5f, %.3e, %.3e, %.3e\n" pr (fromIntegral n :: Double) t lo hi (size result)
-
 
 main = byPrec
