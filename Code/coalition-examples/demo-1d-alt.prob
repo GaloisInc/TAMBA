@@ -56,7 +56,7 @@ querydef close_enough ship dest -> result :
   endif;
 
   int result = 0;
-  if (dest <= 200) then
+  if (dist <= 200) then
     result = 1
   endif;
 

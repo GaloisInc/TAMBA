@@ -56,7 +56,7 @@ querydef enough_berths ship dest berths_needed -> result :
   endif;
 
   int result = 0;
-  if (dest <= 200) and (ship_berths >= berths_needed) then
+  if (dist <= 200) and (ship_berths >= berths_needed) then
     result = 1
   endif;
 
