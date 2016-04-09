@@ -2,6 +2,7 @@ import Text.Printf (printf)
 import System.Process (readProcess)
 import Control.Monad (forM_)
 import System.Clock
+import System.IO
 import Data.List (isPrefixOf)
 import Statistics.Distribution.Beta
 import Statistics.Distribution (quantile)
@@ -65,8 +66,8 @@ bounds result = (lo, hi)
   -- the new lower bound should be >= the deterministic lower bound
   -- the new lower bound should be <= the deterministic upper bound
   -- ... and similar for the upper bound
-  lo = min (fromIntegral $ smax result) . max (fromIntegral $ smin result) $ (size result * betaLo a b)
-  hi = max (fromIntegral $ smin result) . min (fromIntegral $ smax result) $ (size result * betaHi a b)
+  lo = min (fromIntegral $ smax result) $ max (fromIntegral $ smin result) $ (size result * betaLo a b)
+  hi = max (fromIntegral $ smin result) $ min (fromIntegral $ smax result) $ (size result * betaHi a b)
 
 eps = 0.001
 
@@ -114,4 +115,4 @@ byPrec = do
         let (lo, hi) = bounds result
         printf "%d, %.3e, %.5f, %.3e, %.3e, %.3e\n" pr (fromIntegral n :: Double) t lo hi (size result)
 
-main = byPrec
+main = hSetBuffering stdout LineBuffering >> byPrec

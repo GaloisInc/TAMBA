@@ -66,9 +66,7 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
                     printf "*** belief will not be updated as a result of this query\n"))
             ;
 
-          let (y,n) = (0,0) in
           let enddist = ans.PSYS.update.newbelief in
-          ifsampling (
             printf "-------------------------------------------------\n";
             printf "Sample from enddist\n";
 
@@ -89,7 +87,6 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
             let b_dist = beta (float_of_int (y + 1)) (float_of_int (n + 1)) in
             let { beta_alpha; beta_beta } = b_dist in
             printf "alpha: %f, beta: %f\n" beta_alpha beta_beta;
-          );
 
             let size_z = Z.to_float (ESYS.psrep_size enddist) in
             printf "size_z = %f\n" size_z;
