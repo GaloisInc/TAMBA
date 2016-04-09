@@ -120,6 +120,41 @@ module MM = struct
 
   let vul ~dist: adist =
     Util.map_max_float adist
+
+  let post_vul (prior: 'a dist) (query: 'a -> 'b): float =
+    let (joint: ('a * 'b) dist) = bind prior (fun (input: 'a) ->
+      let (output: 'b) = query input in
+      return (input, output)
+    ) in
+    let (bins: ('b, float * ('a dist)) Pmap.t) = project_bins joint snd fst in
+    Pmap.fold (fun ((prob: float), (unscaled_post: 'a dist)) (accum:float) ->
+      let (post: 'a dist) = scale (1.0 /. prob) unscaled_post in
+      accum +. prob *. (vul post)
+    ) bins 0.0
+
+  let post_vul_marginal (prior: 'a dist) (query: 'a -> 'b) (margin: 'a -> 'c): float =
+    let (joint: ('c * 'b) dist) = bind prior (fun (input: 'a) ->
+      let (output: 'b) = query input in
+      return (margin input, output)
+    ) in
+    let (bins: ('b, float * ('c dist)) Pmap.t) = project_bins joint snd fst in
+    Pmap.fold (fun ((prob: float), (unscaled_post: 'c dist)) (accum:float) ->
+      let (post: 'c dist) = scale (1.0 /. prob) unscaled_post in
+      accum +. prob *. (vul post)
+    ) bins 0.0
+      
+      (*
+  let post_vul (prior: 'a MM.dist) (query: 'a -> 'b): float =
+    let (outputs: 'b MM.dist) =
+      MM.bind prior (fun input -> MM.return (query input)) in
+    let (outputs_vuls: float MM.dist) =
+      MM.bind outputs (fun output ->
+        let (post: 'a MM.dist) = MM.condition prior (fun (s:'a) -> (query s) = output) in
+        MM.return (MM.vul post)
+      ) in
+    MM.expect outputs_vuls
+      *)
+
           
   let condition_concrete ~dist: adist ~on: onfun =
     let (new_dist, prob_total) = Pmap.foldi
