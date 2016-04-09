@@ -121,6 +121,11 @@ query enough_berths:
   int berths_needed = 125;
 
 query enough_berths:
+  int ship = 3;
+  int dest = 250;
+  int berths_needed = 375;
+
+query enough_berths:
   int ship = 4;
   int dest = 250;
   int berths_needed = 125;
