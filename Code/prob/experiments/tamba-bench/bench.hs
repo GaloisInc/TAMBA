@@ -2,6 +2,7 @@ import Text.Printf (printf)
 import System.Process (readProcess)
 import Control.Monad (forM_)
 import System.Clock
+import System.Environment
 import System.IO
 import Data.List (isPrefixOf)
 import Statistics.Distribution.Beta
@@ -21,11 +22,6 @@ time action = do
   t `pseq` return (x, t)
 -}
 
-policies :: [String]
-policies = 
-  [ 
-  "coalition-1.prob"
-  ]
 
 leave :: Int -> [a] -> [a]
 leave n xs = leave' xs (drop n xs)
@@ -43,7 +39,7 @@ samples = 0 : 0 : map (10^) [1..7]
 -- Parsing is currently baked into the command line, using unix tricks.
 -- VERY brittle.
 makeCommand pol prec samp = 
-  printf "/vagrant/Code/prob/prob /vagrant/Code/coalition-examples/%s --domain box --precision %d --samples %d" pol prec samp
+  printf "/vagrant/Code/prob/prob %s --domain box --precision %d --samples %d" pol prec samp
 
 data Result = Result
   { size    :: Double
@@ -99,7 +95,7 @@ makeResult s = Result (read a) (read b) (read c) (read d) (read e) (read f) (rea
 --       putStr $ takeWhile (/= '\n') result
 --     putChar '\n'
 
-byPrec = do
+byPrec policies = do
   putStrLn "precision, samples, time, lo, hi, size"
   forM_ policies $ \pol -> do
     forM_ precisions $ \pr -> do
@@ -115,4 +111,4 @@ byPrec = do
         let (lo, hi) = bounds result
         printf "%d, %.3e, %.5f, %.3e, %.3e, %.3e\n" pr (fromIntegral n :: Double) t lo hi (size result)
 
-main = hSetBuffering stdout LineBuffering >> byPrec
+main = hSetBuffering stdout LineBuffering >> getArgs >>= byPrec
