@@ -67,6 +67,7 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
             ;
 
           let enddist = ans.PSYS.update.newbelief in
+            (*
             printf "-------------------------------------------------\n";
             printf "Sample from enddist\n";
 
@@ -74,9 +75,10 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
             ESYS.print_psrep enddist;
             printf "Query for sampling : ";
             print_stmt progstmt;
+            *)
             let (ignored, inputstate_temp) = Evalstate.eval querystmt (new state_empty) in
             inputstate_temp#merge ps.valcache;
-            printf "\n\n------------------------------\nState before sampling: %s\n" inputstate_temp#to_string;
+            (* printf "\n\n------------------------------\nState before sampling: %s\n" inputstate_temp#to_string; *)
             let (y,n) = ESYS.get_alpha_beta
                           (ESYS.psrep_sample
                                   enddist
@@ -86,6 +88,8 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
                                   (list_first outlist)) in
             let b_dist = beta (float_of_int (y + 1)) (float_of_int (n + 1)) in
             let { beta_alpha; beta_beta } = b_dist in
+            let m_belief = ESYS.psrep_max_belief enddist in
+            printf "max belief: %f\n" (Q.float_from m_belief);
             printf "alpha: %f, beta: %f\n" beta_alpha beta_beta;
 
             let size_z = Z.to_float (ESYS.psrep_size enddist) in
@@ -97,8 +101,8 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
             printf "pmax = %f\n" (Q.float_from pma);
             printf "smin = %s\n" (Z.string_from smi);
             printf "smax = %s\n" (Z.string_from sma);
-            printf "pmin = %f\n" (Q.float_from mmi);
-            printf "pmax = %f\n" (Q.float_from mma);
+            printf "mmin = %f\n" (Q.float_from mmi);
+            printf "mmax = %f\n" (Q.float_from mma);
             printf "sample_true = %d\nsample_false = %d\n" y n;
           
 
