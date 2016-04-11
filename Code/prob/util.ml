@@ -45,6 +45,11 @@ let list_nonempty = function [] -> false | _ -> true
 
 let fold_left1 f (x::xs) = List.fold_left f x xs
 
+let rec list_func_and fs x =
+  match fs with
+    | []     -> true
+    | g::gs  -> g x && list_func_and gs x
+
 let list_of_queue q =
   Queue.fold (fun accum i -> i :: accum) [] q
 

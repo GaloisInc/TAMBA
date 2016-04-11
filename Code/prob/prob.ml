@@ -27,8 +27,52 @@ end;;
 module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
   module PSYS = MAKE_PSYSTEM(ESYS)
 
+  let make_trip querydefs (ps : PSYS.policysystem) (queryname, querystmt) =
+    let querytuple = List.assoc queryname querydefs in
+    let (inlist, outlist, progstmt) = querytuple in
+    let (ignored, inputstate_temp) = Evalstate.eval querystmt (new state_empty) in
+    inputstate_temp#merge ps.valcache;
+
+    (*
+    printf "\n\n---------------------------------\n";
+    printf "State in triple: %s\n\n" inputstate_temp#to_string;
+    printf "query in triple:\n"; print_stmt progstmt; printf "\n\n";
+    printf "outlist in triple: %s\n\n" (varid_list_to_string outlist);
+    printf "---------------------------------\n";
+    (* printf "\n\n------------------------------\nState before sampling: %s\n" inputstate_temp#to_string; *)
+    *)
+    (inputstate_temp, (Evalstate.eval progstmt), (list_first outlist))
+
+  let sample_final queries querydefs ps =
+    let enddist = ps.PSYS.belief in
+      let trips = List.map (make_trip querydefs ps) queries in
+      let (y,n) = ESYS.get_alpha_beta
+                    (ESYS.psrep_sample
+                            enddist
+                            !Globals.sample_count
+                            trips) in
+      let b_dist = beta (float_of_int (y + 1)) (float_of_int (n + 1)) in
+      let { beta_alpha; beta_beta } = b_dist in
+      let m_belief = ESYS.psrep_max_belief enddist in
+      printf "max belief: %f\n" (Q.float_from m_belief);
+      printf "alpha: %f, beta: %f\n" beta_alpha beta_beta;
+
+      let size_z = Z.to_float (ESYS.psrep_size enddist) in
+      printf "size_z = %f\n" size_z;
+      let (pmi, pma) = ESYS.psrep_pmin_pmax enddist in
+      let (smi, sma) = ESYS.psrep_smin_smax enddist in
+      let (mmi, mma) = ESYS.psrep_mmin_mmax enddist in
+      printf "pmin = %f\n" (Q.float_from pmi);
+      printf "pmax = %f\n" (Q.float_from pma);
+      printf "smin = %s\n" (Z.string_from smi);
+      printf "smax = %s\n" (Z.string_from sma);
+      printf "mmin = %f\n" (Q.float_from mmi);
+      printf "mmax = %f\n" (Q.float_from mma);
+      printf "sample_true = %d\nsample_false = %d\n" y n
+
+
   let rec pmock_queries queries querydefs ps_in = match queries with
-    | [] -> ()
+    | [] -> ps_in
     | (queryname, querystmt) :: t ->
         ifbench Globals.start_timer Globals.timer_query;
 
@@ -66,47 +110,6 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
                     printf "*** belief will not be updated as a result of this query\n"))
             ;
 
-          let enddist = ans.PSYS.update.newbelief in
-            (*
-            printf "-------------------------------------------------\n";
-            printf "Sample from enddist\n";
-
-            printf "\nans.PSYS.update: ";
-            ESYS.print_psrep enddist;
-            printf "Query for sampling : ";
-            print_stmt progstmt;
-            *)
-            let (ignored, inputstate_temp) = Evalstate.eval querystmt (new state_empty) in
-            inputstate_temp#merge ps.valcache;
-            (* printf "\n\n------------------------------\nState before sampling: %s\n" inputstate_temp#to_string; *)
-            let (y,n) = ESYS.get_alpha_beta
-                          (ESYS.psrep_sample
-                                  enddist
-                                  !Globals.sample_count
-                                  inputstate_temp
-                                  (Evalstate.eval progstmt)
-                                  (list_first outlist)) in
-            let b_dist = beta (float_of_int (y + 1)) (float_of_int (n + 1)) in
-            let { beta_alpha; beta_beta } = b_dist in
-            let m_belief = ESYS.psrep_max_belief enddist in
-            printf "max belief: %f\n" (Q.float_from m_belief);
-            printf "alpha: %f, beta: %f\n" beta_alpha beta_beta;
-
-            let size_z = Z.to_float (ESYS.psrep_size enddist) in
-            printf "size_z = %f\n" size_z;
-            let (pmi, pma) = ESYS.psrep_pmin_pmax enddist in
-            let (smi, sma) = ESYS.psrep_smin_smax enddist in
-            let (mmi, mma) = ESYS.psrep_mmin_mmax enddist in
-            printf "pmin = %f\n" (Q.float_from pmi);
-            printf "pmax = %f\n" (Q.float_from pma);
-            printf "smin = %s\n" (Z.string_from smi);
-            printf "smax = %s\n" (Z.string_from sma);
-            printf "mmin = %f\n" (Q.float_from mmi);
-            printf "mmax = %f\n" (Q.float_from mma);
-            printf "sample_true = %d\nsample_false = %d\n" y n;
-          
-
-
 
             ifbench (
               Globals.stop_timer Globals.timer_query;
@@ -117,9 +120,11 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
 
             flush stdout;
 
-            let ps_out = if !Globals.black_box then ps_in else ps in
+          let ps_out = if !Globals.black_box
+                       then ps_in
+                       else ps in
 
-            pmock_queries t querydefs ps_out
+          pmock_queries t querydefs ps_out
 
   let pmock asetup =
     Printexc.record_backtrace true;
@@ -162,7 +167,8 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
                   PSYS.valcache = secretstate} in
 
           ifdebug (printf "\n\nBefore pmock_queries\n\n");
-          pmock_queries queries querydefs ps
+          let final_dist = pmock_queries queries querydefs ps in
+          sample_final queries querydefs final_dist
   (*with
       | e ->
           printf "%s\n" (Printexc.to_string e);

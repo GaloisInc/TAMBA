@@ -21,7 +21,7 @@ module type STATESET_TYPE =
     val stateset_size: stateset -> Z.t
 
     val lookup_dim: stateset -> int -> varid
-    val sample_region: stateset -> int -> (int array -> bool) -> (int * int)
+    val sample_region: stateset -> int -> (int array -> bool) list -> (int * int)
 
     val stateset_prod: stateset -> stateset -> stateset
 
