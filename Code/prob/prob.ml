@@ -56,20 +56,32 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
       let m_belief = ESYS.psrep_max_belief enddist in
       printf "max belief: %f\n" (Q.float_from m_belief);
       printf "alpha: %f, beta: %f\n" beta_alpha beta_beta;
-      printf "smin (gsl): %f\n" ((quantile b_dist 0.001) *. (Z.to_float (ESYS.psrep_size enddist)));
-      printf "smax (gsl): %f\n" ((quantile b_dist 0.999) *. (Z.to_float (ESYS.psrep_size enddist)));
-
       let size_z = Z.to_float (ESYS.psrep_size enddist) in
-      printf "size_z = %f\n" size_z;
-      let (pmi, pma) = ESYS.psrep_pmin_pmax enddist in
+
+      let (pmi, pma) = let (i, a) = ESYS.psrep_pmin_pmax enddist
+                       in (Q.float_from i, Q.float_from a) in
       let (smi, sma) = ESYS.psrep_smin_smax enddist in
-      let (mmi, mma) = ESYS.psrep_mmin_mmax enddist in
-      printf "pmin = %f\n" (Q.float_from pmi);
-      printf "pmax = %f\n" (Q.float_from pma);
+      let (mmi, mma) = let (i, a) = ESYS.psrep_mmin_mmax enddist
+                       in (Q.float_from i, Q.float_from a) in
+
+      let _ = try let sminp = ((quantile b_dist 0.001) *. size_z) in
+                  let smaxp = ((quantile b_dist 0.999) *. size_z) in
+                  let mminp = sminp *. pmi in
+                  let mmaxp = smaxp *. pma in
+                  printf "\n\nsmin (gsl): %f\n" sminp;
+                  printf "smax (gsl): %f\n" smaxp;
+                  printf "mmin (sampling): %f\n" mminp;
+                  printf "mmax (sampling): %f\n" mmaxp;
+                  printf "post-sampling revised belief: %f\n" (pma /. mminp);
+              with e -> printf "GSL computation did not converge: ERR\n" in
+
+      printf "\n\nsize_z = %f\n" size_z;
+      printf "pmin = %f\n" pmi;
+      printf "pmax = %f\n" pma;
       printf "smin = %s\n" (Z.string_from smi);
       printf "smax = %s\n" (Z.string_from sma);
-      printf "mmin = %f\n" (Q.float_from mmi);
-      printf "mmax = %f\n" (Q.float_from mma);
+      printf "mmin = %f\n" mmi;
+      printf "mmax = %f\n" mma;
       printf "sample_true = %d\nsample_false = %d\n" y n
 
 
