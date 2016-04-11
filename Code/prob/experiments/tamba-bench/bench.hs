@@ -53,8 +53,12 @@ data Result = Result
   , falses  :: Integer
   }
 
-bounds :: Result -> (Double, Double)
-bounds result = (lo, hi)
+bounds :: Result -> Int -> (Double, Double)
+bounds result 0 = (lo, hi)
+  where
+  lo = fromIntegral $ smin result
+  hi = fromIntegral $ smax result
+bounds result _ = (lo, hi)
   where
   a = fromIntegral $ 1 + trues result
   b = fromIntegral $ 1 + falses result
@@ -108,7 +112,7 @@ byPrec policies = do
         let t = (fromIntegral $ toNanoSecs $ diffTimeSpec t1 t0 :: Double) / (10^9)
         --putStrLn output
         let result = makeResult output
-        let (lo, hi) = bounds result
+        let (lo, hi) = bounds result n
         printf "%d, %.3e, %.5f, %.3e, %.3e, %.3e\n" pr (fromIntegral n :: Double) t lo hi (size result)
 
 main = hSetBuffering stdout LineBuffering >> getArgs >>= byPrec
