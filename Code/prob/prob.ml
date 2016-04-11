@@ -56,6 +56,8 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
       let m_belief = ESYS.psrep_max_belief enddist in
       printf "max belief: %f\n" (Q.float_from m_belief);
       printf "alpha: %f, beta: %f\n" beta_alpha beta_beta;
+      printf "smin (gsl): %f\n" ((quantile b_dist 0.001) *. (Z.to_float (ESYS.psrep_size enddist)));
+      printf "smax (gsl): %f\n" ((quantile b_dist 0.999) *. (Z.to_float (ESYS.psrep_size enddist)));
 
       let size_z = Z.to_float (ESYS.psrep_size enddist) in
       printf "size_z = %f\n" size_z;
