@@ -46,11 +46,12 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
   let sample_final queries querydefs ps =
     let enddist = ps.PSYS.belief in
       let trips = List.map (make_trip querydefs ps) queries in
-      let (y,n) = ESYS.get_alpha_beta
-                    (ESYS.psrep_sample
-                            enddist
-                            !Globals.sample_count
-                            trips) in
+      let (y,n) = try (ESYS.get_alpha_beta
+                         (ESYS.psrep_sample
+                                 enddist
+                                 !Globals.sample_count
+                                 trips))
+                  with e -> (0,0) in
       let b_dist = beta (float_of_int (y + 1)) (float_of_int (n + 1)) in
       let { beta_alpha; beta_beta } = b_dist in
       let m_belief = ESYS.psrep_max_belief enddist in
