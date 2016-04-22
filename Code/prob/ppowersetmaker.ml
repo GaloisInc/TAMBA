@@ -311,16 +311,7 @@ struct
                  pss2))
          [] pss1)
 
-      (*
-        val sample_pstateset: pstateset -> int -> state -> (state -> (int * state)) -> varid -> (int * int) list
-        
-        in the current implementation,....
-        val sample_pstateset: pstateset list -> int -> state -> (state -> (int * state)) -> varid -> (int * int) list
-    
-        PSS.size p
-
-      *)
-  let sample_pstateset ps n s f i = 
+  let sample_pstateset ps n fs =
     let sizes = List.map PSS.size ps in
     let total =
       List.fold_left
@@ -328,7 +319,8 @@ struct
         zzero
         sizes in
     let ns = List.map (fun x -> int_of_float (x /. Gmp.Z.to_float total *. float_of_int n)) (List.map Gmp.Z.to_float sizes) in
-    let sampleRegion p n = PSS.sample_pstateset p n s f i in
+    printf "Sampling %d points divided into bins of %s\n" n (String.concat "," (List.map string_of_int ns));
+    let sampleRegion p n = PSS.sample_pstateset p n fs in
     List.map2 sampleRegion ps ns
 
   let get_alpha_beta ps = List.fold_left (fun (ay,an) (y,n) -> (ay + y, an + n)) (0,0) (List.map PSS.get_alpha_beta ps)

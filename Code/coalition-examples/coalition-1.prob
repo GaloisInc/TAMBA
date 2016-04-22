@@ -115,7 +115,7 @@ if fake_bert >= target_berths then
   endif;
 endif;
 
-query who_is_closer:
+query who_is_closer_with_berths:
 (* Emergency at location 6 needing 3 *)
-int target_location = 6;
+int target_loc = 6;
 int target_berths = 3
