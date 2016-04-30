@@ -74,6 +74,9 @@ struct
               p
               (PSS.make_uniform varid (Z.of_int blower) (Z.of_int bupper)) (* todo: parse directly into Z.t *)
 
+      | SEnumUniform (varid, v_blower, v_bupper) ->
+        failwith "Not implemented"
+
   (* peval_start: stmt -> string list -> dist
      Evaluates the given statement on a distribution in which the only possible states is one in which
      all variables have value 0. *)

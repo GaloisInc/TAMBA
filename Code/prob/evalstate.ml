@@ -76,5 +76,11 @@ exception Eval_error of string;;
         | SUniform (varid, blower, bupper) ->
             let a = (Random.int (bupper - blower + 1)) + blower in
               (a, (cstate#set varid a; cstate))
+        | SEnumUniform (varid, id_blower, id_bupper) ->
+          let blower = cstate#get id_blower in
+          let bupper = cstate#get id_upper in
+          let a = (Random.int (bupper - blower + 1)) + blower in
+          (a, (cstate#set varid a; cstate))
+
         | SOutput (varid, toagent) ->
             (0, cstate)

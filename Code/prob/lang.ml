@@ -75,6 +75,7 @@ type stmt =
   | SIf      of lexp * stmt * stmt
   | SWhile   of lexp * stmt
   | SUniform of varid * int * int
+  | SEnumUniform of varid * varid * varid
   | SOutput  of varid * (agent list)
 
 (*
@@ -214,6 +215,9 @@ let rec print_stmt_pretty s tabs =
     | SUniform (varid, blower, bupper) ->
         print_string tabs;
         printf "%s = uniform %d %d" (varid_to_string varid) blower bupper
+    | SEnumUniform (varid, blower_id, bupper_id) ->
+        print_string tabs;
+        printf "%s = uniform %d %d" (varid_to_string varid) (varid_to_string blower_id) (varid_to_string bupper_id)
     | SOutput (varid, agents) ->
         print_string tabs;
         printf "output %s to %s" (varid_to_string varid) (String.concat "," agents)
@@ -337,6 +341,8 @@ let rec render_stmt_pretty_latex s tabs =
           (r bodystmt (tabs ^ "  "))
     | SUniform (varid, blower, bupper) ->
         sprintf "\\suniform{%s}{%d}{%d}" (render_id_latex varid) blower bupper
+    | SEnumUniform (varid, blower_id, bupper_id) ->
+        sprintf "\\suniform{%s}{%s}{%s}" (render_id_latex varid) (render_id_latex blower_id)(render_id_latex bupper_id)
     | SDefine (varid, dt) ->
         ""
     | _ -> raise (General_error "not implemented")
@@ -386,6 +392,8 @@ let print_stmt_type s =
     | SWhile (_, _) ->
         printf "while"
     | SUniform (_, _, _) ->
+        printf "uniform"
+    | SEnumUniform (_, _, _) ->
         printf "uniform"
     | SOutput (_, _) ->
         printf "output"
@@ -442,6 +450,7 @@ let rec collect_vars s =
         List.append (collect_vars_lexp guardlexp)
           (collect_vars bodystmt)
     | SUniform (avarid, blower, bupper) -> [avarid]
+    | SEnumUniform (avarid, blower_id, bupper_id) -> [avarid]
     | SDefine (avarid, datatype) -> [avarid]
     | SOutput (avarid, toagents) -> [avarid]
 ;;
@@ -562,6 +571,11 @@ let rec _sa_of_stmt_subst_stmt indices s =
             Hashtbl.replace newindices varid (1 + (_sa_of_stmt_subst_index indices varid));
             (SUniform (_sa_of_stmt_newname newindices varid, blower, bupper),
              newindices)
+      | SEnumUniform (varid, blower_id, bupper_id) ->
+          let newindices = Hashtbl.copy indices in
+            Hashtbl.replace newindices varid (1 + (_sa_of_stmt_subst_index indices varid));
+            (SEnumUniform (_sa_of_stmt_newname newindices varid, blower_id, bupper_id),
+             newindices)
       | SDefine (varid, vartype) -> (s, indices)
       | _ -> raise (General_error "not implemented")
 ;;
@@ -622,6 +636,7 @@ let rec fold_stmt f astmt a =
     | SIf (guardexp, s1, s2) -> fold_stmt f s2 (fold_stmt f s1 (f astmt a))
     | SWhile (guardexp, bodystmt) -> fold_stmt f bodystmt (f astmt a)
     | SUniform (varid, blower, bupper) -> f astmt a
+    | SEnumUniform (varid, blower_id, bupper_id) -> f astmt a
     | SOutput (varid, agents) -> f astmt a
 
 let rec fold_pstmt f apstmt a =

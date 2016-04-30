@@ -185,6 +185,9 @@ stmt :
     Lang.SSeq(record_assign, stmts)
 }
 
+| TENUM varid ASSIGN UNIFORM varid varid { Lang.SSeq (Lang.SDefine ($2, $1),
+						     Lang.SEnumUniform ($2, $5, $6))}
+
 | TRECORD varid ASSIGN LB record_body RB {
     let fields = $5 in
     let (record_varid_agent, record_varid_str) = $2 in
