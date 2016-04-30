@@ -30,6 +30,7 @@
 %token TINTDEF
 %token TBOOL
 %token TRECORD
+%token TENUM
 %token ASSIGN
 
 %left SEMICOLON
@@ -149,8 +150,41 @@ record_body :
   ($1, $2, None, Some($5, $6))::$8
 }
 
+enum_body :
+| varid enum_body {
+  $1::$2
+}
+| varid{
+  $1
+}
+
 stmt :
 | stmt SEMICOLON stmt { Lang.SSeq ($1, $3) }
+| TENUM varid ASSIGN LB enum_body RB {
+    (*Enum type declaration as record*)
+    let enum_ids = $5 in
+    let (enum_varid_agent, enum_varid_str) = $2 in
+
+    let (typedef, field_ids, stmts, _) =
+      List.fold_left (
+        fun (datatypes, ids, stmts, ctr) (enum_agent, enum_id) ->
+          let new_var_name = enum_agent, enum_varid_str^"."^enum_id in
+
+          let define_var_stmt = Lang.SDefine((new_var_name), Lang.TInt(32)) in
+          let assign_var_stmt = Lang.SAssign ((new_var_name), Lang.AEInt(ctr)) in
+          let curr_stmt = Lang.SSeq(define_var_stmt, assign_var_stmt) in
+          ((enum_varid_str, Lang.TInt(32))::datatypes, varid_str::ids, (Lang.SSeq(curr_stmt, stmts)), ctr+1)
+
+      ) ([],[],Lang.SSkip,0) enum_ids in
+
+    let record_type = Lang.TRecord(typedef) in
+    let record_data = Lang.AERecord (field_ids) in
+    let record_assign =
+      Lang.SSeq(Lang.SDefine($2, record_type), Lang.SAssign($2, record_data)) in
+
+    Lang.SSeq(record_assign, stmts)
+}
+
 | TRECORD varid ASSIGN LB record_body RB {
     let fields = $5 in
     let (record_varid_agent, record_varid_str) = $2 in
