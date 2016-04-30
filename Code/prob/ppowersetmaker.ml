@@ -213,36 +213,54 @@ struct
                         (inmass +/ morein, outmass +/ moreout))
       (qzero, qzero) pss
 
+  let prob_smin_smax pss = List.fold_left (fun (imin, imax) (min,max) -> (imin +! min, imax +! max)) (zzero, zzero)
+                                          (List.map PSS.prob_smin_smax pss)
+
+  let prob_pmin_pmax pss = Util.fold_left1 (fun (imin, imax) (min,max) -> (min_q imin min, max_q imax max))
+                                           (List.map PSS.prob_pmin_pmax pss)
+
+  let prob_mmin_mmax pss = List.fold_left (fun (imin, imax) (min,max) -> (imin +/ min, imax +/ max)) (qzero, qzero)
+                                          (List.map PSS.prob_mmin_mmax pss)
+
   let prob_scale pss s = List.map (fun apss -> PSS.prob_scale apss s) pss
 
   let make_point_of_stateset ss = [PSS.make_point_of_stateset ss]
 
   let abstract_plus pss1 pss2 =
-    Globals.seen_complexity ((List.length pss1) + (List.length pss2));
+    (* This function performs an abstract plus for the powerset domain
+       by reducing the number of disjuncts in the 2 input
+       subcomponents. The strange arithmetic in the main case is an
+       attempt to allocate number of disjuncts to the two
+       sub-invocations invocations in a good way. When both inputs
+       have the same number of disjuncts, each is reduced to smaller
+       sets with half of max disjuncts (precision input). There are
+       various cases where the two inputs have differing number of
+       inputs where we still want to allocate as many total resulting
+       disjuncts as possible. *)
+    let (pssSmaller, pssBigger) = if (List.length(pss1) <= List.length(pss2)) then (pss1, pss2) else (pss2, pss1) in
+    let numSmaller = List.length pssSmaller in
+    let numBigger  = List.length pssBigger in
+    Globals.seen_complexity (numSmaller + numBigger);
     let maxpolies = !Globals.precision in
-      if (maxpolies = 0) then List.append pss1 pss2 else
-        if (maxpolies = 1) then
-          _simplify_to_precision (List.append pss1 pss2) maxpolies
-        else if !Globals.simplifier = 3 then
-          _simplify_to_precision (List.append pss1 pss2) maxpolies
-        else
+    if (maxpolies = 0) || (numSmaller + numBigger >= maxpolies) then List.append pssSmaller pssBigger else
+      if (maxpolies = 1) then
+        _simplify_to_precision (List.append pssSmaller pssBigger) maxpolies
+      else if !Globals.simplifier = 3 then
+        _simplify_to_precision (List.append pssSmaller pssBigger) maxpolies
+      else
         (
-          let num1 = List.length pss1 in
-          let num2 = List.length pss2 in
-          (*let (num1, num2, pss1, pss2) =
-            if num1 < num2 then (num1, num2, pss1, pss2) else (num2, num1, pss2, pss1) in*)
           let halfpolies = maxpolies / 2 in
-          let remove1 = max 0 (num1 - halfpolies) in
-          let remove2 = max 0 ((num1 - remove1 + num2) - maxpolies) in
-            printf "splitting %d,%d into %d,%d\n" num1 num2 (num1 - remove1) (num2 - remove2);
-          let ret =
-            List.append
-              (_simplify_to_precision pss1 (num1 - remove1))
-              (_simplify_to_precision pss2 (num2 - remove2)) in
-            if (num1 + num2 >= maxpolies && List.length ret < maxpolies) ||
-              (num1 + num2 < maxpolies && List.length ret < num1 + num2) then
-              raise (General_error "not using up all polies");
-            ret
+          let removeFromSmaller = max 0 (numSmaller - halfpolies) in
+          let removeFromBigger  = max 0 ((numSmaller - removeFromSmaller + numBigger) - maxpolies) in
+          (*printf "splitting %d,%d into %d,%d and max=%d\n" numSmaller numBigger (numSmaller - removeFromSmaller) (numBigger - removeFromBigger) maxpolies;*)
+          let ret = List.append
+            (_simplify_to_precision pssSmaller (numSmaller - removeFromSmaller))
+            (_simplify_to_precision pssBigger (numBigger  - removeFromBigger)) in
+          (*printf "returned %d polies\n" (List.length ret);*)
+          if (numSmaller + numBigger >= maxpolies && List.length ret < maxpolies) ||
+            (numSmaller + numBigger < maxpolies && List.length ret < numSmaller + numBigger) then
+            raise (General_error "not using up all polies");
+          ret
         )
 
   let is_possible pss =
@@ -293,5 +311,18 @@ struct
                  pss2))
          [] pss1)
 
-end
+  let sample_pstateset ps n fs =
+    let sizes = List.map PSS.size ps in
+    let total =
+      List.fold_left
+        (fun accum n -> accum +! n)
+        zzero
+        sizes in
+    let ns = List.map (fun x -> int_of_float (x /. Gmp.Z.to_float total *. float_of_int n)) (List.map Gmp.Z.to_float sizes) in
+    printf "Sampling %d points divided into bins of %s\n" n (String.concat "," (List.map string_of_int ns));
+    let sampleRegion p n = PSS.sample_pstateset p n fs in
+    List.map2 sampleRegion ps ns
 
+  let get_alpha_beta ps = List.fold_left (fun (ay,an) (y,n) -> (ay + y, an + n)) (0,0) (List.map PSS.get_alpha_beta ps)
+
+end;;

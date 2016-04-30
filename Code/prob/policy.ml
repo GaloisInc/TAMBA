@@ -211,8 +211,14 @@ module MAKE_PSYSTEM (ESYS: EVAL_SYSTEM) = struct
 
     printf "\nend belief:\n"; ESYS.print_psrep outputdist;
 
+    printf "=============================\n";
+    printf "Input state from within policy.ml: %s\n" inputstate_full#to_string;
+    printf "=============================\n";
     let (ignored, outputstate_temp) = Evalstate.eval sa_querystmt
         inputstate_full in
+    printf "=============================\n";
+    printf "Output state from within policy.ml: %s\n" outputstate_temp#to_string;
+    printf "=============================\n";
 
     let outputstate = outputstate_temp#copy in
     outputstate#project outlist;
@@ -225,6 +231,7 @@ module MAKE_PSYSTEM (ESYS: EVAL_SYSTEM) = struct
         (ESYS.psrep_given_state outputdist outputstate)
         secretvars in
 
+    printf "varids: %s\n" (varid_list_to_string secretvars); (* varid_list_to_string ESYS.psrep_given_state outputdist outputstate *)
     let ps_updater = {newbelief = enddist} in
 
     (* let ps_updater = {newbelief = outputdist} in *)

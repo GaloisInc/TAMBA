@@ -1,0 +1,29 @@
+secret: (* Ship in 2-dimensional space *)
+int ship_loc_x = 51;
+int ship_loc_y = 26;
+
+belief:
+  int ship_loc_x = uniform 0 100;
+  int ship_loc_y = uniform 0 100;
+
+querydef close_enough loc_x loc_y dist -> result :
+
+int diff_x = loc_x - ship_loc_x;
+if diff_x < 0 then
+  diff_x = diff_x * -1;
+endif;
+
+int diff_y = loc_y - ship_loc_y;
+if diff_y < 0 then
+  diff_y = diff_y * -1;
+endif;
+
+int result = 0;
+if (diff_x + diff_y <= dist) then
+  result = 1;
+endif;
+
+query close_enough:
+  int loc_x = 50;
+  int loc_y = 50;
+  int dist = 25;

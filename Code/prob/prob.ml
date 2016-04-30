@@ -8,6 +8,8 @@ open Util
 open Preeval
 open Globals
 open Parser_util
+open Pareto.Distributions
+open Pareto.Distributions.Beta
 
 open Maths
 open Gmp
@@ -25,13 +27,76 @@ end;;
 module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
   module PSYS = MAKE_PSYSTEM(ESYS)
 
-  let rec pmock_queries queries querydefs ps = match queries with
-    | [] -> ()
+  let make_trip querydefs (ps : PSYS.policysystem) (queryname, querystmt) =
+    let querytuple = List.assoc queryname querydefs in
+    let (inlist, outlist, progstmt) = querytuple in
+    let (ignored, inputstate_temp) = Evalstate.eval querystmt (new state_empty) in
+    inputstate_temp#merge ps.valcache;
+
+    (*
+    printf "\n\n---------------------------------\n";
+    printf "State in triple: %s\n\n" inputstate_temp#to_string;
+    printf "query in triple:\n"; print_stmt progstmt; printf "\n\n";
+    printf "outlist in triple: %s\n\n" (varid_list_to_string outlist);
+    printf "---------------------------------\n";
+    (* printf "\n\n------------------------------\nState before sampling: %s\n" inputstate_temp#to_string; *)
+    *)
+    (inputstate_temp, (Evalstate.eval progstmt), (list_first outlist))
+
+  let sample_final queries querydefs ps =
+    let enddist = ps.PSYS.belief in
+      let trips = List.map (make_trip querydefs ps) queries in
+      let (y,n) = try (ESYS.get_alpha_beta
+                         (ESYS.psrep_sample
+                                 enddist
+                                 !Globals.sample_count
+                                 trips))
+                  with e -> (0,0) in
+      let b_dist = beta (float_of_int (y + 1)) (float_of_int (n + 1)) in
+      let { beta_alpha; beta_beta } = b_dist in
+      let m_belief = ESYS.psrep_max_belief enddist in
+      printf "max belief: %f\n" (Q.float_from m_belief);
+      printf "alpha: %f, beta: %f\n" beta_alpha beta_beta;
+      let size_z = Z.to_float (ESYS.psrep_size enddist) in
+
+      let (pmi, pma) = let (i, a) = ESYS.psrep_pmin_pmax enddist
+                       in (Q.float_from i, Q.float_from a) in
+      let (smi, sma) = ESYS.psrep_smin_smax enddist in
+      let (mmi, mma) = let (i, a) = ESYS.psrep_mmin_mmax enddist
+                       in (Q.float_from i, Q.float_from a) in
+
+      let _ = try let sminp = ((quantile b_dist 0.001) *. size_z) in
+                  let smaxp = ((quantile b_dist 0.999) *. size_z) in
+                  let mminp = sminp *. pmi in
+                  let mmaxp = smaxp *. pma in
+                  printf "\n\nsmin (gsl): %f\n" sminp;
+                  printf "smax (gsl): %f\n" smaxp;
+                  printf "mmin (sampling): %f\n" mminp;
+                  printf "mmax (sampling): %f\n" mmaxp;
+                  printf "post-sampling revised belief: %f\n" (pma /. mminp);
+              with e -> printf "GSL computation did not converge: ERR\n" in
+
+      printf "\n\nsize_z = %f\n" size_z;
+      printf "pmin = %f\n" pmi;
+      printf "pmax = %f\n" pma;
+      printf "smin = %s\n" (Z.string_from smi);
+      printf "smax = %s\n" (Z.string_from sma);
+      printf "mmin = %f\n" mmi;
+      printf "mmax = %f\n" mma;
+      printf "sample_true = %d\nsample_false = %d\n" y n
+
+
+  let rec pmock_queries queries querydefs ps_in = match queries with
+    | [] -> ps_in
     | (queryname, querystmt) :: t ->
         ifbench Globals.start_timer Globals.timer_query;
 
+        let ps = ps_in in
+
         let querytuple = List.assoc queryname querydefs  in
         let (inlist, outlist, progstmt) = querytuple in
+        printf "Outlist: ";
+        printf "%s\n" (varid_list_to_string outlist);
 
         let secretvars = ESYS.psrep_vars ps.PSYS.belief in
 
@@ -67,6 +132,7 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
                     printf "*** belief will not be updated as a result of this query\n"))
             ;
 
+
             ifbench (
               Globals.stop_timer Globals.timer_query;
               Globals.mark_epoch ();
@@ -74,7 +140,13 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
               Globals.next_epoch ()
             );
 
-            pmock_queries t querydefs ps
+            flush stdout;
+
+          let ps_out = if !Globals.black_box
+                       then ps_in
+                       else ps in
+
+          pmock_queries t querydefs ps_out
 
   let pmock asetup =
     Printexc.record_backtrace true;
@@ -117,7 +189,9 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
                   PSYS.belief = startdist;
                   PSYS.valcache = secretstate} in
 
-          pmock_queries queries querydefs ps
+          ifdebug (printf "\n\nBefore pmock_queries\n\n");
+          let final_dist = pmock_queries queries querydefs ps in
+          sample_final queries querydefs final_dist
   (*with
       | e ->
           printf "%s\n" (Printexc.to_string e);
@@ -147,6 +221,12 @@ let main () =
       ("--precision",
        Arg.Set_int Globals.precision,
        "set the precision");
+      ("--samples",
+       Arg.Set_int Globals.sample_count,
+       "set the number of samples to use");
+      ("--blackbox",
+       Arg.Set Globals.black_box,
+       "reset the belief to uniform between each query");
       ("--split-factor",
        Arg.Set_int Globals.split_uniforms_factor,
        "set the uniforms split factor, default = 1");
@@ -214,7 +294,9 @@ let main () =
                   | 3 -> (module EVALS_PPSS_POLY: EXP_SYSTEM)
                   | 4 -> (module EVALS_PPSS_OCTALATTE: EXP_SYSTEM)
                   | _ -> raise Not_expected): EXP_SYSTEM) in
+          ifdebug (printf "\n\nBefore pmock\n\n");
           E.pmock aexperiment;
+          ifdebug (printf "\n\nAfter pmock\n\n");
           ifdebug (printf "maximum complexity encountered = %d\n" !Globals.max_complexity);
           ifbench (Globals.close_bench ());
           Globals.bench_latte_close ();

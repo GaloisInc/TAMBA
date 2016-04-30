@@ -3,6 +3,7 @@ open State
 open Ppl_ocaml
 open Ppl_util
 open Lang
+open Array
 
 module type PPLDOMAIN_TYPE =
 sig
@@ -60,8 +61,8 @@ sig
    *  2: number of samples that cause the query to return False
    *
    * [1]: TODO eventually we also want to pass the desired confidence
-  val sample_region: region -> int ->  (int list -> bool )-> (int,int)
-  val update_bounds: region -> (int,int) -> ()
    *)
+  val sample_region: region -> int ->  (int array -> bool) list -> (int * int)
+  val update_bounds: region -> (int * int) -> unit
 
 end;;

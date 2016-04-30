@@ -72,6 +72,10 @@ module type PSTATESET_TYPE =
 
     val prob_max_min: pstateset -> (Q.t * Q.t)
 
+    val prob_smin_smax: pstateset -> (Z.t * Z.t)
+    val prob_pmin_pmax: pstateset -> (Q.t * Q.t)
+    val prob_mmin_mmax: pstateset -> (Q.t * Q.t)
+
     val min_mass: pstateset -> Q.t
 
     val max_belief: pstateset -> Q.t (* returns the maximal normalized max prob over all points *)
@@ -79,4 +83,8 @@ module type PSTATESET_TYPE =
     val is_possible: pstateset -> bool
 
     val stateset_hull: pstateset -> stateset
+
+    val get_alpha_beta: pstateset -> (int * int)
+
+    val sample_pstateset: pstateset -> int -> (state * (state -> (int * state)) * varid) list -> pstateset
   end;;

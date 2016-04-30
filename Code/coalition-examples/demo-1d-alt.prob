@@ -26,7 +26,7 @@ belief:
   int ship4_berths = uniform 0 1000;
   int ship5_berths = uniform 0 1000;
 
-querydef enough_berths ship dest berths_needed -> result :
+querydef close_enough ship dest -> result :
   int ship_loc = 0;
   int ship_berths = 0;
   if ship == 1 then
@@ -56,76 +56,108 @@ querydef enough_berths ship dest berths_needed -> result :
   endif;
 
   int result = 0;
-  if (dist <= 200) and (ship_berths >= berths_needed) then
+  if (dist <= 200) then
     result = 1
   endif;
 
-query enough_berths:
+querydef enough_berths ship berths_needed -> result :
+  int ship_loc = 0;
+  int ship_berths = 0;
+  if ship == 1 then
+    ship_loc    = ship1_loc;
+    ship_berths = ship1_berths
+  endif;
+  if ship == 2 then
+    ship_loc = ship2_loc;
+    ship_berths = ship2_berths
+  endif;
+  if ship == 3 then
+    ship_loc = ship3_loc;
+    ship_berths = ship3_berths
+  endif;
+  if ship == 4 then
+    ship_loc = ship4_loc;
+    ship_berths = ship4_berths
+  endif;
+  if ship == 5 then
+    ship_loc = ship5_loc;
+    ship_berths = ship5_berths
+  endif;
+
+  int dist = ship_loc - dest;
+  if dist < 0 then
+    dist = -1 * dist
+  endif;
+
+  int result = 0;
+  if (ship_berths >= berths_needed) then
+    result = 1
+  endif;
+
+query close_enough:
   int ship = 1;
   int dest = 250;
+
+query close_enough:
+  int ship = 2;
+  int dest = 250;
+
+query close_enough:
+  int ship = 3;
+  int dest = 250;
+
+query close_enough:
+  int ship = 4;
+  int dest = 250;
+
+query close_enough:
+  int ship = 5;
+  int dest = 250;
+
+query enough_berths:
+  int ship = 1;
   int berths_needed = 500;
 
 query enough_berths:
   int ship = 2;
-  int dest = 250;
   int berths_needed = 500;
 
 query enough_berths:
   int ship = 3;
-  int dest = 250;
   int berths_needed = 500;
 
 query enough_berths:
   int ship = 4;
-  int dest = 250;
-  int berths_needed = 500;
-
-query enough_berths:
-  int ship = 5;
-  int dest = 250;
   int berths_needed = 500;
 
 query enough_berths:
   int ship = 1;
-  int dest = 250;
   int berths_needed = 250;
 
 query enough_berths:
   int ship = 2;
-  int dest = 250;
   int berths_needed = 250;
 
 query enough_berths:
   int ship = 3;
-  int dest = 250;
   int berths_needed = 250;
 
 query enough_berths:
   int ship = 4;
-  int dest = 250;
-  int berths_needed = 250;
-
-query enough_berths:
-  int ship = 5;
-  int dest = 250;
   int berths_needed = 250;
 
 query enough_berths:
   int ship = 1;
-  int dest = 250;
   int berths_needed = 125;
 
 query enough_berths:
   int ship = 2;
-  int dest = 250;
   int berths_needed = 125;
 
 query enough_berths:
   int ship = 3;
-  int dest = 250;
   int berths_needed = 375;
 
 query enough_berths:
   int ship = 4;
-  int dest = 250;
   int berths_needed = 125;

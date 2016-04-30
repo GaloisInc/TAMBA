@@ -203,6 +203,10 @@ module Ppldomainocta: (PPLDOMAIN_TYPE with type region = octagonal_shape_mpz_cla
           gens;
         (vmin, vmax)
 
+   let sample_region p t f = raise (General_error "sample_region not yet implemented for octa domain")
+
+   let update_bounds p t = raise (General_error "update_bounds not yet implemented for octa domain")
+
     let enum_region p = (* !!! todo: this is completely untested *)
       let (vmin, vmax) = _bounds_of_box p in
       let vec_min = Array.to_list vmin in

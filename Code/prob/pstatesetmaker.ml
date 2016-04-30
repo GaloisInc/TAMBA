@@ -27,7 +27,9 @@ module MakePStateset(* create pstateset from a stateset *)
       smin: Z.t;
       smax: Z.t;
       mmin: Q.t;
-      mmax: Q.t
+      mmax: Q.t;
+      numy: int; (* The last two are only *)
+      numn: int  (* used in sampling *)
     }
 
     let estimator_empty = {
@@ -36,7 +38,9 @@ module MakePStateset(* create pstateset from a stateset *)
       smin = zzero;
       smax = zzero;
       mmin = qzero;
-      mmax = qzero
+      mmax = qzero;
+      numy = 0;
+      numn = 0
     }
 
     let estimator_one = {
@@ -45,7 +49,9 @@ module MakePStateset(* create pstateset from a stateset *)
       smin = zone;
       smax = zone;
       mmin = qone;
-      mmax = qone
+      mmax = qone;
+      numy = 0;
+      numn = 0
     }
 
     type pstateset = {
@@ -59,7 +65,9 @@ module MakePStateset(* create pstateset from a stateset *)
       smin = est.smin;
       smax = est.smax;
       mmin = est.mmin */ scalar;
-      mmax = est.mmax */ scalar
+      mmax = est.mmax */ scalar;
+      numy = est.numy; (* TODO: This is probably wrong *)
+      numn = est.numn
     }
 
     let make_empty () =
@@ -89,17 +97,21 @@ module MakePStateset(* create pstateset from a stateset *)
                 smin = range;
                 smax = range;
                 mmin = qone;
-                mmax = qone
+                mmax = qone;
+                numy = 0;
+                numn = 0
                }}
 
     let print pss =
-      printf "PStateset (p=[%s,%s],s=[%s,%s],m=[%s,%s]): "
+      printf "PStateset (p=[%s,%s],s=[%s,%s],m=[%s,%s],a/r=[%s,%s]): "
         (Q.to_string pss.est.pmin)
         (Q.to_string pss.est.pmax)
         (Z.to_string pss.est.smin)
         (Z.to_string pss.est.smax)
         (Q.to_string pss.est.mmin)
-        (Q.to_string pss.est.mmax);
+        (Q.to_string pss.est.mmax)
+        (string_of_int pss.est.numy)
+        (string_of_int pss.est.numn);
       SS.print_stateset pss.ss;
       printf "\n"
 
@@ -118,7 +130,9 @@ module MakePStateset(* create pstateset from a stateset *)
            smin = pss1.est.smin *! pss2.est.smin;
            smax = pss1.est.smax *! pss2.est.smax;
            mmin = pss1.est.mmin */ pss2.est.mmin;
-           mmax = pss1.est.mmax */ pss2.est.mmax
+           mmax = pss1.est.mmax */ pss2.est.mmax;
+           numy = pss1.est.numy * pss2.est.numy;
+           numn = pss1.est.numn * pss2.est.numn
          }}
 
     let addvar pss varid =
@@ -199,7 +213,9 @@ module MakePStateset(* create pstateset from a stateset *)
                 mmax =
              qmin
                (newpmax */ (Q.from_z newsmax))
-               (est.mmax -/ (est.pmin */ (Q.from_z (Z.max zzero (est.smin -! sizeinter)))))
+               (est.mmax -/ (est.pmin */ (Q.from_z (Z.max zzero (est.smin -! sizeinter)))));
+             numy = 0;
+             numn = 0
                }} in
         (_assert_check temp;
          temp))
@@ -256,7 +272,10 @@ module MakePStateset(* create pstateset from a stateset *)
            smin = Z.max zzero ((pss1.est.smin +! pss2.est.smin) -! overopti);
            smax = Z.min (SS.stateset_size ssunion) ((pss1.est.smax +! pss2.est.smax) -! overpessi);
            mmin = pss1.est.mmin +/ pss2.est.mmin;
-           mmax = pss1.est.mmax +/ pss2.est.mmax
+           mmax = pss1.est.mmax +/ pss2.est.mmax;
+           (* TODO: Figure out the appropriate things for this *)
+           numy = 0;
+           numn = 0
          }
         } in
         (*printf "\nresult (intersection = %s):\n" (Z.to_string (SS.stateset_size ssinter));
@@ -291,7 +310,9 @@ module MakePStateset(* create pstateset from a stateset *)
                 mmax =
              qmin
                (newpmax */ (Q.from_z newsmax))
-               (est.mmax -/ (est.pmin */ (Q.from_z (Z.max zzero (est.smin -! sizeinter)))))
+               (est.mmax -/ (est.pmin */ (Q.from_z (Z.max zzero (est.smin -! sizeinter)))));
+             numy = 0;
+             numn = 0
                }} in
         (_assert_check temp;
          temp)
@@ -365,7 +386,9 @@ module MakePStateset(* create pstateset from a stateset *)
         smin = qceil ((Q.from_z est.smin) // (Q.from_z hmax)); (* todo: check this *)
         smax = Z.min new_size est.smax;
         mmin = est.mmin;
-        mmax = est.mmax
+        mmax = est.mmax;
+        numy = 0;
+        numn = 0
       } in
       let temp =
         {ss = new_ss;
@@ -443,6 +466,10 @@ module MakePStateset(* create pstateset from a stateset *)
     let prob_max_min pss =
       _opt_estimate_max_in_min_out pss.est
 
+    let prob_smin_smax pss = (pss.est.smin, pss.est.smax)
+    let prob_pmin_pmax pss = (pss.est.pmin, pss.est.pmax)
+    let prob_mmin_mmax pss = (pss.est.mmin, pss.est.mmax)
+
     let prob_scale pss scalar = {ss = pss.ss;
                                  est = estimator_prob_scale pss.est scalar}
 
@@ -462,6 +489,34 @@ module MakePStateset(* create pstateset from a stateset *)
         let (massin, massout) = _opt_estimate_max_in_min_out pss.est in
     printf "massin: %s\nmassout: %s\n\n" (Gmp.Q.to_string massin) (Gmp.Q.to_string massout);
           massin // massout)
+
+  (* sample_pstateset : stateset -> n -> (state * (state -> bool) * varid) list -> (int * int) *)
+    (* let sample_pstateset pset n state (eval_q : state -> (int * state)) vid = *)
+    let sample_pstateset pset n es =
+        let evals = List.map (fun (state, eval_q, vid) ->
+                                let aset = pset.ss in
+                                let setstate i v =
+                                  let vid1 = SS.lookup_dim aset i in
+                                  (* printf "vid_dim: %s\n" (varid_to_string vid1); *)
+                                  state#set vid1 v in
+                                let eval = fun pt -> Array.iteri setstate pt;
+                                             let (ig, state2) = eval_q state in
+                                             ifdebug (printf "vid_eval: %s\nstate2: %s\n\n"
+                                                             (varid_to_string vid)
+                                                             state2#to_string);
+                                             state2#get vid == 1
+                                in eval
+                             ) es in
+        let (yes,no) = SS.sample_region pset.ss n evals in
+        let pset_new = {
+            pset with est = {
+                      pset.est with numy = yes;
+                                    numn = no;
+                            }
+                       } in
+        pset_new
+
+    let get_alpha_beta pss = (pss.est.numy, pss.est.numn)
 
     let stateset_hull pss = pss.ss
       (*

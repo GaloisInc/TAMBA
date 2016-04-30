@@ -27,37 +27,36 @@ belief:
   int ship5_berths = uniform 0 1000;
 
 querydef enough_berths ship dest berths_needed -> result :
-  int ship_loc = 0;
-  int ship_berths = 0;
+  int result = 0;
   if ship == 1 then
-    ship_loc    = ship1_loc;
-    ship_berths = ship1_berths
+    if (ship1_loc - dest <= 200 and ship1_loc - dest >= -200) and
+       (ship1_berths >= berths_needed) then
+      result = 1
+    endif;
   endif;
   if ship == 2 then
-    ship_loc = ship2_loc;
-    ship_berths = ship2_berths
+    if (ship2_loc - dest <= 200 and ship2_loc - dest >= -200) and
+       (ship2_berths >= berths_needed) then
+      result = 1
+    endif;
   endif;
   if ship == 3 then
-    ship_loc = ship3_loc;
-    ship_berths = ship3_berths
+    if (ship3_loc - dest <= 200 and ship3_loc - dest >= -200) and
+       (ship3_berths >= berths_needed) then
+      result = 1
+    endif;
   endif;
   if ship == 4 then
-    ship_loc = ship4_loc;
-    ship_berths = ship4_berths
+    if (ship4_loc - dest <= 200 and ship4_loc - dest >= -200) and
+       (ship4_berths >= berths_needed) then
+      result = 1
+    endif;
   endif;
   if ship == 5 then
-    ship_loc = ship5_loc;
-    ship_berths = ship5_berths
-  endif;
-
-  int dist = ship_loc - dest;
-  if dist < 0 then
-    dist = -1 * dist
-  endif;
-
-  int result = 0;
-  if (dist <= 200) and (ship_berths >= berths_needed) then
-    result = 1
+    if (ship5_loc - dest <= 200 and ship5_loc - dest >= -200) and
+       (ship5_berths >= berths_needed) then
+      result = 1
+    endif;
   endif;
 
 query enough_berths:

@@ -7,6 +7,7 @@ open Util
 open Lang
 open Logical
 open Latte
+open Array
 
 open Ppl_ocaml
 open Ppl_util
@@ -40,6 +41,8 @@ struct
 
   let _var_lookup ss varid = Bimap.find ss.varmap varid
 
+  let lookup_dim ss dim = Bimap.find_bm ss.varmap dim
+
   let stateset_new varlist = {
     bound = P.make_new (List.length varlist);
     size = zone; (* ambiguous here, really we are representing 0 dimensions at first *)
@@ -65,6 +68,8 @@ struct
 
   let stateset_is_empty aset1 = Z.is_zero (stateset_size aset1)
   let stateset_is_nonempty aset1 = not (Z.is_zero (stateset_size aset1))
+
+  let sample_region aset = P.sample_region aset.bound
 
   let _stateset_of_region p vmap =
     {bound = p;
@@ -289,6 +294,7 @@ struct
 
   (* !!! untested !!! *)
   let stateset_addvar aset varid =
+    (* printf "In stateset_addvar: %s\n\n" (Lang.varid_to_string varid); *)
     if Bimap.mem aset.varmap varid then raise (General_error ("variable " ^ (varid_to_string varid) ^ " already defined"));
     let vmap = Bimap.copy aset.varmap in
     let newregion = P.copy_region aset.bound in
@@ -376,7 +382,14 @@ struct
 
   exception Break_loop
 
-  let statesets_exact_intersections (ssl: (stateset * 'a) list) =
+  let statesets_exact_intersections (ssl: (stateset * 'a) list): (('a list) list) =
+    (* Takes a set of statesets, with each have some associated but
+       unused data value, and produces a list (one for each disjoint
+       region) of sets of data values that came from the input regions
+       that they overlap. You can specify the data value as the region
+       as well which will give you a list of (a set of regions) where
+       each element of the list represents a disjoint region. *)
+    
     let queue = ref (Queue.create ()) in
     let queue_copy = ref (Queue.create ()) in
     let queue_done = (Queue.create ()) in
@@ -420,6 +433,55 @@ struct
       done;
       list_of_queue queue_done
 
+  let statesets_get_exact_intersections
+      (ssl: (stateset list)): ((stateset*(stateset list)) list) =
+    (* Same as above, except it takes in only the list of statesets,
+       and returns a disjoint stateset for each disjoint regions (along
+       with a list of input regions that overlap it *)
+    
+    let queue = ref (Queue.create ()) in
+    let queue_copy = ref (Queue.create ()) in
+    let queue_done = (Queue.create ()) in
+      List.iter (fun i -> Queue.add (i, [i]) !queue) ssl;
+      while (not (Queue.is_empty !queue)) do
+	let expandedref = ref false in
+	let (p1temp, notes1temp) = Queue.pop !queue in
+	let p1ref = ref p1temp in
+	let notes1ref = ref notes1temp in
+	  while (not (Queue.is_empty !queue)) do
+	    (*printf "queue = %d, queue copy = %d, queue done = %d\n"
+	      (Queue.length !queue)
+	      (Queue.length !queue_copy)
+	      (Queue.length queue_done);
+	    printf "p1ref = \n"; P.print_region !p1ref;
+	    printf "queue=\n";
+	    List.iter (fun (p, n) -> printf "(%d): " (List.length n); P.print_region p; printf "\n") (list_of_queue !queue);
+	    flush Pervasives.stdout;*)
+
+	    let (p2, notes2) = Queue.pop !queue in
+	    if P.regions_are_disjoint !p1ref.bound p2.bound then
+	      Queue.add (p2, notes2) !queue_copy
+	    else
+	      (let (inp1, inp2, inboth) = stateset_intersect_partition !p1ref p2 in
+	       List.iter
+		 (fun p -> Queue.add (p, !notes1ref) !queue_copy
+		 ) inp1;
+	       List.iter
+		 (fun p -> Queue.add (p, notes2) !queue_copy
+		 ) inp2;
+	       p1ref := inboth;
+	       notes1ref := List.append !notes1ref notes2;
+	       expandedref := true)
+	  done;
+	Queue.add (!p1ref, !notes1ref) queue_done;
+	(*printf "done (contains pieces from %d polies):\n" (List.length !notes1ref);
+	  P.print_region !p1ref;*)
+	let queue_temp = !queue in
+	queue := !queue_copy;
+	queue_copy := queue_temp
+      done;
+      list_of_queue queue_done
+        
   let _union_and_return r1 r2 =
     let r1 = P.copy_region r1 in
       P.union_regions_assign r1 r2;
@@ -456,7 +518,10 @@ struct
 
   let statesets_intersect_partition (ssl1: (stateset * 'a) list) (ssl2: (stateset * 'a) list) :
       ((stateset * 'a) list) * ((stateset * 'a) list) * ((stateset * 'a * 'a) list) =
-
+    (* Partition the set of input statesets A and B into three
+       disjoint pieces: 1. those overlapping A, 2. those overlapping B,
+       3. those overlapping both . *)
+    
     match (ssl1, ssl2) with
       | ([], _) -> ([], ssl2, [])
       | (_, []) -> (ssl1, [], [])

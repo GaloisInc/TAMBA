@@ -19,6 +19,8 @@ let mem bm k = Hashtbl.mem bm.fmap k;;
 
 let find bm k = Hashtbl.find bm.fmap k;;
 
+let find_bm bm k = Hashtbl.find bm.bmap k;;
+
 let get_fmap bm = bm.fmap;;
 
 let get_bmap bm = bm.bmap;;
