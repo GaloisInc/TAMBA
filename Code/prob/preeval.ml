@@ -24,11 +24,29 @@ let rec subst_lexp alexp (varid: Lang.varid) aaexp =
       | LEReln  (rln, exp1, exp2) -> LEReln (rln, raexp exp1, raexp exp2)
 ;;
 
+let enum_type_error ((_, enum_cls) : varid) (enum : aexp) : bool =
+  try
+    match (enum) with
+    | (AEInt _) -> false
+    | (AEVar (_,name)) ->
+    let index = String.index name '.' in
+    let enum_cls' = String.sub name 0 index in
+    enum_cls <> enum_cls'
+    | _ -> true
+  with
+    _ -> true
+;;
+
 let rec subst_stmt s (varid: Lang.varid) aaexp =
   let r = fun s -> subst_stmt s varid aaexp in
   let rlexp = fun s -> subst_lexp s varid aaexp in
   let raexp = fun s -> subst_aexp s varid aaexp in
     match s with
+      | SEnumAssign (enum_cls, name, varexp) ->
+        if enum_type_error enum_cls varexp then
+          failwith "enum type failure";
+        if (name = varid) then (raise (General_error ("assignment to a variable (" ^ (Lang.varid_to_string name) ^ ") that will be substituted")));
+        SAssign (name, raexp varexp)
       | SAssign (name, varexp) ->
           if (name = varid) then (raise (General_error ("assignment to a variable (" ^ (Lang.varid_to_string name) ^ ") that will be substituted")));
           SAssign (name, raexp varexp)
@@ -40,13 +58,15 @@ let rec subst_stmt s (varid: Lang.varid) aaexp =
       | SUniform (name, blower, bupper) ->
           if (name = varid) then (raise (General_error ("uniform to a variable (" ^ (Lang.varid_to_string name) ^ ") that will be substituted")));
           s
-      | SEnumUniform (name, blower_aexp, bupper_aexp) ->
+      | SEnumUniform (enum_cls, name, blower_aexp, bupper_aexp) ->
         if (name = varid) then (raise (General_error ("assignment to a variable (" ^ (Lang.varid_to_string name) ^ ") that will be substituted")));
+        if (enum_type_error enum_cls bupper_aexp) || (enum_type_error enum_cls blower_aexp) then
+          failwith "enum type failure";
         let blower_aexp = raexp (blower_aexp) in
         let bupper_aexp = raexp (bupper_aexp) in
         let ret_stmt = match (blower_aexp, bupper_aexp) with
-        | (AEInt(blower), AEInt(bupper)) -> SUniform (name, blower, bupper)
-        | _ -> SEnumUniform(name, blower_aexp, bupper_aexp) in
+          | (AEInt(blower), AEInt(bupper)) -> SUniform (name, blower, bupper)
+          | _ -> SEnumUniform(enum_cls, name, blower_aexp, bupper_aexp) in
         ret_stmt
       | SDefine (name, datatype) ->
           if (name = varid) then (raise (General_error ("definition of a variable (" ^ (Lang.varid_to_string name) ^ ") that will be substituted")));

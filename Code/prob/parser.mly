@@ -122,8 +122,6 @@ pstmt :
   let (_, command) = List.fold_left (
     fun (ctr, ps) id ->
       let (agent, name) = id in
-      (*print_endline("test:"^enum_name^"."^name);*)
-      (*print_endline(string_of_int (ctr));*)
       (ctr+1, Lang.PSSubst ((agent, enum_name^"."^name), AEInt(ctr), ps))
     ) (0, $8) enum_types in
   command
@@ -208,7 +206,8 @@ stmt :
 						     Lang.SUniform ($2, $5, $6))}
 | datatype varid { Lang.SDefine ($2, $1) }
 | varid ASSIGN UNIFORM INT INT { Lang.SUniform ($1, $4, $5) }
-| TENUM varid varid ASSIGN UNIFORM aexp aexp { Lang.SEnumUniform ($3, $6, $7) }
+| TENUM varid varid ASSIGN aexp { Lang.SEnumAssign ($2, $3, $5) }
+| TENUM varid varid ASSIGN UNIFORM aexp aexp { Lang.SEnumUniform ($2, $3, $6, $7) }
 | varid ASSIGN aexp { Lang.SAssign ($1, $3) }
 | PIF INT COLON INT THEN stmt ELSE stmt ENDPIF
   { Lang.SPSeq ($6, $8, Q.from_ints $2 ($2 + $4), $2, $4) }

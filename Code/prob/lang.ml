@@ -71,11 +71,12 @@ type stmt =
   | SSeq     of stmt * stmt
   | SPSeq    of stmt * stmt * Q.t * int * int
   | SAssign  of varid * aexp
+  | SEnumAssign of varid * varid * aexp
   | SDefine  of varid * datatype
   | SIf      of lexp * stmt * stmt
   | SWhile   of lexp * stmt
   | SUniform of varid * int * int
-  | SEnumUniform of varid * aexp * aexp
+  | SEnumUniform of varid * varid * aexp * aexp
   | SOutput  of varid * (agent list)
 
 (*
@@ -190,6 +191,12 @@ let rec print_stmt_pretty s tabs =
         print_string (varid_to_string name);
         printf " = ";
         print_aexp ae1
+    | SEnumAssign (enum_cls, name, ae1) ->
+        print_string tabs;
+        print_string (varid_to_string enum_cls);
+        print_string (varid_to_string name);
+        printf " = ";
+        print_aexp ae1
     | SIf (guardlexp, s1, s2) ->
         print_string tabs;
         printf "if ";
@@ -215,7 +222,7 @@ let rec print_stmt_pretty s tabs =
     | SUniform (varid, blower, bupper) ->
         print_string tabs;
         printf "%s = uniform %d %d" (varid_to_string varid) blower bupper
-    | SEnumUniform (varid, blower_var, bupper_var) ->
+    | SEnumUniform (enum_cls, varid, blower_var, bupper_var) ->
         print_string tabs;
         printf "%s = uniform " (varid_to_string varid);
         (print_aexp blower_var);
@@ -324,6 +331,8 @@ let rec render_stmt_pretty_latex s tabs =
           (r s2 (tabs ^ ""))
     | SAssign (name, ae1) ->
         sprintf "\\sassign{%s}{%s}" (render_id_latex name) (raexp ae1)
+    | SEnumAssign (enum_cls, name, ae1) ->
+        sprintf "\\sassign{%s}{%s}" (render_id_latex name) (raexp ae1)
     | SIf (guardlexp, s1, SSkip) ->
         sprintf "\\sifk \\; %s \\; \\sthenk\\\\\n%s%s"
           (rlexp guardlexp)
@@ -344,7 +353,7 @@ let rec render_stmt_pretty_latex s tabs =
           (r bodystmt (tabs ^ "  "))
     | SUniform (varid, blower, bupper) ->
         sprintf "\\suniform{%s}{%d}{%d}" (render_id_latex varid) blower bupper
-    | SEnumUniform (varid, blower_var, bupper_var) ->
+    | SEnumUniform (enum_cls, varid, blower_var, bupper_var) ->
         sprintf "\\suniform{%s}{%s}{%s}" (render_id_latex varid)
           (raexp blower_var) (raexp bupper_var)
     | SDefine (varid, dt) ->
@@ -391,13 +400,15 @@ let print_stmt_type s =
         printf "seq"
     | SAssign (_, _) ->
         printf "assign"
+    | SEnumAssign (_,_, _) ->
+        printf "assign"
     | SIf (_, _, _) ->
         printf "if"
     | SWhile (_, _) ->
         printf "while"
     | SUniform (_, _, _) ->
         printf "uniform"
-    | SEnumUniform (_, _, _) ->
+    | SEnumUniform (_, _, _, _) ->
         printf "uniform"
     | SOutput (_, _) ->
         printf "output"
@@ -443,6 +454,7 @@ let rec collect_vars_lexp e =
 let rec collect_vars s =
   match s with
     | SAssign (name, varaexp) -> name :: (collect_vars_aexp varaexp)
+    | SEnumAssign (enum_cls, name, varaexp) -> name :: (collect_vars_aexp varaexp)
     | SSkip -> []
     | SSeq (s1, s2) -> List.append (collect_vars s1) (collect_vars s2)
     | SPSeq (s1, s2, p, n1, n2) -> List.append (collect_vars s1) (collect_vars s2)
@@ -454,7 +466,7 @@ let rec collect_vars s =
         List.append (collect_vars_lexp guardlexp)
           (collect_vars bodystmt)
     | SUniform (avarid, blower, bupper) -> [avarid]
-    | SEnumUniform (avarid, blower_var, bupper_var) -> [avarid]
+    | SEnumUniform (enum_cls, avarid, blower_var, bupper_var) -> [avarid]
     | SDefine (avarid, datatype) -> [avarid]
     | SOutput (avarid, toagents) -> [avarid]
 ;;
@@ -552,6 +564,12 @@ let rec _sa_of_stmt_subst_stmt indices s =
             Hashtbl.replace newindices name (1 + (_sa_of_stmt_subst_index indices name));
             (SAssign (_sa_of_stmt_newname newindices name, newvaraexp),
              newindices)
+      | SEnumAssign (enum_cls, name, varaexp) ->
+          let newvaraexp = raexp varaexp in
+          let newindices = Hashtbl.copy indices in
+            Hashtbl.replace newindices name (1 + (_sa_of_stmt_subst_index indices name));
+            (SEnumAssign (enum_cls, _sa_of_stmt_newname newindices name, newvaraexp),
+             newindices)
       | SSkip -> (s, indices)
       | SSeq (s1, s2) ->
           let (news1, newindices1) = rstmt s1 in
@@ -575,10 +593,10 @@ let rec _sa_of_stmt_subst_stmt indices s =
             Hashtbl.replace newindices varid (1 + (_sa_of_stmt_subst_index indices varid));
             (SUniform (_sa_of_stmt_newname newindices varid, blower, bupper),
              newindices)
-      | SEnumUniform (varid, blower_var, bupper_var) ->
+      | SEnumUniform (enum_cls, varid, blower_var, bupper_var) ->
           let newindices = Hashtbl.copy indices in
             Hashtbl.replace newindices varid (1 + (_sa_of_stmt_subst_index indices varid));
-            (SEnumUniform (_sa_of_stmt_newname newindices varid, blower_var, bupper_var),
+            (SEnumUniform (enum_cls, _sa_of_stmt_newname newindices varid, blower_var, bupper_var),
              newindices)
       | SDefine (varid, vartype) -> (s, indices)
       | _ -> raise (General_error "not implemented")
@@ -633,6 +651,7 @@ let rec fold_lexp f alexp a =
 let rec fold_stmt f astmt a =
   match astmt with
     | SAssign (name, varexp) -> f astmt a
+    | SEnumAssign (enum_cls, name, varexp) -> f astmt a
     | SDefine (name, vartype) -> f astmt a
     | SSkip -> f astmt a
     | SSeq (s1, s2) ->  fold_stmt f s2 (fold_stmt f s1 (f astmt a))
@@ -640,7 +659,7 @@ let rec fold_stmt f astmt a =
     | SIf (guardexp, s1, s2) -> fold_stmt f s2 (fold_stmt f s1 (f astmt a))
     | SWhile (guardexp, bodystmt) -> fold_stmt f bodystmt (f astmt a)
     | SUniform (varid, blower, bupper) -> f astmt a
-    | SEnumUniform (varid, blower_var, bupper_var) -> f astmt a
+    | SEnumUniform (enum_cls, varid, blower_var, bupper_var) -> f astmt a
     | SOutput (varid, agents) -> f astmt a
 
 let rec fold_pstmt f apstmt a =

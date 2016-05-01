@@ -75,7 +75,9 @@ exception Eval_error of string;;
         | SUniform (varid, blower, bupper) ->
             let a = (Random.int (bupper - blower + 1)) + blower in
               (a, (cstate#set varid a; cstate))
-        | SEnumUniform (_, _, _) ->
+        | SEnumUniform (_, _, _, _) ->
+          failwith "Preprocessing problems"
+        | SEnumAssign (_, _, _) ->
           failwith "Preprocessing problems"
         | SOutput (varid, toagent) ->
             (0, cstate)
