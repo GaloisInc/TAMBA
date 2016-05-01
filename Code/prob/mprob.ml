@@ -30,6 +30,7 @@ let translate_to_owner (astmt: Lang.stmt) (whichagent: agent) =
        match astmt with
          | SDefine ((owner, name), dt) -> SDefine ((whichagent, name), dt)
          | SUniform ((owner, name), a, b) -> SUniform ((whichagent, name), a, b)
+         | SEnumUniform ((owner, name), a, b) -> SEnumUniform ((whichagent, name), a, b)
          | SAssign ((owner, name), aexp) -> SAssign ((whichagent, name), aexp)
          | _ -> raise Unchanged)
     (fun alexp -> raise Unchanged)

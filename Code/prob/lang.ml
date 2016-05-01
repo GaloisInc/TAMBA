@@ -217,7 +217,7 @@ let rec print_stmt_pretty s tabs =
         printf "%s = uniform %d %d" (varid_to_string varid) blower bupper
     | SEnumUniform (varid, blower_id, bupper_id) ->
         print_string tabs;
-        printf "%s = uniform %d %d" (varid_to_string varid) (varid_to_string blower_id) (varid_to_string bupper_id)
+        printf "%s = uniform %s %s" (varid_to_string varid) (varid_to_string blower_id) (varid_to_string bupper_id)
     | SOutput (varid, agents) ->
         print_string tabs;
         printf "output %s to %s" (varid_to_string varid) (String.concat "," agents)

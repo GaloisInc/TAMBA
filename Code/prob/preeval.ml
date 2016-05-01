@@ -40,6 +40,9 @@ let rec subst_stmt s (varid: Lang.varid) aaexp =
       | SUniform (name, blower, bupper) ->
           if (name = varid) then (raise (General_error ("uniform to a variable (" ^ (Lang.varid_to_string name) ^ ") that will be substituted")));
           s
+      | SEnumUniform (name, blower_id, bupper_id) ->
+          if (name = varid) then (raise (General_error ("uniform to a variable (" ^ (Lang.varid_to_string name) ^ ") that will be substituted")));
+          s
       | SDefine (name, datatype) ->
           if (name = varid) then (raise (General_error ("definition of a variable (" ^ (Lang.varid_to_string name) ^ ") that will be substituted")));
           s

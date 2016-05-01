@@ -151,11 +151,11 @@ record_body :
 }
 
 enum_body :
-| varid enum_body {
-  $1::$2
+| varid SEMICOLON enum_body {
+  $1::$3
 }
-| varid{
-  $1
+| varid {
+  $1::[]
 }
 
 stmt :
@@ -173,9 +173,9 @@ stmt :
           let define_var_stmt = Lang.SDefine((new_var_name), Lang.TInt(32)) in
           let assign_var_stmt = Lang.SAssign ((new_var_name), Lang.AEInt(ctr)) in
           let curr_stmt = Lang.SSeq(define_var_stmt, assign_var_stmt) in
-          ((enum_varid_str, Lang.TInt(32))::datatypes, varid_str::ids, (Lang.SSeq(curr_stmt, stmts)), ctr+1)
+          ((enum_varid_str, Lang.TInt(32))::datatypes, enum_varid_str::ids, (Lang.SSeq(curr_stmt, stmts)), ctr+1)
 
-      ) ([],[],Lang.SSkip,0) enum_ids in
+      ) ([],[],Lang.SSkip, 0) enum_ids in
 
     let record_type = Lang.TRecord(typedef) in
     let record_data = Lang.AERecord (field_ids) in
@@ -184,10 +184,9 @@ stmt :
 
     Lang.SSeq(record_assign, stmts)
 }
-
-| TENUM varid ASSIGN UNIFORM varid varid { Lang.SSeq (Lang.SDefine ($2, $1),
-						     Lang.SEnumUniform ($2, $5, $6))}
-
+| TENUM varid varid ASSIGN UNIFORM varid varid {
+  Lang.SSeq (Lang.SDefine ($3, Lang.TInt(32)), Lang.SEnumUniform ($3, $6, $7))
+}
 | TRECORD varid ASSIGN LB record_body RB {
     let fields = $5 in
     let (record_varid_agent, record_varid_str) = $2 in

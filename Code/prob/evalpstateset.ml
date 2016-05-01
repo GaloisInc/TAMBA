@@ -70,11 +70,12 @@ struct
       | SUniform (varid, blower, bupper) ->
           let vars_remain = list_subtract (PSS.vars p) [varid] in
           let p = PSS.project p vars_remain in
-            PSS.prod
-              p
-              (PSS.make_uniform varid (Z.of_int blower) (Z.of_int bupper)) (* todo: parse directly into Z.t *)
+          PSS.prod p
+            (PSS.make_uniform varid (Z.of_int blower) (Z.of_int bupper)) (* todo: parse directly into Z.t *)
 
       | SEnumUniform (varid, v_blower, v_bupper) ->
+        let vars_remain = list_subtract (PSS.vars p) [varid] in
+        let p = PSS.project p vars_remain in
         failwith "Not implemented"
 
   (* peval_start: stmt -> string list -> dist

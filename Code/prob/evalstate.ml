@@ -42,7 +42,35 @@ exception Eval_error of string;;
   (* eval: stmt -> state -> (int * state)
      Evaluate stmt cstmt within state cstate, raise Eval_error if expression cannot be evaluated
      to a value. *)
-  let rec eval cstmt (cstate: state) : (int * state) =
+  let rec eval_enum_uniform cstmt (cstate: state) =
+    match cstmt with
+    | SDefine (name, datatype) ->
+      SDefine (name, datatype)
+    | SAssign (name, varaexp) ->
+      SAssign (name, varaexp)
+    | SPSeq (s1, s2, p, n1, n2) ->
+      SPSeq ( eval_enum_uniform s1 cstate, eval_enum_uniform s2 cstate, p, n1, n2)
+    | SSeq (stmt1, stmt2) ->
+      let s1 = eval_enum_uniform stmt1 cstate in
+      let s2 = eval_enum_uniform stmt2 state1 in
+      SSeq(s1, s2)
+    | SIf (guardlexp, stmt1, stmt2) ->
+      SIf (guardlexp, eval_enum_uniform stmt1 cstate, eval_enum_uniform stmt2 cstate)
+    | SWhile (guardlexp, stmtbody) ->
+      let s = eval_enum_uniform stmtbody cstate
+      SWhile (guardlexp, s)
+    | SSkip -> SSkip
+    | SUniform (varid, blower, bupper) ->
+      SUniform (varid, blower, bupper)
+    | SEnumUniform (varid, blower_id, bupper_id) ->
+      let blower = cstate#get blower_id in
+      let bupper = cstate#get bupper_id in
+      SUniform (varid, blower, bupper)
+    | SOutput (varid, toagent) ->
+      SOutput (varid, toagent)
+
+
+let rec eval cstmt (cstate: state) : (int * state) =
     let cstate = cstate#copy in
       match cstmt with
         | SDefine (name, datatype) ->
@@ -76,11 +104,10 @@ exception Eval_error of string;;
         | SUniform (varid, blower, bupper) ->
             let a = (Random.int (bupper - blower + 1)) + blower in
               (a, (cstate#set varid a; cstate))
-        | SEnumUniform (varid, id_blower, id_bupper) ->
-          let blower = cstate#get id_blower in
-          let bupper = cstate#get id_upper in
+        | SEnumUniform (varid, blower_id, bupper_id) ->
+          let blower = cstate#get blower_id in
+          let bupper = cstate#get bupper_id in
           let a = (Random.int (bupper - blower + 1)) + blower in
           (a, (cstate#set varid a; cstate))
-
         | SOutput (varid, toagent) ->
             (0, cstate)
