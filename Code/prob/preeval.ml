@@ -40,6 +40,14 @@ let rec subst_stmt s (varid: Lang.varid) aaexp =
       | SUniform (name, blower, bupper) ->
           if (name = varid) then (raise (General_error ("uniform to a variable (" ^ (Lang.varid_to_string name) ^ ") that will be substituted")));
           s
+      | SEnumUniform (name, blower_aexp, bupper_aexp) ->
+        if (name = varid) then (raise (General_error ("assignment to a variable (" ^ (Lang.varid_to_string name) ^ ") that will be substituted")));
+        let blower_aexp = raexp (blower_aexp) in
+        let bupper_aexp = raexp (bupper_aexp) in
+        let ret_stmt = match (blower_aexp, bupper_aexp) with
+        | (AEInt(blower), AEInt(bupper)) -> SUniform (name, blower, bupper)
+        | _ -> SEnumUniform(name, blower_aexp, bupper_aexp) in
+        ret_stmt
       | SDefine (name, datatype) ->
           if (name = varid) then (raise (General_error ("definition of a variable (" ^ (Lang.varid_to_string name) ^ ") that will be substituted")));
           s

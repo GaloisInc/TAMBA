@@ -1,0 +1,17 @@
+secret: #include "bday.secret"
+
+belief:
+  #enum day = { SUN, MON, TUE, WED, THUR, FRI, SAT} in
+  enum day s_bday = uniform day.MON day.THUR;
+  int s_byear = uniform 1956 1992;
+
+policy:	max_prob_output [s_bday s_byear] 1/1
+
+querydef bday c_day -> out : #include "bday_bday.query"
+querydef spec c_year -> out : #include "bday_spec.query"
+
+query bday: int c_day = 3;
+
+query bday: int c_day = 2;
+
+query spec: int c_year = 2011;

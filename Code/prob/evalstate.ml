@@ -33,7 +33,7 @@ exception Eval_error of string;;
   let rec eval_aexp_assign (caexp : aexp) (name : Lang.varid)
       (cstate : state) : (int * state) =
     match caexp with
-    | AERecord record -> let (_, namestr) = name in
+    | AERecord record ->
       (cstate#set_record name record) ;
             (0, cstate)
       | _ -> let varval = eval_aexp caexp cstate in
@@ -46,7 +46,6 @@ exception Eval_error of string;;
     let cstate = cstate#copy in
       match cstmt with
         | SDefine (name, datatype) ->
-          let (_, name_str) = name in
             (0, (cstate#addvar name; cstate))
         | SAssign (name, varaexp) ->
           eval_aexp_assign varaexp name cstate
@@ -76,5 +75,7 @@ exception Eval_error of string;;
         | SUniform (varid, blower, bupper) ->
             let a = (Random.int (bupper - blower + 1)) + blower in
               (a, (cstate#set varid a; cstate))
+        | SEnumUniform (_, _, _) ->
+          failwith "Preprocessing problems"
         | SOutput (varid, toagent) ->
             (0, cstate)

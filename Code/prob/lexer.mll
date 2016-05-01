@@ -20,6 +20,8 @@ rule token = parse
   | "false"     { FALSE }
   | "uniform"   { UNIFORM }
   | "#define"   { DEFINE }
+  | "#enum"     { ENUM }
+  | "enum"      { TENUM }
   | "#include"  { INCLUDE }
   | "in"        { IN }
   | "secret"    { SECRET }

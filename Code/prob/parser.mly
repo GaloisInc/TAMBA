@@ -23,11 +23,12 @@
 %token LAND LOR
 %token SKIP EQUALS
 %token UNIFORM
-%token DEFINE INCLUDE IN
+%token DEFINE INCLUDE IN ENUM
 %token OUTPUT TO
 
 %token <int> TINT
 %token TINTDEF
+%token TENUM
 %token TBOOL
 %token TRECORD
 %token ASSIGN
@@ -107,9 +108,27 @@ aexp :
 | LP aexp RP { $2 }
 ;
 
+enum_body :
+| varid COMMA enum_body { $1::$3}
+| varid { $1::[] }
+
 
 pstmt :
 | DEFINE varid ASSIGN aexp IN pstmt { Lang.PSSubst ($2, $4, $6) }
+
+| ENUM varid ASSIGN LB enum_body RB IN pstmt {
+  let enum_types = $5 in
+  let (_, enum_name) = $2 in
+  let (_, command) = List.fold_left (
+    fun (ctr, ps) id ->
+      let (agent, name) = id in
+      (*print_endline("test:"^enum_name^"."^name);*)
+      (*print_endline(string_of_int (ctr));*)
+      (ctr+1, Lang.PSSubst ((agent, enum_name^"."^name), AEInt(ctr), ps))
+    ) (0, $8) enum_types in
+  command
+}
+
 | INCLUDE STRING IN pstmt { Lang.PSInc ($2, ! Globals.currently_parsing, $4) }
 | INCLUDE STRING { Lang.PSInc ($2, !Globals.currently_parsing, Lang.PSStmt Lang.SSkip) }
 | stmt { Lang.PSStmt ($1) }
@@ -189,6 +208,7 @@ stmt :
 						     Lang.SUniform ($2, $5, $6))}
 | datatype varid { Lang.SDefine ($2, $1) }
 | varid ASSIGN UNIFORM INT INT { Lang.SUniform ($1, $4, $5) }
+| TENUM varid varid ASSIGN UNIFORM aexp aexp { Lang.SEnumUniform ($3, $6, $7) }
 | varid ASSIGN aexp { Lang.SAssign ($1, $3) }
 | PIF INT COLON INT THEN stmt ELSE stmt ENDPIF
   { Lang.SPSeq ($6, $8, Q.from_ints $2 ($2 + $4), $2, $4) }

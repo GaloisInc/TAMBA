@@ -73,7 +73,8 @@ struct
             PSS.prod
               p
               (PSS.make_uniform varid (Z.of_int blower) (Z.of_int bupper)) (* todo: parse directly into Z.t *)
-
+      | SEnumUniform (varid, blower_var, bupper_var) ->
+        failwith "Issues with preevaluation"
   (* peval_start: stmt -> string list -> dist
      Evaluates the given statement on a distribution in which the only possible states is one in which
      all variables have value 0. *)
