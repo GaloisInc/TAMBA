@@ -45,7 +45,7 @@
 - name: Install camlp5
   become: yes
   become_user: vagrant
-  command: opam install camlp5 -y
+  command: opam install camlp5=6.15 -y
 
 - name: Install ocaml GMP bindings
   become: yes

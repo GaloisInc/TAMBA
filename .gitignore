@@ -3,3 +3,6 @@
 qif/
 *.cmi
 *.cmo
+*.hi
+*.o
+*.log
