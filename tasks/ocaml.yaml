@@ -45,12 +45,27 @@
 - name: Install camlp5
   become: yes
   become_user: vagrant
-  command: opam install camlp5 -y
+  command: opam install camlp5=6.15 -y
 
 - name: Install ocaml GMP bindings
   become: yes
   become_user: vagrant
   command: opam install mlgmp -y
+
+- name: Install ocaml GSL-bindings
+  become: yes
+  become_user: vagrant
+  command: opam install gsl -y
+
+- name: Install pareto
+  become: yes
+  become_user: vagrant
+  command: opam install pareto -y
+
+- name: Install utop
+  become: yes
+  become_user: vagrant
+  command: opam install utop -y
 
 - name: Ensure OPAM env is set in bash profile
   shell: sh -c 'echo "eval \`opam config env\`" >> /home/vagrant/.profile' && touch /home/vagrant/.opam-config-profile

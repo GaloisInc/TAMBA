@@ -1,0 +1,16 @@
+secret:
+  (* Ship location: 0 to 100? *)
+  
+  (* US Abe Lincoln *)
+  int lincoln_loc  = 50;
+belief:
+  (* Uniform beliefs over the input space for each secret *)
+
+  (* US Abe Lincoln *)
+  int lincoln_loc  = uniform 0 100;
+
+querydef is_in_range target_range_min target_range_max -> in_range : #include "scenario.query"
+
+query is_in_range:
+int target_range_min = 35;
+int target_range_max = 65;

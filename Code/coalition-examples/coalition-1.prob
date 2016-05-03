@@ -1,0 +1,121 @@
+secret: (* Ship type: CVN -> 1, AH -> 2, CG -> 3, Frigate -> 4 *)
+  (* Number of berths: 0 to 10? *)
+  (* Ship location: 0 to 50? *)
+  
+  (* US Abe Lincoln *)
+  int lincoln_loc  = 3;
+  int lincoln_type = 1;
+  int lincoln_bert = 3;
+
+  (* US Comfort *)
+  int comfort_loc  = 35;
+  int comfort_type = 2;
+  int comfort_bert = 8;
+
+  (* US Lake Champlain *)
+  int champlain_loc  = 2;
+  int champlain_type = 3;
+  int champlain_bert = 2;
+
+  (* US Achilles *)
+  int achilles_loc  = 20;
+  int achilles_type = 3;
+  int achilles_bert = 3;
+
+  (* US Fake Name *)
+  int fake_loc  = 12;
+  int fake_type = 4;
+  int fake_bert = 1;
+
+belief:
+  (* Uniform beliefs over the input space for each secret *)
+
+  (* US Abe Lincoln *)
+  int lincoln_loc  = uniform 0 50;
+  int lincoln_type = uniform 1 4;
+  int lincoln_bert = uniform 0 10;
+
+  (* US Comfort *)
+  int comfort_loc  = uniform 0 50;
+  int comfort_type = uniform 1 4;
+  int comfort_bert = uniform 0 10;
+
+  (* US Lake Champlain *)
+  int champlain_loc  = uniform 0 50;
+  int champlain_type = uniform 1 4;
+  int champlain_bert = uniform 0 10;
+
+  (* US Achilles *)
+  int achilles_loc  = uniform 0 50;
+  int achilles_type = uniform 1 4;
+  int achilles_bert = uniform 0 10;
+
+  (* US Fake Name *)
+  int fake_loc  = uniform 0 50;
+  int fake_type = uniform 1 4;
+  int fake_bert = uniform 0 10;
+
+
+querydef who_is_closer_with_berths target_loc target_berths -> who_closer :
+
+int diff_abe = lincoln_loc - target_loc;
+int diff_comfort = comfort_loc - target_loc;
+int diff_champ = champlain_loc - target_loc;
+int diff_achilles = achilles_loc - target_loc;
+int diff_fake = fake_loc - target_loc;
+
+(* Make all distances positive *)
+if diff_abe < 0 then
+  diff_abe = -1 * diff_abe
+endif;
+if diff_comfort < 0 then
+  diff_comfort = -1 * diff_comfort
+endif;
+if diff_champ < 0 then
+  diff_champ = -1 * diff_champ
+endif;
+if diff_achilles < 0 then
+  diff_achilles = -1 * diff_achilles
+endif;
+if diff_fake < 0 then
+  diff_fake = -1 * diff_fake
+endif;
+
+(* Check to see who has enough berths *)
+
+int who_closer = 0;
+int closest_dist = 51;
+
+if lincoln_bert >= target_berths then 
+  who_closer = 1;
+  closest_dist = diff_abe;
+endif;
+if comfort_bert >= target_berths then 
+  if diff_comfort < closest_dist then
+    who_closer = 2;
+    closest_dist = diff_comfort;
+  endif;
+endif;
+if champlain_bert >= target_berths then 
+  if diff_champ < closest_dist then
+    who_closer = 3;
+    closest_dist = diff_champ;
+  endif;
+endif;
+if achilles_bert >= target_berths then 
+  if diff_achilles < closest_dist then
+    who_closer = 4;
+    closest_dist = diff_achilles;
+  endif;
+endif;
+if fake_bert >= target_berths then 
+  if diff_fake < closest_dist then
+    who_closer = 5;
+    closest_dist = diff_fake;
+  endif;
+endif;
+
+query who_is_closer_with_berths:
+(* Emergency at location 6 needing 3 *)
+int target_loc = 6;
+int target_berths = 3

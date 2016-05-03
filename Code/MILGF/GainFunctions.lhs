@@ -262,6 +262,9 @@ define it in terms of a given set of priors.
 > minCapacity :: [Prior] -> Channel -> Entropy
 > minCapacity pis chan = maximum $ map (flip minLeakage chan) pis
 
+> minLeakageMax :: Prior -> Channel -> Entropy
+> minLeakageMax pi chan = logBase 2 $ pVulnMax pi chan / vuln pi chan
+
 
 Gain Functions
 ==============
