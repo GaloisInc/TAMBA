@@ -269,6 +269,7 @@ let rec linear_expression_of_aexp vmap ae =
                  Minus ((r exp1),
                         (r exp2))
              | (_, _) -> raise (General_error "todo: other operations"))
+      | AERecord _ -> Coefficient (Z.of_int 1) (*failwith "Unimplemented"*)
 
 let rec logical_of_lexp vmap alexp : LE.logical =
   let pone e = Plus (e, Coefficient (Z.of_int 1)) in

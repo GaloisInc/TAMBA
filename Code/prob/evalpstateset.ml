@@ -34,6 +34,8 @@ struct
           PSS.addvar p name
 
       | SOutput (name, toagent) -> p
+      | SAssign (name, AERecord _) ->
+        p
 
       | SAssign (name, varaexp) ->
           PSS.transform p cstmt

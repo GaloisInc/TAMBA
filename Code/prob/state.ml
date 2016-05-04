@@ -1,9 +1,17 @@
 open Util
 
+(* Records stored in state's "records" hashtbl that maps record variable ids
+ * to records (lists of field_name*datatype). Record fields implemented as
+ * ordinary variables with "<record name>." prefix. Storing records separately
+ * in state allows records passed in as query parameters to be expanded into
+ * their field variables.
+ * *)
+
 class type state = object
   method canon: (Lang.varid * int) list
   method addvar: Lang.varid -> unit
   method set: Lang.varid -> int -> unit
+  method set_record: Lang.varid -> Lang.record -> unit
   method get: Lang.varid -> int
   method vars: Lang.varid list
   method iter: (Lang.varid -> int -> unit) -> unit
@@ -17,10 +25,31 @@ class type state = object
   method remove: Lang.varid -> unit
   method project: Lang.varid list -> unit
   method set_vals: (Lang.varid, int) Hashtbl.t -> unit
+  method is_record: (Lang.varid) -> bool
+  method get_vals: (Lang.varid) -> Lang.varid list
+  method print_records: unit -> unit
+  method print_vals: unit -> unit
 end;;
 
-class state_hashed h : state = object (self)
-  val mutable vals: (Lang.varid, int) Hashtbl.t = h
+class state_hashed hv hr : state = object (self)
+  val mutable vals: (Lang.varid, int) Hashtbl.t = hv
+  val mutable records: (Lang.varid, Lang.record) Hashtbl.t = hr
+
+  method print_records unit : unit =
+    print_endline "++++++++++++++++++++++++++++++++";
+    Hashtbl.iter  (fun (_,name) _ -> print_endline name) records;
+    print_endline "++++++++++++++++++++++++++++++++";
+
+  method print_vals unit : unit =
+    print_endline "+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+    Hashtbl.iter  (fun (_,name) _ -> print_endline name) vals;
+    print_endline "-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+
+  method is_record (r:Lang.varid) : bool  =
+    Hashtbl.mem records r
+
+  method get_vals (r:Lang.varid) : Lang.varid list =
+    List.map (fun name -> ("", name)) (Hashtbl.find records r)
 
   method set_vals h =
     ignore(vals <- h)
@@ -37,11 +66,18 @@ class state_hashed h : state = object (self)
     else
       raise (General_error ("undefined variable " ^ (Lang.varid_to_string varname)))
 
-  method get varname: int =
+  method set_record (varname : Lang.varid) (r : Lang.record) : unit =
+    if Hashtbl.mem vals varname && ((Hashtbl.find vals varname) = 0) then
+       Hashtbl.replace records varname r
+    else
+      (
+      raise (General_error ("undefined record " ^ (Lang.varid_to_string varname))))
+
+  method get (varname : Lang.varid) : int =
     try
       Hashtbl.find vals varname
     with
-      | Not_found -> raise (General_error ("undefined variable " ^ (Lang.varid_to_string varname)))
+    | Not_found -> raise (General_error ("undefined variable " ^ (Lang.varid_to_string varname)))
 
   method vars: (Lang.varid list) = Hashtbl.fold (fun k v accum -> k :: accum ) vals []
 
@@ -60,7 +96,7 @@ class state_hashed h : state = object (self)
   method set_list sl =
     List.iter (fun (vname, vval) -> ignore (self#addvar vname; self#set vname vval)) sl
 
-  method copy = new state_hashed (Hashtbl.copy vals)
+  method copy = new state_hashed (Hashtbl.copy vals) (Hashtbl.copy records)
 
   method eq (s: state) =
     let s1 = self#canon in
@@ -89,7 +125,7 @@ class state_hashed h : state = object (self)
 end;;
 
 class state_empty = object
-  inherit state_hashed (Hashtbl.create 4)
+  inherit state_hashed (Hashtbl.create 4) (Hashtbl.create 4)
 end;;
 
 class state_default vars =
@@ -98,7 +134,7 @@ class state_default vars =
       (List.iter (fun varid -> ignore (Hashtbl.replace h varid 0)) vars);
        h) in
 object
-  inherit state_hashed h
+  inherit state_hashed h (Hashtbl.create 4)
 end;;
 
 let rec states_merge sl1 sl2 =

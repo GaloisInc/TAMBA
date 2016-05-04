@@ -9,17 +9,18 @@ exception Eval_error of string;;
 
   (* eval_aexp: aexp -> state -> int *)
   (* evaluates aexp caexp on given state cstate *)
-  let rec eval_aexp caexp (cstate: state) =
+  let rec eval_aexp caexp (cstate: state) : int =
     match caexp with
       | AEVar (id) -> cstate#get id
       | AEBinop (op, aexp1, aexp2) ->
           let (bname, beval) = op in
             beval (eval_aexp aexp1 cstate) (eval_aexp aexp2 cstate)
       | AEInt (v) -> v
+      | AERecord _ -> failwith "Cannot evaluate records to ints"
 
   (* eval_lexp: lexp -> state -> int *)
   (* evaluates lexp clexp on given state cstate *)
-  let rec eval_lexp clexp (cstate: state) =
+  let rec eval_lexp clexp (cstate: state) : int =
     match clexp with
       | LEBinop (op, lexp1, lexp2) ->
           let (bname, beval) = op in
@@ -29,6 +30,15 @@ exception Eval_error of string;;
             beval (eval_aexp aexp1 cstate) (eval_aexp aexp2 cstate)
       | LEBool (v) -> v
 
+  let rec eval_aexp_assign (caexp : aexp) (name : Lang.varid)
+      (cstate : state) : (int * state) =
+    match caexp with
+    | AERecord record -> let (_, namestr) = name in
+      (cstate#set_record name record) ;
+            (0, cstate)
+      | _ -> let varval = eval_aexp caexp cstate in
+        (varval, (cstate#set name varval; cstate))
+
   (* eval: stmt -> state -> (int * state)
      Evaluate stmt cstmt within state cstate, raise Eval_error if expression cannot be evaluated
      to a value. *)
@@ -36,10 +46,10 @@ exception Eval_error of string;;
     let cstate = cstate#copy in
       match cstmt with
         | SDefine (name, datatype) ->
+          let (_, name_str) = name in
             (0, (cstate#addvar name; cstate))
         | SAssign (name, varaexp) ->
-            let varval = eval_aexp varaexp cstate in
-              (varval, (cstate#set name varval; cstate))
+          eval_aexp_assign varaexp name cstate
         | SPSeq (s1, s2, p, n1, n2) ->
             if (Random.float 1.0) < (Q.to_float p) then
               eval s1 cstate

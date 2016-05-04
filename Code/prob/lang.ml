@@ -5,14 +5,22 @@ open Gmp
 type datatype =
   | TBool
   | TInt of int
+  | TRecord of (string * datatype) list
 
-let datatype_size dt = match dt with
+let rec datatype_size (dt:datatype) : int = match dt with
   | TInt (i) -> i
   | TBool -> 1
+  | TRecord r -> List.fold_left (fun a (_, dt') -> a+(datatype_size dt')) 0 r
 
-let render_datatype t = match t with
+let rec render_datatype (t:datatype) : string = match t with
   | TBool -> "bool"
   | TInt (size) -> sprintf "int%d" size
+  | TRecord (r) ->
+    let rendered_fields = List.map (
+        fun (field, dt) ->field^":"^(render_datatype dt)) r in
+    let rendered_body = String.concat ";" rendered_fields in
+    "{"^rendered_body^"}"
+  | _ -> failwith "Invalid datatype"
 
 type agent = string
 type varid = agent * string
@@ -26,13 +34,17 @@ type abinop = (string * (int -> int -> int))
 type lbinop = (string * (int -> int -> int))
 type lreln  = (string * (int -> int -> int))
 
+
 let varid_belongs_to anagent (owner, id) = anagent = owner;;
+
+type record = (string) list
 
 (* arithmetic expression *)
 type aexp =
   | AEVar   of varid
   | AEInt   of int
   | AEBinop of abinop * aexp * aexp
+  | AERecord of record (* Maps from true field names to assigned variable names*)
 
 (*
   match aexp with
@@ -123,6 +135,12 @@ let rec print_aexp e =
           print_string " ";
           print_aexp e2;
           print_string ")"
+    | AERecord r ->
+      print_string "{ ";
+      List.iter (fun (field_name) ->
+          print_string (field_name^" ")
+        ) r;
+      print_string "}"
 
 (* print_lexp: lexp -> unit
    Prints the given logical expression. *)
@@ -253,6 +271,7 @@ let rec render_aexp_latex e =
           (_render_binop_latex binop)
           (render_aexp_latex e1)
           (render_aexp_latex e2)
+    | AERecord _ -> failwith "Unimplmeneted"
 
 let rec render_lexp_latex e =
   match e with
@@ -395,6 +414,7 @@ let rec collect_vars_aexp e =
   | AEInt (v) -> []
   | AEVar (id) -> [id]
   | AEBinop (b, exp1, exp2) -> List.append (collect_vars_aexp exp1) (collect_vars_aexp exp2)
+  | AERecord r -> []
 ;;
 
 (* collect_vars_lexp: lexp -> string list
@@ -550,10 +570,10 @@ let sa_of_stmt s inputs outputs =
   (* todo: last assignment of an output var needs not to be rewritten *)
 
   let indices = Hashtbl.create 8 in
-    List.iter
-      (fun v ->
-         Hashtbl.replace indices v 0;
-      ) inputs;
+  List.iter
+    (fun v ->
+       Hashtbl.replace indices v 0;
+    ) inputs;
 
   let itemp = Hashtbl.copy indices in
   let (ignore, itemp) = _sa_of_stmt_subst_stmt itemp s in
@@ -584,6 +604,7 @@ let rec fold_aexp f aaexp a =
     | AEInt (v) -> f aaexp a
     | AEVar (id) -> f aaexp a
     | AEBinop (b, exp1, exp2) -> (fold_aexp f exp2 (fold_aexp f exp1 (f aaexp a)))
+    | AERecord _ -> failwith "Fold AERecord Unimplemented"
 
 let rec fold_lexp f alexp a =
     match alexp with

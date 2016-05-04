@@ -29,6 +29,7 @@
 %token <int> TINT
 %token TINTDEF
 %token TBOOL
+%token TRECORD
 %token ASSIGN
 
 %left SEMICOLON
@@ -64,15 +65,14 @@
 /* lang */
 
 varid:
-| VAR DOT VAR { ($1, $3) }
-| VAR { ("", $1) } 
+| VAR { ("", $1) }
 ;
 
 lbinop :
 | LAND    { ("and", Lang.logical_and) }
 | LOR     { ("or", Lang.logical_or) }
 ;
- 
+
 lreln :
 | LEQ     { ("<=", Lang.leq) }
 | GEQ     { (">=", Lang.geq) }
@@ -107,6 +107,7 @@ aexp :
 | LP aexp RP { $2 }
 ;
 
+
 pstmt :
 | DEFINE varid ASSIGN aexp IN pstmt { Lang.PSSubst ($2, $4, $6) }
 | INCLUDE STRING IN pstmt { Lang.PSInc ($2, ! Globals.currently_parsing, $4) }
@@ -135,8 +136,53 @@ nonemptyagentlist:
 | agent COMMA agentlist { $1 :: $3 }
 ;
 
+record_body :
+| datatype varid ASSIGN aexp SEMICOLON record_body {
+  ($1, $2, Some($4), None)::($6) }
+| datatype varid ASSIGN aexp {
+  [($1, $2, Some($4), None)]
+  }
+| datatype varid ASSIGN UNIFORM INT INT  {
+  [($1, $2, None, Some($5, $6))]
+}
+| datatype varid ASSIGN UNIFORM INT INT SEMICOLON record_body {
+  ($1, $2, None, Some($5, $6))::$8
+}
+
 stmt :
 | stmt SEMICOLON stmt { Lang.SSeq ($1, $3) }
+| TRECORD varid ASSIGN LB record_body RB {
+    let fields = $5 in
+    let (record_varid_agent, record_varid_str) = $2 in
+    let (typedef, field_ids, stmts) =
+      List.fold_left (
+        fun (datatypes, ids, stmts) (datatype, field_varid, val_opt, dist_opt) ->
+          let (varid_agent, varid_str) = field_varid in
+          match val_opt with
+          | Some (value) ->
+              let new_var_name = varid_agent, record_varid_str^"."^varid_str in
+
+              let define_var_stmt = Lang.SDefine((new_var_name), datatype) in
+              let assign_var_stmt = Lang.SAssign ((new_var_name), value) in
+              let curr_stmt =Lang.SSeq(define_var_stmt, assign_var_stmt) in
+              ((varid_str, datatype)::datatypes, varid_str::ids, (Lang.SSeq(curr_stmt, stmts)))
+          | None ->
+            (match dist_opt with
+            | Some (low_b, up_b) ->
+              let new_var_name = varid_agent, record_varid_str^"."^varid_str in
+              let dist_stmt = Lang.SUniform (new_var_name, low_b, up_b) in
+              let define_var_stmt = Lang.SDefine((new_var_name), datatype) in
+              let curr_stmt =Lang.SSeq(define_var_stmt, dist_stmt) in
+              ((varid_str, datatype)::datatypes, varid_str::ids, (Lang.SSeq(curr_stmt, stmts)))
+            | None -> failwith "variable not assigned anything")
+      ) ([],[],Lang.SSkip) fields in
+    let record_type = Lang.TRecord(typedef) in
+    let record_data = Lang.AERecord (field_ids) in
+    let record_assign =
+      Lang.SSeq(Lang.SDefine($2, record_type), Lang.SAssign($2, record_data)) in
+
+    Lang.SSeq(record_assign, stmts)
+  }
 | datatype varid ASSIGN aexp { Lang.SSeq (Lang.SDefine ($2, $1),
 					  Lang.SAssign ($2, $4))}
 | datatype varid ASSIGN UNIFORM INT INT { Lang.SSeq (Lang.SDefine ($2, $1),
@@ -189,7 +235,7 @@ secretlist :
 | secret secretlist { $1 :: $2 }
 ;
 
-belief : 
+belief :
 | BELIEF COLON pstmt { ([], [], $3) }
 | BELIEF agentlist ABOUT agentlist COLON pstmt { ($2, $4, $6) }
 ;
@@ -198,13 +244,13 @@ belieflist :
 | { [] }
 | belief belieflist { $1 :: $2 }
 ;
-  
+
 querylist :
 | { [] }
 | query querylist { $1 :: $2 }
 ;
 
-query : 
+query :
 | QUERY COLON pstmt { $3 }
 ;
 

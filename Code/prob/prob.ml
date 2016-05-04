@@ -99,8 +99,15 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
         printf "%s\n" (varid_list_to_string outlist);
 
         let secretvars = ESYS.psrep_vars ps.PSYS.belief in
+
+        (* TODO: Single assignment not working with records, maybe because
+         * arguments not being expanded yet and inlist doesn't contain
+         * them
+         * *)
+
         let sa_progstmt = (sa_of_stmt progstmt (List.append secretvars inlist) outlist) in
         let sa_progstmt = (if !Globals.use_dsa then sa_progstmt else progstmt) in
+        (*let sa_progstmt = progstmt in [> Temporary <]*)
 
           printf "-------------------------------------------------\n";
           printf "query %s from %s to %s\n"
@@ -163,6 +170,7 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
 
       let sa_beliefstmt = (sa_of_stmt beliefstmt [] secretvars) in
       let sa_beliefstmt = (if !Globals.use_dsa then sa_beliefstmt else beliefstmt) in
+      (*let sa_beliefstmt = beliefstmt in*)
 
       let startdist = ESYS.peval_start sa_beliefstmt in
 
