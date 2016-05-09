@@ -105,48 +105,53 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
          * them
          * *)
 
+        printf "Inlist: ";
+        printf "%s\n" (varid_list_to_string inlist);
+
+        (* TODO: Check whether this is necesary for us
         let sa_progstmt = (sa_of_stmt progstmt (List.append secretvars inlist) outlist) in
         let sa_progstmt = (if !Globals.use_dsa then sa_progstmt else progstmt) in
+         *)
         (*let sa_progstmt = progstmt in [> Temporary <]*)
 
-          printf "-------------------------------------------------\n";
-          printf "query %s from %s to %s\n"
-            queryname
-            (String.concat " " (List.map Lang.varid_to_string inlist))
-            (String.concat " " (List.map Lang.varid_to_string outlist));
-          print_stmt progstmt; printf "\n";
+        printf "-------------------------------------------------\n";
+        printf "query %s from %s to %s\n"
+          queryname
+          (String.concat " " (List.map Lang.varid_to_string inlist))
+          (String.concat " " (List.map Lang.varid_to_string outlist));
+        print_stmt progstmt; printf "\n";
 
-          ifverbose
-            (printf "query (single assignment):\n"; print_stmt sa_progstmt; printf "\n");
+        ifverbose
+          (printf "query (single assignment):\n"; print_stmt progstmt; printf "\n");
 
-          let ans = PSYS.policysystem_answer ps querytuple querystmt in
-          let res = ans.PSYS.result in
-          let ps = PSYS.policysystem_answered ps ans.PSYS.update in
+        let ans = PSYS.policysystem_answer ps querytuple querystmt in
+        let res = ans.PSYS.result in
+        let ps = PSYS.policysystem_answered ps ans.PSYS.update in
 
-            (match res with
-               | RTrueValue (vals) ->
-                   (printf "*** query was accepted\n")
-                     (* , "results: %s\n" (String.concat " " (List.map (fun (k,v) -> k ^ "=" ^ (string_of_int v)) vals))) *)
-               | RReject (reason) ->
-                   (printf "*** query was rejected due to: %s\n" reason;
-                    printf "*** belief will not be updated as a result of this query\n"))
-            ;
+          (match res with
+             | RTrueValue (vals) ->
+                 (printf "*** query was accepted\n")
+                   (* , "results: %s\n" (String.concat " " (List.map (fun (k,v) -> k ^ "=" ^ (string_of_int v)) vals))) *)
+             | RReject (reason) ->
+                 (printf "*** query was rejected due to: %s\n" reason;
+                  printf "*** belief will not be updated as a result of this query\n"))
+          ;
 
 
-            ifbench (
-              Globals.stop_timer Globals.timer_query;
-              Globals.mark_epoch ();
-              Globals.print_epoch ();
-              Globals.next_epoch ()
-            );
+        ifbench (
+          Globals.stop_timer Globals.timer_query;
+          Globals.mark_epoch ();
+          Globals.print_epoch ();
+          Globals.next_epoch ()
+        );
 
-            flush stdout;
+        flush stdout;
 
-          let ps_out = if !Globals.black_box
-                       then ps_in
-                       else ps in
+        let ps_out = if !Globals.black_box
+                     then ps_in
+                     else ps in
 
-          pmock_queries t querydefs ps_out
+        pmock_queries t querydefs ps_out
 
   let pmock asetup =
     Printexc.record_backtrace true;
