@@ -112,7 +112,7 @@ byPrec policies = do
   forM_ policies $ \pol -> do
     forM_ precisions $ \pr -> do
       forM_ samples $ \n -> do
-        (output, dt) <- time $ readProcess "bash" ["-c", makeCommand pol pr n] ""
+        (output, t) <- time $ readProcess "bash" ["-c", makeCommand pol pr n] ""
         --putStrLn output
         let result = makeResult output
         let (lo, hi) = bounds result n
