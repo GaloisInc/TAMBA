@@ -99,17 +99,20 @@ makeResult s = Result (read a) (read b) (read c) (read d) (read e) (read f) (rea
 --       putStr $ takeWhile (/= '\n') result
 --     putChar '\n'
 
+time action = do
+  t0 <- getTime Monotonic
+  x <- action
+  rnf x `pseq` return ()
+  t1 <- getTime Monotonic
+  let dt = (fromIntegral $ toNanoSecs $ diffTimeSpec t1 t0 :: Double) / (10^9)
+  return (x, dt)
+
 byPrec policies = do
   putStrLn "precision, samples, time, lo, hi, size"
   forM_ policies $ \pol -> do
     forM_ precisions $ \pr -> do
       forM_ samples $ \n -> do
-  
-        t0 <- getTime Monotonic
-        output <- readProcess "bash" ["-c", makeCommand pol pr n] ""
-        rnf output `pseq` return ()
-        t1 <- getTime Monotonic
-        let t = (fromIntegral $ toNanoSecs $ diffTimeSpec t1 t0 :: Double) / (10^9)
+        (output, dt) <- time $ readProcess "bash" ["-c", makeCommand pol pr n] ""
         --putStrLn output
         let result = makeResult output
         let (lo, hi) = bounds result n
