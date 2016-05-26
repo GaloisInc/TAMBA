@@ -1,0 +1,49 @@
+{\rtf1\ansi\ansicpg1252\cocoartf1404\cocoasubrtf460
+{\fonttbl\f0\fnil\fcharset0 Menlo-Regular;}
+{\colortbl;\red255\green255\blue255;}
+\margl1440\margr1440\vieww13260\viewh12160\viewkind0
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f0\fs36 \cf0 \CocoaLigature0 Algorithm 2:\
+  cmd   : grep "revised:" demo-1d-rewrite-box.txt\
+  prior : 1/1010045120210252210120045010001\
+  post  :      1/57436203641797102050781250\
+  leak  : 14.1 bits\
+  \
+Ship 3:\
+  cmd   : ./prob ../coalition-examples/demo-1d-s3-rewrite.prob --domain box | grep "revised:"\
+  prior : 1/1002001\
+  post  :   1/50125\
+  leak  : 4.3 bits\
+\
+Ship 5:\
+  cmd   : ./prob ../coalition-examples/demo-1d-s5-rewrite.prob --domain box | grep "revised:"\
+  prior : 1/1002001\
+  post  :  1/700850\
+  leak  : 0.52 bits\
+\
+Algorithm 2\'92:\
+  cmd   : ./prob ../coalition-examples/demo-1d-alt-rewrite.prob --domain box | grep "revised:"\
+  prior : 1/1010045120210252210120045010001\
+  post  :       1/3791428500381005859375000\
+  leak  : 18 bits\
+\
+Ship 3:\
+  cmd   : ./prob ../coalition-examples/demo-1d-alt-s3-rewrite.prob --domain box | grep "revised:"\
+  prior : 1/1002001\
+  post  :   1/50125\
+  leak  : 4.3 bits\
+\
+Ship 5:\
+  prior : 1/1002001\
+  post  :  1/600600\
+  leak  : 0.74 bits\
+\
+Sampling:\
+  cmd   : ./prob ../coalition-examples/demo-1d-rewrite.prob --domain box --precision 4 --samples 10000 | grep "revised".*:\
+  no sampling : 1\
+  bits        : 100\
+  sampling    : 0.000001\
+  bits        : 80\
+\
+}

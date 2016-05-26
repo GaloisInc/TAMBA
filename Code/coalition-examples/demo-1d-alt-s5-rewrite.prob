@@ -26,3 +26,7 @@ querydef enough_berths ship berths_needed -> result :
 query close_enough:
   int ship = 5;
   int dest = 250;
+
+query close_enough:
+  int ship = 5;
+  int dest = 250;

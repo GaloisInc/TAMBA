@@ -14,7 +14,7 @@ norm <- function(v) {
     return(v / sum(v))
 }
 
-# A range query that returns 1 if a <= x < b (with x between 0 and n)
+# A range query that returns 1 if a <= x < b (with x between 1 and n)
 range <- function(n,a,b) {
     pre = rep(1,a-1)
     mid = rep(0,b-a)

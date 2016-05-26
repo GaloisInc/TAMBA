@@ -38,3 +38,8 @@ query enough_berths:
 query enough_berths:
   int ship = 3;
   int berths_needed = 375;
+
+query enough_berths:
+  int ship = 3;
+  int berths_needed = 375;
+
