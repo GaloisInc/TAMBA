@@ -69,6 +69,9 @@ bounds result _ = (lo, hi)
   lo = min (fromIntegral $ smax result) $ max (fromIntegral $ smin result) $ (size result * betaLo a b)
   hi = max (fromIntegral $ smin result) $ min (fromIntegral $ smax result) $ (size result * betaHi a b)
 
+maxVulnerability :: Result -> Double
+maxVulnerability result = pmax result / mmin result
+
 eps = 0.001
 
 betaLo a b = quantile d eps
@@ -109,12 +112,23 @@ time action = do
 
 byPrec policies = do
   putStrLn "precision, samples, time, lo, hi, size"
+  do
+    pol <- policies
+    pr <- precisions
+    n <- samples
+    (output, t) <- lift . time $ readProcess "bash" ["-c", makeCommand pol pr n] ""
+    let 
+      result = makeResult output
+      vmax = maxVulnerability result
+    return $ printf 
+      
   forM_ policies $ \pol -> do
     forM_ precisions $ \pr -> do
       forM_ samples $ \n -> do
         (output, t) <- time $ readProcess "bash" ["-c", makeCommand pol pr n] ""
         --putStrLn output
         let result = makeResult output
+        vmax = maxVulnerability result
         let (lo, hi) = bounds result n
         printf "%d, %.3e, %.5f, %.3e, %.3e, %.3e\n" pr (fromIntegral n :: Double) t lo hi (size result)
 
