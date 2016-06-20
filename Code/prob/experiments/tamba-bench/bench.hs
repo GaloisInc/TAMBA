@@ -10,6 +10,7 @@ import Statistics.Distribution (quantile)
 import Control.Parallel
 import Control.DeepSeq
 import Debug.Trace
+import System.Timeout
 
 {-
 time :: IO String -> IO  (String, Double)
@@ -30,10 +31,10 @@ leave n xs = leave' xs (drop n xs)
     leave' (_:xs) (y:ys) = leave' xs ys
 
 precisions :: [Int]
-precisions = [1..5]
+precisions = [2,4,6,8,0]
 
 samples :: [Int]
-samples = 0 : 0 : map (10^) [1..7]
+samples = 0 : map (10^) [1..5]
 
 
 -- Parsing is currently baked into the command line, using unix tricks.
@@ -102,34 +103,38 @@ makeResult s = Result (read a) (read b) (read c) (read d) (read e) (read f) (rea
 --       putStr $ takeWhile (/= '\n') result
 --     putChar '\n'
 
-time action = do
+-- time :: Int -> IO a -> IO (Maybe a, 
+time tmax action = do
   t0 <- getTime Monotonic
-  x <- action
+  x <- timeout tmax action
   rnf x `pseq` return ()
   t1 <- getTime Monotonic
   let dt = (fromIntegral $ toNanoSecs $ diffTimeSpec t1 t0 :: Double) / (10^9)
   return (x, dt)
 
 byPrec policies = do
-  putStrLn "precision, samples, time, lo, hi, size"
-  do
-    pol <- policies
-    pr <- precisions
-    n <- samples
-    (output, t) <- lift . time $ readProcess "bash" ["-c", makeCommand pol pr n] ""
-    let 
-      result = makeResult output
-      vmax = maxVulnerability result
-    return $ printf 
+  putStrLn "file, precision, samples, time, vmax, pmax, mmin, lo, hi, size"
+  -- do
+  --   pol <- policies
+  --   pr <- precisions
+  --   n <- samples
+  --   (output, t) <- lift . time $ readProcess "bash" ["-c", makeCommand pol pr n] ""
+  --   let 
+  --     result = makeResult output
+  --     vmax = maxVulnerability result
+  --   return $ printf 
       
   forM_ policies $ \pol -> do
     forM_ precisions $ \pr -> do
       forM_ samples $ \n -> do
-        (output, t) <- time $ readProcess "bash" ["-c", makeCommand pol pr n] ""
-        --putStrLn output
-        let result = makeResult output
-        vmax = maxVulnerability result
-        let (lo, hi) = bounds result n
-        printf "%d, %.3e, %.5f, %.3e, %.3e, %.3e\n" pr (fromIntegral n :: Double) t lo hi (size result)
+        (mOutput, t) <- time (30*60*1000000) $ readProcess "bash" ["-c", makeCommand pol pr n] ""
+        case mOutput of 
+          Nothing -> return () -- timed out
+          Just output -> do
+            --putStrLn output
+            let result = makeResult output
+                vmax = maxVulnerability result
+                (lo, hi) = bounds result n
+            printf "%s, %d, %.3e, %.5f, %.3e, %.3e, %.3e, %.3e, %.3e, %.3e\n" pol pr (fromIntegral n :: Double) t vmax (pmax result) (mmin result) lo hi (size result)
 
 main = hSetBuffering stdout LineBuffering >> getArgs >>= byPrec
