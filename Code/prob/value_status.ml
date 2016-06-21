@@ -22,6 +22,11 @@ module AbsMap = Map.Make(Varid)
 
 type abs_env = valueStatus AbsMap.t
 
+let rec map_from_list (xs : (varid * valueStatus) list) =
+  match xs with
+    | []               -> AbsMap.empty
+    | ((v_id, st)::ys) -> AbsMap.add v_id st (map_from_list ys)
+
 let merge_two key a b =
   match (a,b) with
     | (None,    None)    -> None

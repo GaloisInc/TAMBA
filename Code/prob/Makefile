@@ -38,6 +38,8 @@ SOURCES_COMMON :=\
 	maths.ml \
 	err.ml \
 	state.ml \
+	value_status.ml \
+	optimize.ml \
 	latte.ml \
 	ppldomainpoly.ml \
 	ppldomainbox.ml \
