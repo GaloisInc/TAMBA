@@ -1,4 +1,5 @@
 open Printf
+open List
 open Util
 open Gmp
 
@@ -46,6 +47,13 @@ type aexp =
   | AEBinop of abinop * aexp * aexp
   | AERecord of record (* Maps from true field names to assigned variable names*)
 
+let rec aexp_vars ae =
+  match ae with
+    | AEVar v             -> [v]
+    | AEInt n             -> []
+    | AEBinop (_, a1, a2) -> List.append (aexp_vars a1) (aexp_vars a2)
+    | AERecord rc         -> failwith "Records not implemented for analysis"
+
 (*
   match aexp with
   | AEInt (v) -> ...
@@ -58,6 +66,13 @@ type lexp =
   | LEBool  of int
   | LEBinop of lbinop * lexp * lexp
   | LEReln  of lreln  * aexp * aexp;;
+
+let rec lexp_vars le =
+  match le with
+    | LEBool b            -> []
+    | LEBinop (_, e1, e2) -> List.append (lexp_vars e1) (lexp_vars e2)
+    | LEReln  (_, a1, a2) -> List.append (aexp_vars a1) (aexp_vars a2)
+
 
 (*
   match lexp with
@@ -76,6 +91,20 @@ type stmt =
   | SWhile   of lexp * stmt
   | SUniform of varid * int * int
   | SOutput  of varid * (agent list)
+
+let rec stmt_vars stm =
+  match stm with
+    | SSkip                   -> []
+    | SSeq (s1, s2)           -> List.append (stmt_vars s1) (stmt_vars s2)
+    | SPSeq (s1, s2, _, _, _) -> List.append (stmt_vars s1) (stmt_vars s2)
+    | SAssign  (v, a1)        -> v::aexp_vars a1
+    | SDefine  (v, _)         -> [v] (* TODO: Is this the correct bahavior? *)
+    | SUniform (v, _, _)      -> [v] (* TODO: Is this the correct bahavior? *)
+    | SIf      (l1, s1, s2)   -> List.append (List.append (lexp_vars l1)
+                                                          (stmt_vars s1))
+                                             (stmt_vars s2)
+    | SWhile   (l1, s1)       -> List.append (lexp_vars l1) (stmt_vars s1)
+    | s                       -> failwith "Output not support in analysis"
 
 (*
   match t with
