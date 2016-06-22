@@ -146,7 +146,8 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
 
         let ab_env = map_from_list (List.map (fun x -> x, Static) inlist) in
         let res_map = static_check progstmt ab_env false in
-        printf "The following are static: %s\n" "TODO THIS PART"; 
+        printf "The status of arguments and locals:\n\t";
+        print_abs_env res_map;
 
         ifverbose
           (printf "query (single assignment):\n"; print_stmt progstmt; printf "\n");

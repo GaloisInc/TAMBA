@@ -1,9 +1,16 @@
 open Util
 open Lang
+open List
+open Printf
 
 type valueStatus =
   | Static
   | Dynamic
+
+let value_status_to_string vs =
+  match vs with
+    | Static  -> "Static"
+    | Dynamic -> "Dynamic"
 
 module Varid =
   struct
@@ -21,6 +28,12 @@ module Varid =
 module AbsMap = Map.Make(Varid)
 
 type abs_env = valueStatus AbsMap.t
+
+let print_abs_env env =
+  let elems = AbsMap.bindings env in
+  let print_binding (vid, vs) =
+    printf "(%s, %s); " (varid_to_string vid) (value_status_to_string vs) in
+  List.iter print_binding elems
 
 let rec map_from_list (xs : (varid * valueStatus) list) =
   match xs with
