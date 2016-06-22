@@ -5,6 +5,7 @@ open Gmp
 open Gmp_util
 open Printf
 open Util
+open Ocephes
 open Pstateset
 
 open Gmp.Q.Infixes
@@ -508,9 +509,21 @@ module MakePStateset(* create pstateset from a stateset *)
                                 in eval
                              ) es in
         let (yes,no) = SS.sample_region pset.ss n evals in
+        let (myalpha, mybeta) = (float_of_int (yes + 1), float_of_int (no + 1)) in
+        let () = printf "\n\nOCEPHES TEST:\n\na: %f, b: %f, res: %f" (myalpha)
+                                                                     (mybeta)
+                                                                     (incbi myalpha mybeta 0.999) in
+        let smax2 = Z.from_float (incbi myalpha mybeta 0.999) in
+        let smin2 = Z.from_float (incbi myalpha mybeta 0.001) in
+        (* incbi in R is called qbeta. TODO: write qbeta wrapper that asserts non-zero input *)
         let pset_new = {
             pset with est = {
-                      pset.est with numy = yes;
+                      pset.est with
+                                    mmax = pset.est.pmax */ (Q.from_z smax2);
+                                    mmin = pset.est.pmin */ (Q.from_z smin2);
+                                    smax = smax2;
+                                    smin = smin2;
+                                    numy = yes;
                                     numn = no;
                             }
                        } in

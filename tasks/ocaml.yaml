@@ -62,6 +62,11 @@
   become_user: vagrant
   command: opam install pareto -y
 
+- name: Install Ocephes
+  become: yes
+  become_user: vagrant
+  command: opam install ocephes -y
+
 - name: Install utop
   become: yes
   become_user: vagrant
