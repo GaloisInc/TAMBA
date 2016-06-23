@@ -293,7 +293,7 @@ let main () =
       ("--bench-latte",
        Arg.String (fun s ->
                      if s <> "--" then Globals.set_bench s;
-                     Globals.output_bench := true
+                     Globals.output_bench := true;
                      if s <> "--" then Globals.set_bench_latte s;
                      Globals.output_bench_latte := true
                   ),

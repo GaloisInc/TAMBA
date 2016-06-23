@@ -39,7 +39,6 @@ SOURCES_COMMON :=\
 	err.ml \
 	state.ml \
 	value_status.ml \
-	optimize.ml \
 	latte.ml \
 	ppldomainpoly.ml \
 	ppldomainbox.ml \
@@ -51,6 +50,7 @@ SOURCES_COMMON :=\
 	ppowersetmaker.ml \
 	evalpstateset.ml \
 	esys.ml \
+	optimize.ml \
 	lexer.ml parser_util.ml parser.ml \
 	preeval.ml \
 	policy.ml 
