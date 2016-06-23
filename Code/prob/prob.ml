@@ -292,9 +292,9 @@ let main () =
        "count number of calls to count");
       ("--bench-latte",
        Arg.String (fun s ->
-                     printf "Here!\n";
+                     if s <> "--" then Globals.set_bench s;
+                     Globals.output_bench := true
                      if s <> "--" then Globals.set_bench_latte s;
-                     printf "There!\n";
                      Globals.output_bench_latte := true
                   ),
        "write out latte timing information, use -- to designate stdout");

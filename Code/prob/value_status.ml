@@ -58,3 +58,9 @@ let rec any_in_map_dynamic vs m = if AbsMap.is_empty m then false else
                    status = Dynamic
                  with
                    _ -> true) || any_in_map_dynamic ys m
+
+let rec safe_assoc key xs =
+  match xs with
+    | []      -> None
+    | ((k,v)::ys) -> if key = k then Some v
+                                else safe_assoc key ys
