@@ -91,6 +91,7 @@ type stmt =
   | SWhile   of lexp * stmt
   | SUniform of varid * int * int
   | SOutput  of varid * (agent list)
+  | SLivenessAnnot of varid list * stmt
 
 let rec stmt_vars stm =
   match stm with

@@ -101,3 +101,10 @@ let rec rewrite_stmt cstmt env assign_stack : ((varid * aexp option) list * (var
                             | 0 -> rewrite_stmt sf env assign_stack
                             | 1 -> rewrite_stmt st env assign_stack
                             | i -> failwith "Collapsing If-statement failed in code transformation"))
+
+
+let rec liveness_analysis cstmt vids =
+  match cstmt with
+    | SSkip -> Skip
+    | SAssign (name, rhs) -> 
+      
