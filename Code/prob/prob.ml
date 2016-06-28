@@ -193,6 +193,8 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
 
           ifdebug (printf "\n\nBefore pmock_queries\n\n");
           let final_dist = pmock_queries queries querydefs ps in
+          if !Globals.output_latte_count
+          then printf "Number of calls to LattE: %d\n" !Globals.latte_count;
           sample_final queries querydefs final_dist
   (*with
       | e ->
@@ -252,6 +254,11 @@ let main () =
                      Globals.output_bench := true
                   ),
        "write out timing information, use -- to designate stdout");
+      ("--count-latte",
+       Arg.String (fun s ->
+                     Globals.output_latte_count := true
+                  ),
+       "count number of calls to count");
       ("--bench-latte",
        Arg.String (fun s ->
                      if s <> "--" then Globals.set_bench_latte s;

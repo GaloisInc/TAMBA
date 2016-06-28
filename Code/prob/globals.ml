@@ -10,7 +10,11 @@ let currently_parsing = ref "";;
 let precision = ref 0;;
 let simplifier = ref 0;;
 let sample_count = ref 0;;
+let latte_count = ref 0;;
 let black_box = ref false;;
+
+let inc_latte_count =
+  latte_count := !latte_count + 1;;
 
 let use_latte_minmax = ref false;;
 let split_uniforms_factor = ref 1;;
@@ -24,6 +28,7 @@ let output_verbose = ref false;;
 let output_debug   = ref false;;
 let output_bench   = ref false;;
 let output_bench_latte = ref false;;
+let output_latte_count = ref false;;
 
 let current_executable = Sys.argv.(0);;
 let current_dir = Filename.dirname current_executable;;
