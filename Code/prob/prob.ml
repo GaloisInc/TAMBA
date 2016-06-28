@@ -46,23 +46,20 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
   let sample_final queries querydefs ps =
     let enddist = ps.PSYS.belief in
       let trips = List.map (make_trip querydefs ps) queries in
-      let (y,n) = try (ESYS.get_alpha_beta
-                         (ESYS.psrep_sample
-                                 enddist
-                                 !Globals.sample_count
-                                 trips))
-                  with e -> (0,0) in
+      let enddist2 = try (ESYS.psrep_sample enddist !Globals.sample_count trips)
+                     with e -> enddist in
+      let (y,n) = ESYS.get_alpha_beta enddist2 in
       let b_dist = beta (float_of_int (y + 1)) (float_of_int (n + 1)) in
       let { beta_alpha; beta_beta } = b_dist in
-      let m_belief = ESYS.psrep_max_belief enddist in
+      let m_belief = ESYS.psrep_max_belief enddist2 in
       printf "max belief: %f\n" (Q.float_from m_belief);
       printf "alpha: %f, beta: %f\n" beta_alpha beta_beta;
-      let size_z = Z.to_float (ESYS.psrep_size enddist) in
+      let size_z = Z.to_float (ESYS.psrep_size enddist2) in
 
-      let (pmi, pma) = let (i, a) = ESYS.psrep_pmin_pmax enddist
+      let (pmi, pma) = let (i, a) = ESYS.psrep_pmin_pmax enddist2
                        in (Q.float_from i, Q.float_from a) in
-      let (smi, sma) = ESYS.psrep_smin_smax enddist in
-      let (mmi, mma) = let (i, a) = ESYS.psrep_mmin_mmax enddist
+      let (smi, sma) = ESYS.psrep_smin_smax enddist2 in
+      let (mmi, mma) = let (i, a) = ESYS.psrep_mmin_mmax enddist2
                        in (Q.float_from i, Q.float_from a) in
 
       let _ = try let sminp = ((quantile b_dist 0.001) *. size_z) in

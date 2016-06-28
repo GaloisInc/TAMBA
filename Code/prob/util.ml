@@ -4,6 +4,7 @@ open Str
 open List
 open Gmp
 open Gmp.Q
+open Gmp.Z
 
 exception General_error of string;;
 exception Not_applicable;;
@@ -71,6 +72,24 @@ let list_pairs_and_rest l =
     List.map (fun (i1, i2) ->
                 (i1, i2, List.filter (fun i3 -> i3 != i1 && i3 != i2) l))
       pairs
+
+let is_min a (b, c, d) =
+  let ab = Z.compare a b in
+  let ac = Z.compare a c in
+  let ad = Z.compare a d in
+  (ab = -1 || ab = 0) && (ac = -1 || ac = 0) && (ad = -1 || ad = 0)
+
+let best_bounds smin1 smax1 smin2 smax2 =
+  let b1 = Z.abs (Z.sub smax1 smin1) in
+  let b2 = Z.abs (Z.sub smax2 smin1) in
+  let b3 = Z.abs (Z.sub smax1 smin2) in
+  let b4 = Z.abs (Z.sub smax2 smin2) in
+  if (is_min b1 (b2, b3, b4)) then (smin1, smax1)
+  else if (is_min b2 (b1, b3, b4)) then (smin1, smax2)
+  else if (is_min b3 (b1, b2, b4)) then (smin2, smax1)
+  else if (is_min b4 (b1, b2, b3)) then (smin2, smax2)
+  else failwith "best_bounds failed."
+
 
 (*
 let list_pairs_and_rest l =
