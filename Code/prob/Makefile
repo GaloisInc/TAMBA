@@ -63,6 +63,10 @@ SOURCES_PROB := \
 	$(SOURCES_COMMON) \
 	prob.ml
 
+SOURCES_OPT := \
+	$(SOURCES_COMMON) \
+	optimization_workbench.ml
+
 SOURCES_MPROB := \
 	$(SOURCES_COMMON) \
 	smcdefs.ml \
@@ -74,6 +78,7 @@ SOURCES_ALL := $(SOURCES_PROB) $(SOURCES_CEVAL) $(SOURCES_MPROB)
 OBJS_PROB  := $(SOURCES_PROB:.ml=.$(OEXT))
 OBJS_MPROB := $(SOURCES_MPROB:.ml=.$(OEXT))
 OBJS_LATEX := $(SOURCES_LATEX:.ml=.$(OEXT))
+OBJS_OPT  := $(SOURCES_OPT:.ml=.$(OEXT))
 
 OBJS_ALL   := $(OBJS_PROB) $(OBJS_CEVAL)
 
@@ -90,6 +95,9 @@ prob: $(OBJS_PROB) latte_tmp
 
 exp: experiment.ml
 	$(OCAMLC) $(PPL_LINK) $(LINK_FLAGS) -o exp experiment.ml
+
+opt: $(OBJS_OPT)
+	$(OCAMLC) $(PPL_LINK) $(LINK_FLAGS) -o opt $(OBJS_OPT)
 
 mprob: $(OBJS_MPROB) 
 	$(OCAMLC) $(PPL_LINK) $(LINK_FLAGS) -o mprob $(OBJS_MPROB)

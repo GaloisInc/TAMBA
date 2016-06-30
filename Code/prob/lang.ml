@@ -23,6 +23,8 @@ let rec render_datatype (t:datatype) : string = match t with
     "{"^rendered_body^"}"
   | _ -> failwith "Invalid datatype"
 
+
+
 type agent = string
 type varid = agent * string
 
@@ -35,6 +37,19 @@ type abinop = (string * (int -> int -> int))
 type lbinop = (string * (int -> int -> int))
 type lreln  = (string * (int -> int -> int))
 
+(* For liveness analysis we need the following 4-tuple which have the
+   following meaning
+  
+   For each node in the AST we need to know the variables that are:
+
+    * used
+    * defined
+    * live_out
+    * live_in
+
+   So the 4-tuple provides that information in the order listed above
+ *)
+type liveness_info = (varid list * varid list * varid list * varid list)
 
 let varid_belongs_to anagent (owner, id) = anagent = owner;;
 
@@ -91,7 +106,7 @@ type stmt =
   | SWhile   of lexp * stmt
   | SUniform of varid * int * int
   | SOutput  of varid * (agent list)
-  | SLivenessAnnot of varid list * stmt
+  | SLivenessAnnot of liveness_info * stmt
 
 let rec stmt_vars stm =
   match stm with
@@ -105,6 +120,7 @@ let rec stmt_vars stm =
                                                           (stmt_vars s1))
                                              (stmt_vars s2)
     | SWhile   (l1, s1)       -> List.append (lexp_vars l1) (stmt_vars s1)
+    | SLivenessAnnot (vs, s1) -> stmt_vars s1
     | s                       -> failwith "Output not support in analysis"
 
 (*
@@ -263,6 +279,12 @@ let rec print_stmt_pretty s tabs =
         print_stmt_pretty s1 tabs;
         print_string ";\n";
         print_stmt_pretty s2 tabs
+    | SLivenessAnnot ((u,d,o,i),s1) ->
+        printf "(used: [%s] " (varid_list_to_string u);
+        printf "defd: [%s] " (varid_list_to_string d);
+        printf "out: [%s] " (varid_list_to_string o);
+        printf "in: [%s])\t" (varid_list_to_string i);
+        print_stmt_pretty s1 tabs
 
 ;;
 
