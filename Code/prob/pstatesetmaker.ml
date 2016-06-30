@@ -491,10 +491,9 @@ module MakePStateset(* create pstateset from a stateset *)
     printf "massin: %s\nmassout: %s\n\n" (Gmp.Q.to_string massin) (Gmp.Q.to_string massout);
           massin // massout)
 
-  (* sample_pstateset : stateset -> n -> (state * (state -> bool) * varid) list -> (int * int) *)
-    (* let sample_pstateset pset n state (eval_q : state -> (int * state)) vid = *)
     let sample_pstateset pset n es =
-        let evals = List.map (fun (state, eval_q, vid) ->
+        let evals = List.map (fun (state, eval_q, expected) ->
+                                printf "\nquery inputs in sample_pstate:\n\t"; state#print; printf "\n";
                                 let aset = pset.ss in
                                 let setstate i v =
                                   let vid1 = SS.lookup_dim aset i in
@@ -503,9 +502,12 @@ module MakePStateset(* create pstateset from a stateset *)
                                 let eval = fun pt -> Array.iteri setstate pt;
                                              let (ig, state2) = eval_q state in
                                              ifdebug (printf "vid_eval: %s\nstate2: %s\n\n"
-                                                             (varid_to_string vid)
+                                                             (varid_list_to_string (List.map pair_first expected))
                                                              state2#to_string);
-                                             state2#get vid == 1
+                                             List.for_all (fun (vid, d_res) ->
+                                                               state2#get vid = d_res)
+                                                          expected
+
                                 in eval
                              ) es in
         let (yes,no) = SS.sample_region pset.ss n evals in

@@ -54,7 +54,7 @@ module type EVAL_SYSTEM = sig
   val psrep_given_state: psrep -> state -> psrep
   val psrep_vars: psrep -> Lang.varid list
 
-  val psrep_sample: psrep -> int -> (state * (state -> (int * state)) * varid) list -> psrep
+  val psrep_sample: psrep -> int -> (state * (state -> (int * state)) * (varid * int) list) list -> psrep
 
   val get_alpha_beta: psrep -> (int * int)
 

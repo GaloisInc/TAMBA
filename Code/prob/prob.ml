@@ -27,21 +27,38 @@ end;;
 module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
   module PSYS = MAKE_PSYSTEM(ESYS)
 
+  let make_expected_pairs outlist outstate =
+    List.map (fun output_id -> let expected = outstate#get output_id in
+                              (output_id, expected)) outlist
+  (* This function prepares the intermediate states for sampling. Ensuring
+     that the following are accounted for:
+
+      1) The inputstate for the query we are sampling from
+      2) The a function to apply to our sample inputs
+      3) the output list and their expected values
+
+   *)
   let make_trip querydefs (ps : PSYS.policysystem) (queryname, querystmt) =
     let querytuple = List.assoc queryname querydefs in
     let (inlist, outlist, progstmt) = querytuple in
+
+    (* set up the initial state for sampling and keep a copy to find the expected results *)
     let (ignored, inputstate_temp) = Evalstate.eval querystmt (new state_empty) in
     inputstate_temp#merge ps.valcache;
+    let initial_state = inputstate_temp#copy in
 
-    (*
+    (* find the expected results *)
+    let (ignored, outputstate) = Evalstate.eval progstmt inputstate_temp in
+    let out_and_expected = make_expected_pairs outlist outputstate in
+
+
     printf "\n\n---------------------------------\n";
     printf "State in triple: %s\n\n" inputstate_temp#to_string;
     printf "query in triple:\n"; print_stmt progstmt; printf "\n\n";
     printf "outlist in triple: %s\n\n" (varid_list_to_string outlist);
     printf "---------------------------------\n";
     (* printf "\n\n------------------------------\nState before sampling: %s\n" inputstate_temp#to_string; *)
-    *)
-    (inputstate_temp, (Evalstate.eval progstmt), (list_first outlist))
+    (initial_state, (Evalstate.eval progstmt), out_and_expected)
 
   let sample_final queries querydefs ps =
     let enddist = ps.PSYS.belief in
@@ -62,6 +79,11 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
       let (mmi, mma) = let (i, a) = ESYS.psrep_mmin_mmax enddist2
                        in (Q.float_from i, Q.float_from a) in
 
+
+      (* The following code is using GSL via Pareto, and sometimes
+         fails to converge, so we don't rely on it but it can be
+         useful to see.
+       *)
       let _ = try let sminp = ((quantile b_dist 0.001) *. size_z) in
                   let smaxp = ((quantile b_dist 0.999) *. size_z) in
                   let mminp = sminp *. pmi in
@@ -73,6 +95,7 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
                   printf "post-sampling revised belief: %f\n" (pma /. mminp);
               with e -> printf "GSL computation did not converge: ERR\n" in
 
+      (* Output to be processed by bench.hs *)
       printf "\n\nsize_z = %f\n" size_z;
       printf "pmin = %f\n" pmi;
       printf "pmax = %f\n" pma;
