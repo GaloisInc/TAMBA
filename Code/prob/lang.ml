@@ -69,6 +69,14 @@ let rec aexp_vars ae =
     | AEBinop (_, a1, a2) -> List.append (aexp_vars a1) (aexp_vars a2)
     | AERecord rc         -> failwith "Records not implemented for analysis"
 
+let rec equal_aexp a1 a2 =
+  match (a1, a2) with
+    | (AEVar v, AEVar u) -> v = u
+    | (AEInt i, AEInt j) -> i = j
+    | (AEBinop (_, a1, a2), AEBinop (_, b1, b2)) -> equal_aexp a1 b1 &&
+                                                    equal_aexp a2 b2
+    | a -> false
+
 (*
   match aexp with
   | AEInt (v) -> ...
@@ -88,6 +96,16 @@ let rec lexp_vars le =
     | LEBinop (_, e1, e2) -> List.append (lexp_vars e1) (lexp_vars e2)
     | LEReln  (_, a1, a2) -> List.append (aexp_vars a1) (aexp_vars a2)
 
+(* Use the below with caution, beucase HOAS is used in lexp
+    equal of lexp assumes the operators are equal!!!
+ *)
+let rec equal_lexp l1 l2 =
+  match (l1, l2) with
+    | (LEBool i, LEBool j) -> i = j
+    | (LEBinop (_, a, b), LEBinop (_, c, d)) -> (equal_lexp a c) && (equal_lexp b d)
+    | (LEReln (_, ax1, ax2), LEReln (_, bx1, bx2)) -> (equal_aexp ax1 bx1) &&
+                                                      (equal_aexp ax2 bx2)
+    | l -> false
 
 (*
   match lexp with
@@ -122,6 +140,55 @@ let rec stmt_vars stm =
     | SWhile   (l1, s1)       -> List.append (lexp_vars l1) (stmt_vars s1)
     | SLivenessAnnot (vs, s1) -> stmt_vars s1
     | s                       -> failwith "Output not support in analysis"
+
+let print_stmt_type s =
+  match s with
+    | SSkip ->
+        printf "skip"
+    | SPSeq (_, _, _, _, _) ->
+        printf "pif"
+    | SSeq (_, _) ->
+        printf "seq"
+    | SAssign (_, _) ->
+        printf "assign"
+    | SIf (_, _, _) ->
+        printf "if"
+    | SWhile (_, _) ->
+        printf "while"
+    | SUniform (_, _, _) ->
+        printf "uniform"
+    | SOutput (_, _) ->
+        printf "output"
+    | SDefine (_, _) ->
+        printf "define"
+    | SLivenessAnnot (_, _) ->
+        printf "liveness_annotation"
+;;
+
+let rec equal_stmts s1 s2 =
+(*  print_stmt_type s1; printf "\n";
+  print_stmt_type s2; printf "\n";
+*)
+  match (s1, s2) with
+    | (SSkip, SSkip) -> true
+    | (SSeq (sa,sb), SSeq (s1,s2)) -> equal_stmts sa s1 && equal_stmts sb s2
+    | (SPSeq (sa,sb,a,b,c), SPSeq (s1,s2,d,e,f)) -> equal_stmts sa s1 &&
+                                                    equal_stmts sb s2 &&
+                                                    Gmp.Q.equal a d   &&
+                                                    (b = e) &&
+                                                    (c = f)
+    | (SAssign(n1,ax),SAssign(n2,bx)) -> (n1 = n2) && equal_aexp ax bx
+    | (SDefine(v, t), SDefine(w,u))   -> (v = w) && (t = u)
+    | (SUniform (v, a, b), SUniform (u, c, d)) -> (v = u) && (a = c) && (b = d)
+    | (SIf (lax, sa, sb), SIf (lbx, s1, s2)) -> equal_lexp lax lbx &&
+                                                equal_stmts sa s1 &&
+                                                equal_stmts sb s2
+    | (SWhile (lax, sa), SWhile (lbx, sb)) -> equal_lexp lax lbx &&
+                                              equal_stmts sa sb
+    | (SLivenessAnnot (i, sa), SLivenessAnnot (j, sb)) -> (i = j) &&
+                                                          equal_stmts sa sb
+    | (SOutput (n, vs), SOutput (o, us)) -> (n = o) && (vs = us)
+    | s -> false
 
 (*
   match t with
@@ -423,27 +490,6 @@ let print_pstmt_latex s =
   print_string "}\n\\end{displaymath}\n"
 ;;
 
-let print_stmt_type s =
-  match s with
-    | SSkip ->
-        printf "skip"
-    | SPSeq (_, _, _, _, _) ->
-        printf "pif"
-    | SSeq (_, _) ->
-        printf "seq"
-    | SAssign (_, _) ->
-        printf "assign"
-    | SIf (_, _, _) ->
-        printf "if"
-    | SWhile (_, _) ->
-        printf "while"
-    | SUniform (_, _, _) ->
-        printf "uniform"
-    | SOutput (_, _) ->
-        printf "output"
-    | SDefine (_, _) ->
-        printf "define"
-;;
 
 (* print_stmt: stmt -> unit
    Prints the given statement. *)
