@@ -40,7 +40,7 @@ samples = 0 : map (10^) [1..5]
 -- Parsing is currently baked into the command line, using unix tricks.
 -- VERY brittle.
 makeCommand pol prec samp = 
-  printf "/vagrant/Code/prob/prob %s --domain box --precision %d --samples %d" pol prec samp
+  printf "/vagrant/Code/prob/prob %s --verbose 1 --domain box --precision %d --samples %d" pol prec samp
 
 data Result = Result
   { size    :: Double
@@ -113,7 +113,7 @@ time tmax action = do
   return (x, dt)
 
 byPrec policies = do
-  putStrLn "file, precision, samples, time, vmax, pmax, mmin, lo, hi, size"
+  putStrLn "file, precision, samples, time, vmax, pmax, mmin, lo, hi"
   -- do
   --   pol <- policies
   --   pr <- precisions
@@ -135,6 +135,6 @@ byPrec policies = do
             let result = makeResult output
                 vmax = maxVulnerability result
                 (lo, hi) = bounds result n
-            printf "%s, %d, %.3e, %.5f, %.3e, %.3e, %.3e, %.3e, %.3e, %.3e\n" pol pr (fromIntegral n :: Double) t vmax (pmax result) (mmin result) lo hi (size result)
+            printf "%s, %d, %.3e, %.5f, %.3e, %.3e, %.3e, %.3e, %.3e\n" pol pr (fromIntegral n :: Double) t vmax (pmax result) (mmin result) lo hi
 
 main = hSetBuffering stdout LineBuffering >> getArgs >>= byPrec
