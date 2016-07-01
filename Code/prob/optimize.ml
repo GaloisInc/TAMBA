@@ -1,6 +1,6 @@
-open Printf
-open Util
 open Lang
+open Util
+open Printf
 open Gmp
 open Value_status
 open State
@@ -103,8 +103,53 @@ let rec rewrite_stmt cstmt env assign_stack : ((varid * aexp option) list * (var
                             | i -> failwith "Collapsing If-statement failed in code transformation"))
 
 
+let rec flip_seq cstmt =
+  match cstmt with
+     | SSeq (s1, s2)           -> SSeq (flip_seq s2, flip_seq s1)
+     | SPSeq (s1, s2, a, b, c) -> SPSeq (flip_seq s2, flip_seq s1, a, b, c)
+     | SIf      (l1, s1, s2)   -> SIf (l1, flip_seq s1, flip_seq s2)
+     | SWhile   (l1, s1)       -> SWhile (l1, flip_seq s1)
+     | s                       -> s
+
+let rec ann_use_def cstmt =
+  match cstmt with
+   | SSkip -> SLivenessAnnot (([],[],[],[]), SSkip)
+   | SSeq  (s1, s2) -> SSeq (ann_use_def s1, ann_use_def s2)
+   | SPSeq (s1, s2, q, i1, i2) -> SPSeq (ann_use_def s1, ann_use_def s2, q, i1, i2)
+   | SAssign  (name, aex) -> let used = aexp_vars aex in
+                             let defd = [name] in
+                             SLivenessAnnot ((used, defd, [],[]), SAssign (name, aex))
+   | SDefine  (name, d_type) -> SLivenessAnnot (([], [name], [], []), SDefine (name, d_type))
+   | SIf      (lex, s1, s2)  -> let used = lexp_vars lex in
+                                let (s12, s22) = (ann_use_def s1, ann_use_def s2) in
+                                SLivenessAnnot ((used, [], [], []), SIf (lex, s12, s22))
+   | SLivenessAnnot (i, s)   -> failwith "Annotation node found earlier than expected"
+   | s -> print_stmt_type s; failwith " is not yet supported in liveness analysis\n"
+
+let rec succ_ins_stmt cstmt =
+  match cstmt with
+   | SSkip -> []
+   | SSeq  (s1, s2) -> List.append (succ_ins_stmt s1) (succ_ins_stmt s2)
+   | SPSeq (s1, s2, q, i1, i2) -> List.append (succ_ins_stmt s1) (succ_ins_stmt s2)
+   | SAssign  (name, aex) -> []
+   | SDefine  (name, d_type) -> []
+   | SIf      (lex, s1, s2)  -> List.append (succ_ins_stmt s1) (succ_ins_stmt s2)
+   | SLivenessAnnot ((u, d, o, i), s)   -> List.append i (succ_ins_stmt s)
+   | s -> print_stmt_type s; failwith " is not yet supported in liveness analysis\n"
+
+let diff l1 l2 = List.filter (fun x -> not (List.mem x l2)) l1
+
 let rec liveness_analysis cstmt vids =
   match cstmt with
-    | SSkip -> Skip
-    | SAssign (name, rhs) -> 
+    | SSkip -> SSkip
+    | SAssign (name, rhs) -> SAssign (name, rhs)
+   | SDefine  (name, d_type) -> SDefine (name, d_type)
+    | SLivenessAnnot ((u, d, o, i), stmt) ->
+        let in1 = List.append u (diff o d) in
+        let stmt2 = liveness_analysis stmt vids in
+        let out1 = succ_ins_stmt stmt2 in
+        SLivenessAnnot ((u, d, out1, in1), stmt2)
+    | SSeq (s1, s2) -> SSeq (liveness_analysis s1 vids, liveness_analysis s2 vids)
+    | SIf (lex, s1, s2) -> SIf (lex, liveness_analysis s1 vids, liveness_analysis s2 vids)
+    | s -> print_stmt_type s; failwith " is not yet supported in liveness analysis\n"
       
