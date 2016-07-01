@@ -51,6 +51,7 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
 
         let flipped = flip_seq progstmt in
         let fannotated = ann_use_def flipped in
+        print_stmt (fannotated); printf "\n--------------\n";
         let rec fix_live i vs stmts =
           let lived = liveness_analysis_rev stmts vs in
           (* printf "-------------------------------------------------\n";

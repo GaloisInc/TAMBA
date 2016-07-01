@@ -51,6 +51,8 @@ type lreln  = (string * (int -> int -> int))
  *)
 type liveness_info = (varid list * varid list * varid list * varid list)
 
+let empty_info = ([], [], [], [])
+
 let varid_belongs_to anagent (owner, id) = anagent = owner;;
 
 type record = (string) list
@@ -163,6 +165,30 @@ let print_stmt_type s =
         printf "define"
     | SLivenessAnnot (_, _) ->
         printf "liveness_annotation"
+;;
+
+let rec print_stmt_type_no_ann s =
+  match s with
+    | SSkip ->
+        printf "skip"
+    | SPSeq (_, _, _, _, _) ->
+        printf "pif"
+    | SSeq (_, _) ->
+        printf "seq"
+    | SAssign (_, _) ->
+        printf "assign"
+    | SIf (_, _, _) ->
+        printf "if"
+    | SWhile (_, _) ->
+        printf "while"
+    | SUniform (_, _, _) ->
+        printf "uniform"
+    | SOutput (_, _) ->
+        printf "output"
+    | SDefine (_, _) ->
+        printf "define"
+    | SLivenessAnnot (_, s) ->
+        print_stmt_type_no_ann s
 ;;
 
 let rec equal_stmts s1 s2 =
@@ -343,9 +369,11 @@ let rec print_stmt_pretty s tabs =
         print_string tabs;
         printf "%s %s" (render_datatype vartype) (varid_to_string varid)
     | SSeq (s1, s2) ->
+        printf "Seq (";
         print_stmt_pretty s1 tabs;
         print_string ";\n";
-        print_stmt_pretty s2 tabs
+        print_stmt_pretty s2 tabs;
+        printf ")"
     | SLivenessAnnot ((u,d,o,i),s1) ->
         printf "(used: [%s] " (varid_list_to_string u);
         printf "defd: [%s] " (varid_list_to_string d);
