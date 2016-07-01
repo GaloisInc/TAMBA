@@ -145,11 +145,30 @@ let rec liveness_analysis cstmt vids =
     | SAssign (name, rhs) -> SAssign (name, rhs)
     | SDefine  (name, d_type) -> SDefine (name, d_type)
     | SLivenessAnnot ((u, d, o, i), stmt) ->
-        let in1 = List.append u (diff o d) in
         let stmt2 = liveness_analysis stmt vids in
         let out1 = succ_ins_stmt stmt2 in
+        let in1 = List.append u (diff out1 d) in
         SLivenessAnnot ((u, d, out1, in1), stmt2)
     | SSeq (s1, s2) -> SSeq (liveness_analysis s1 vids, liveness_analysis s2 vids)
     | SIf (lex, s1, s2) -> SIf (lex, liveness_analysis s1 vids, liveness_analysis s2 vids)
     | s -> print_stmt_type s; failwith " is not yet supported in liveness analysis\n"
+
+let rec get_succ_ins cstmt =
+    match cstmt with
+      | SLivenessAnnot ((u, d, o, i), s1) -> i
+      | SSeq (s1, s2) -> get_succ_ins s1
       
+let rec liveness_analysis_rev cstmt vids =
+  match cstmt with
+    | SSkip -> SSkip
+    | SAssign (name, rhs) -> SAssign (name, rhs)
+    | SDefine  (name, d_type) -> SDefine (name, d_type)
+    | SLivenessAnnot ((u, d, o, i), stmt) ->
+        let in1 = list_unique (List.append u (diff vids d)) in
+        let stmt2 = liveness_analysis_rev stmt vids in
+        SLivenessAnnot ((u, d, vids, in1), stmt2)
+    | SSeq (s1, s2) -> let s1p = liveness_analysis_rev s1 vids in
+                       let outs = get_succ_ins s1p in
+                       SSeq (s1p, liveness_analysis_rev s2 outs)
+    | SIf (lex, s1, s2) -> SIf (lex, liveness_analysis_rev s1 vids, liveness_analysis_rev s2 vids)
+    | s -> print_stmt_type s; failwith " is not yet supported in liveness analysis\n"

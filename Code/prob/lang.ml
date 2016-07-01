@@ -350,7 +350,7 @@ let rec print_stmt_pretty s tabs =
         printf "(used: [%s] " (varid_list_to_string u);
         printf "defd: [%s] " (varid_list_to_string d);
         printf "out: [%s] " (varid_list_to_string o);
-        printf "in: [%s])\n\t" (varid_list_to_string i);
+        printf "in: [%s])\n" (varid_list_to_string i);
         print_stmt_pretty s1 tabs
 
 ;;
