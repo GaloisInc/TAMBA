@@ -9,12 +9,16 @@ EXTEND
           <:expr< Globals.do_ifdebug (fun () -> $e1$) >>
       ]
   |
-      [ "ifnot_quiet"; e1 = expr ->
-          <:expr< Globals.do_if_not_quiet (fun () -> $e1$) >>
+      [ "ifverbose1"; e1 = expr ->
+          <:expr< Globals.do_ifverbose1 (fun () -> $e1$) >>
       ]
   |
       [ "ifverbose"; e1 = expr ->
           <:expr< Globals.do_ifverbose (fun () -> $e1$) >>
+      ]
+  |
+      [ "ifnotverbose"; e1 = expr ->
+          <:expr< Globals.do_if_not_verbose (fun () -> $e1$) >>
       ]
   |
       [ "ifbench"; e1 = expr ->

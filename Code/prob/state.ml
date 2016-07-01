@@ -16,7 +16,9 @@ class type state = object
   method vars: Lang.varid list
   method iter: (Lang.varid -> int -> unit) -> unit
   method to_string: string
+  method as_args: string
   method print: unit
+  method print_as_args: unit
   method set_list: (Lang.varid * int) list -> unit
   method copy: state
   method eq: state -> bool
@@ -91,7 +93,17 @@ class state_hashed hv hr : state = object (self)
             self#canon)) ^
       "]"
 
+  method as_args =
+    "(" ^
+      (String.concat ", "
+         (List.map
+            (fun (id, v) -> (Lang.varid_to_string id) ^ "=" ^ string_of_int(v))
+            self#canon)) ^
+      ")"
+
   method print = print_string self#to_string
+
+  method print_as_args = print_string self#as_args
 
   method set_list sl =
     List.iter (fun (vname, vval) -> ignore (self#addvar vname; self#set vname vval)) sl

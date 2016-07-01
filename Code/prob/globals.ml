@@ -24,9 +24,8 @@ let renderlatex = ref false;;
 let simplify_steps = ref 0;;
 
 let use_dsa = ref false;;
-let output_verbose = ref false;;
+let output_verbose = ref 0;;
 let output_debug   = ref false;;
-let quiet_output   = ref false;;
 let output_bench   = ref false;;
 let output_bench_latte = ref false;;
 let output_latte_count = ref false;;
@@ -49,11 +48,13 @@ let file_abs f = (* assuming f is specified relative to new environment *)
     f
 
 let do_ifverbose f =
-  if !output_verbose then f ();;
+  if !output_verbose = 2 then f ();;
+let do_ifverbose1 f =
+  if !output_verbose = 1 then f ();;
+let do_if_not_verbose f =
+  if !output_verbose = 0 then f ();;
 let do_ifdebug f =
   if !output_debug then f ();;
-let do_if_not_quiet f =
-  if not (!quiet_output) then f ();;
 let do_ifbench f =
   if !output_bench then f ();;
 let do_ifbench_latte f =

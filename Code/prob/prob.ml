@@ -65,8 +65,12 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
       let b_dist = beta (float_of_int (y + 1)) (float_of_int (n + 1)) in
       let { beta_alpha; beta_beta } = b_dist in
       let m_belief = ESYS.psrep_max_belief enddist2 in
-      printf "max belief: %f\n" (Q.float_from m_belief);
-      printf "alpha: %f, beta: %f\n" beta_alpha beta_beta;
+      printf "\n--- Sampling -------------------\n";
+      printf "max-belief (post-sampling): %s\n" (Q.to_string m_belief);
+      ifverbose1 (
+        printf "alpha: %f, beta: %f\n" beta_alpha beta_beta
+      );
+      printf "\n";
       let size_z = Z.to_float (ESYS.psrep_size enddist2) in
 
       let (pmi, pma) = let (i, a) = ESYS.psrep_pmin_pmax enddist2
@@ -79,8 +83,8 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
       (* The following code is using GSL via Pareto, and sometimes
          fails to converge, so we don't rely on it but it can be
          useful to see.
-       *)
-      let _ = try let sminp = ((quantile b_dist 0.001) *. size_z) in
+      let _ = try let sminp = ((quantile b_dist 0.001) *. size_z) in (* convert  size_z and the result of quantile to rationals*)
+                                                                     (* use floor for sminp *)
                   let smaxp = ((quantile b_dist 0.999) *. size_z) in
                   let mminp = sminp *. pmi in
                   let mmaxp = smaxp *. pma in
@@ -90,19 +94,22 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
                   printf "mmax (sampling): %f\n" mmaxp;
                   printf "post-sampling revised belief: %f\n" (pma /. mminp);
               with e -> printf "GSL computation did not converge: ERR\n" in
+       *)
 
       (* Output to be processed by bench.hs *)
-      printf "\n\nsize_z = %f\n" size_z;
-      printf "pmin = %f\n" pmi;
-      printf "pmax = %f\n" pma;
-      printf "smin = %s\n" (Z.string_from smi);
-      printf "smax = %s\n" (Z.string_from sma);
-      printf "mmin = %f\n" mmi;
-      printf "mmax = %f\n" mma;
-      printf "sample_true = %d\nsample_false = %d\n" y n
+      ifverbose1 (
+        printf "\n\nsize_z = %f\n" size_z;
+        printf "pmin = %f\n" pmi;
+        printf "pmax = %f\n" pma;
+        printf "smin = %s\n" (Z.string_from smi);
+        printf "smax = %s\n" (Z.string_from sma);
+        printf "mmin = %f\n" mmi;
+        printf "mmax = %f\n" mma;
+        printf "sample_true = %d\nsample_false = %d\n" y n
+      )
 
 
-  let rec pmock_queries queries querydefs ps_in = match queries with
+  let rec pmock_queries count queries querydefs ps_in = match queries with
     | [] -> ps_in
     | (queryname, querystmt) :: t ->
         ifbench Globals.start_timer Globals.timer_query;
@@ -111,8 +118,6 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
 
         let querytuple = List.assoc queryname querydefs  in
         let (inlist, outlist, progstmt) = querytuple in
-        printf "Outlist: ";
-        printf "%s\n" (varid_list_to_string outlist);
 
         let secretvars = ESYS.psrep_vars ps.PSYS.belief in
 
@@ -121,41 +126,50 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
          * them
          * *)
 
-        printf "Inlist: ";
-        printf "%s\n" (varid_list_to_string inlist);
+        ifverbose (
+          printf "Outlist: ";
+          printf "%s\n" (varid_list_to_string outlist);
 
-        (* TODO: Check whether this is necesary for us
-        let sa_progstmt = (sa_of_stmt progstmt (List.append secretvars inlist) outlist) in
-        let sa_progstmt = (if !Globals.use_dsa then sa_progstmt else progstmt) in
-         *)
-        (*let sa_progstmt = progstmt in [> Temporary <]*)
+          printf "Inlist: ";
+          printf "%s\n" (varid_list_to_string inlist);
 
-        printf "-------------------------------------------------\n";
-        printf "query %s from %s to %s\n"
-          queryname
-          (String.concat " " (List.map Lang.varid_to_string inlist))
-          (String.concat " " (List.map Lang.varid_to_string outlist));
-        print_stmt progstmt; printf "\n";
-        printf "-------------------------------------------------\n";
+          (* TODO: Check whether this is necesary for us
+          let sa_progstmt = (sa_of_stmt progstmt (List.append secretvars inlist) outlist) in
+          let sa_progstmt = (if !Globals.use_dsa then sa_progstmt else progstmt) in
+           *)
+          (*let sa_progstmt = progstmt in [> Temporary <]*)
+
+          printf "-------------------------------------------------\n";
+          printf "query %s from %s to %s\n"
+            queryname
+            (String.concat " " (List.map Lang.varid_to_string inlist))
+            (String.concat " " (List.map Lang.varid_to_string outlist));
+          print_stmt progstmt; printf "\n";
+          printf "-------------------------------------------------\n"
+        );
 
         let ab_env = map_from_list (List.map (fun x -> x, Static) inlist) in
         let res_map = static_check progstmt ab_env false in
 
-        ifnot_quiet (
+        ifverbose1 (
           printf "The status of arguments and locals:\n\t";
           print_abs_env res_map
         );
 
         ifverbose
-          (printf "query (single assignment):\n"; print_stmt progstmt; printf "\n");
+          (printf "\nquery (single assignment):\n"; print_stmt progstmt; printf "\n");
 
-        let ans = PSYS.policysystem_answer ps querytuple querystmt in
+        ifnotverbose (
+          printf "\n--- Query #%d ------------------\n" count
+        );
+
+        let ans = PSYS.policysystem_answer ps (queryname, querytuple) querystmt in
         let res = ans.PSYS.result in
         let ps = PSYS.policysystem_answered ps ans.PSYS.update in
 
           (match res with
              | RTrueValue (vals) ->
-                 (printf "*** query was accepted\n")
+                 (ifverbose1 (printf "*** query was accepted\n"))
                    (* , "results: %s\n" (String.concat " " (List.map (fun (k,v) -> k ^ "=" ^ (string_of_int v)) vals))) *)
              | RReject (reason) ->
                  (printf "*** query was rejected due to: %s\n" reason;
@@ -176,7 +190,7 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
                      then ps_in
                      else ps in
 
-        pmock_queries t querydefs ps_out
+        pmock_queries (count + 1) t querydefs ps_out
 
   let pmock asetup =
     Printexc.record_backtrace true;
@@ -210,7 +224,8 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
         printf "secret:\n\t"; secretstate#print; printf "\n";
         ifverbose (printf "initial belief generator:\n"; print_stmt beliefstmt; printf "\n");
         ifverbose (printf "initial belief generator (single assignment):\n"; print_stmt sa_beliefstmt; printf "\n");
-        printf "initial belief:\n"; ESYS.print_psrep startdist;
+        ifverbose1 (printf "initial belief:\n"; ESYS.print_psrep startdist);
+        printf "\nInitial max-belief: %s\n" (Gmp.Q.to_string (ESYS.psrep_max_belief startdist));
         (*printf "relative entropy (initial -> secret): %f\n" startrelent; *)
 
         let ps = {PSYS.policies =
@@ -220,7 +235,7 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
                   PSYS.valcache = secretstate} in
 
           ifdebug (printf "\n\nBefore pmock_queries\n\n");
-          let final_dist = pmock_queries queries querydefs ps in
+          let final_dist = pmock_queries 1 queries querydefs ps in
           if !Globals.output_latte_count
           then printf "Number of calls to LattE: %d\n" !Globals.latte_count;
           sample_final queries querydefs final_dist
@@ -296,14 +311,11 @@ let main () =
                   ),
        "write out latte timing information, use -- to designate stdout");
       ("--verbose",
-       Arg.Set Globals.output_verbose,
+       Arg.Set_int Globals.output_verbose,
        "verbose output");
       ("--debug",
        Arg.Set Globals.output_debug,
        "debug output");
-      ("--quiet",
-       Arg.Set Globals.quiet_output,
-       "silence majority of output");
       ("--simplify",
        Arg.String (fun (s) ->
                      Globals.simplifier :=

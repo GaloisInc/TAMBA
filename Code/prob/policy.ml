@@ -143,6 +143,7 @@ module MAKE_PSYSTEM (ESYS: EVAL_SYSTEM) = struct
      valcache = ps.valcache}
 
   let rec policysystem_check_policies
+      (count: int)
       (policies: policy list)
       (distout: ESYS.psrep) (* output distribution *)
       (distbelief: ESYS.psrep) (* revised distribution *)
@@ -150,10 +151,14 @@ module MAKE_PSYSTEM (ESYS: EVAL_SYSTEM) = struct
       (outputs: Lang.varid list)
     : string option =
     (* let max_prob = find_max_belief distout outputs policies.pvars in *)
-    printf "Number of policies: %d\n" (List.length policies);
-    printf "Max belief of distout: %s\n" (Gmp.Q.to_string (ESYS.psrep_max_belief distout));
-    printf "Max belief of revised: %s\n" (Gmp.Q.to_string (ESYS.psrep_max_belief distbelief));
-    printf "Max belief of distactual: %s\n" (Gmp.Q.to_string (ESYS.psrep_max_belief distactual));
+    ifverbose1 (
+      printf "\n----------------------\n";
+      printf "Checking Policy #%d:\n" count;
+      printf "Number of policies: %d\n" (List.length policies);
+      printf "Max belief of distout: %s\n" (Gmp.Q.to_string (ESYS.psrep_max_belief distout));
+      printf "Max belief of revised: %s\n" (Gmp.Q.to_string (ESYS.psrep_max_belief distbelief));
+      printf "Max belief of distactual: %s\n" (Gmp.Q.to_string (ESYS.psrep_max_belief distactual))
+    );
     match policies with
     | [] -> None
     | p :: r ->
@@ -161,16 +166,17 @@ module MAKE_PSYSTEM (ESYS: EVAL_SYSTEM) = struct
         let string_p = string_of_policy p in
         Some ("policy not satisfied: " ^ string_p)
       else
-        policysystem_check_policies r distout distbelief distactual outputs
+        policysystem_check_policies (count + 1) r distout distbelief distactual outputs
 
 
-  let policysystem_answer (ps: policysystem) (query: (Lang.varid list * Lang.varid list * Lang.stmt)) (queryinput_stmt: Lang.stmt) :  policysystemresult =
+  let policysystem_answer (ps: policysystem) (querytup: (string * (Lang.varid list * Lang.varid list * Lang.stmt))) (queryinput_stmt: Lang.stmt) :  policysystemresult =
     (* todo: simplify some of this query preparation, factor out to someplace else, also done repeatedly in prob.ml *)
 
-    ifnot_quiet (
+    ifverbose1 (
       printf "\nstart belief:\n"; ESYS.print_psrep ps.belief
     );
 
+    let (queryname, query) = querytup in
     let (inlist, outlist, querystmt) = query in
     let secretvars = ESYS.psrep_vars ps.belief in
 
@@ -205,13 +211,13 @@ module MAKE_PSYSTEM (ESYS: EVAL_SYSTEM) = struct
     (*ISSUE: Maybe remove record from valcache *)
     let secretdist = ESYS.psrep_point (ESYS.srep_point ps.valcache) in
 
-    ifnot_quiet (
+    ifverbose1 (
       printf "\ninput belief:\n"; ESYS.print_psrep inputdist
     );
 
     let outputdist = ESYS.peval sa_querystmt inputdist in
 
-    ifnot_quiet (
+    ifverbose1 (
       printf "\nend belief:\n"; ESYS.print_psrep outputdist
     );
 
@@ -229,7 +235,6 @@ module MAKE_PSYSTEM (ESYS: EVAL_SYSTEM) = struct
         (ESYS.psrep_given_state outputdist outputstate)
         secretvars in
 
-    printf "varids: %s\n" (varid_list_to_string secretvars); (* varid_list_to_string ESYS.psrep_given_state outputdist outputstate *)
     let ps_updater = {newbelief = enddist} in
 
     (* let ps_updater = {newbelief = outputdist} in *)
@@ -237,25 +242,31 @@ module MAKE_PSYSTEM (ESYS: EVAL_SYSTEM) = struct
                 let endrelent = ESYS.psrep_relative_entropy enddist secretdist in
               *)
 
-    ifnot_quiet (
+    ifverbose1 (
       printf "\ninput state:\n\t"; inputstate_full#print; printf "\n";
     );
 
-    printf "\noutput view:\n\t"; outputstate#print; printf "\n";
+    printf "query %s" queryname; inputstate_full#print_as_args;
 
-    ifnot_quiet (
-      printf "\nrevised belief\n"; ESYS.print_psrep enddist
+    printf " = "; outputstate#print_as_args; printf "\n";
+
+    ifverbose1 (
+      printf "\nrevised belief\n"; ESYS.print_psrep enddist;
+
+      (* printf "relative entropy (start -> secret): %f\n" startrelent;
+         printf "relative entropy (revised -> secret): %f\n" endrelent;
+         printf "bits learned: %f\n" (startrelent -. endrelent); *)
+
+      printf "\n### checking policies ###\n";
     );
-
-    (* printf "relative entropy (start -> secret): %f\n" startrelent;
-       printf "relative entropy (revised -> secret): %f\n" endrelent;
-       printf "bits learned: %f\n" (startrelent -. endrelent); *)
-
-    printf "\n### checking policies ###\n";
     (*flush stdout;*)
 
-    (*      match policysystem_check_policies ps.policies outputdist enddist secretdist outlist with *)
-    match policysystem_check_policies ps.policies outputdist outputdist secretdist outlist with
+    ifnotverbose (
+      printf "Revised max-belief: %s\n" (Gmp.Q.to_string (ESYS.psrep_max_belief enddist))
+    );
+
+    (*      match policysystem_check_policies 0 ps.policies outputdist enddist secretdist outlist with *)
+    match policysystem_check_policies 0 ps.policies outputdist outputdist secretdist outlist with
     (*        | None -> {result = RTrueValue (outputstate#canon);*)
     | None -> {result = RTrueValue ([]);
                update = ps_updater}

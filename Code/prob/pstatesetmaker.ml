@@ -511,10 +511,10 @@ module MakePStateset(* create pstateset from a stateset *)
         let (yes,no) = SS.sample_region pset.ss n evals in
         let (myalpha, mybeta) = (float_of_int (yes + 1), float_of_int (no + 1)) in
         let sizes = Z.to_float (SS.stateset_size pset.ss) in
-        printf "\nsize of stateset: %f\n" sizes;
+        (* printf "\nsize of stateset: %f\n" sizes; *)
         let smax1 = sizes *. (incbi myalpha mybeta 0.999) in
         let smin1 = sizes *. (incbi myalpha mybeta 0.001) in
-        printf "\nsmin1: %f, smax1: %f\n" smin1 smax1;
+        (* printf "\nsmin1: %f, smax1: %f\n" smin1 smax1; *)
         let smax2 = Z.from_float smax1 in
         let smin2 = Z.from_float smin1 in
         let (smin_best, smax_best) = best_bounds pset.est.smin pset.est.smax smin2 smax2 in
