@@ -123,7 +123,7 @@ let rec ann_use_def cstmt =
    | SIf      (lex, s1, s2)  -> let used = lexp_vars lex in
                                 let (s12, s22) = (ann_use_def s1, ann_use_def s2) in
                                 SLivenessAnnot ((used, [], [], []), SIf (lex, s12, s22))
-   | SLivenessAnnot (i, s)   -> failwith "Annotation node found earlier than expected"
+   | SLivenessAnnot (i, s)   -> print_stmt_type s; failwith "\nAnnotation node found earlier than expected"
    | s -> print_stmt_type s; failwith " is not yet supported in liveness analysis\n"
 
 let rec succ_ins_stmt cstmt =
@@ -143,7 +143,7 @@ let rec liveness_analysis cstmt vids =
   match cstmt with
     | SSkip -> SSkip
     | SAssign (name, rhs) -> SAssign (name, rhs)
-   | SDefine  (name, d_type) -> SDefine (name, d_type)
+    | SDefine  (name, d_type) -> SDefine (name, d_type)
     | SLivenessAnnot ((u, d, o, i), stmt) ->
         let in1 = List.append u (diff o d) in
         let stmt2 = liveness_analysis stmt vids in

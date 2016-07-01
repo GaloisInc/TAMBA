@@ -53,9 +53,28 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
         printf "-------------------------------------------------\n";
         print_stmt flipped; printf "\n";
 
-        let annotated = ann_use_def flipped in
+        let fannotated = ann_use_def flipped in
         printf "-------------------------------------------------\n";
-        print_stmt annotated; printf "\n";
+        printf "Flipped and annotated (I don't think I need this)\n";
+        printf "-------------------------------------------------\n";
+        print_stmt fannotated; printf "\n";
+
+        let rec fix_live i [] stmts =
+          let lived = liveness_analysis stmts [] in
+          printf "-------------------------------------------------\n";
+          printf "Iteration %d of liveness_analysis\n" i;
+          printf "-------------------------------------------------\n";
+          print_stmt lived; printf "\n";
+
+          printf "Before\n";
+          let res = if (stmts = lived)
+                    then (printf "Fixed point reached\n"; lived)
+                    else fix_live (i + 1) [] lived in
+          printf "After\n";
+          res in
+
+        let ignored = fix_live 0 [] (ann_use_def progstmt) in
+
 
         pmock_queries t querydefs
 
