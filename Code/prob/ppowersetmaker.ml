@@ -319,7 +319,7 @@ struct
         zzero
         sizes in
     let ns = List.map (fun x -> int_of_float (x /. Gmp.Z.to_float total *. float_of_int n)) (List.map Gmp.Z.to_float sizes) in
-    printf "Sampling %d points divided into bins of %s\n" n (String.concat "," (List.map string_of_int ns));
+    (* Sampling points divided into bins given by ns *)
     let sampleRegion p n = PSS.sample_pstateset p n fs in
     List.map2 sampleRegion ps ns
 

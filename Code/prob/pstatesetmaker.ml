@@ -488,12 +488,10 @@ module MakePStateset(* create pstateset from a stateset *)
       else if _hit_max pss then qone
       else (
         let (massin, massout) = _opt_estimate_max_in_min_out pss.est in
-    printf "massin: %s\nmassout: %s\n\n" (Gmp.Q.to_string massin) (Gmp.Q.to_string massout);
           massin // massout)
 
     let sample_pstateset pset n es =
         let evals = List.map (fun (state, eval_q, expected) ->
-                                printf "\nquery inputs in sample_pstate:\n\t"; state#print; printf "\n";
                                 let aset = pset.ss in
                                 let setstate i v =
                                   let vid1 = SS.lookup_dim aset i in
@@ -512,9 +510,6 @@ module MakePStateset(* create pstateset from a stateset *)
                              ) es in
         let (yes,no) = SS.sample_region pset.ss n evals in
         let (myalpha, mybeta) = (float_of_int (yes + 1), float_of_int (no + 1)) in
-        let () = printf "\n\nOCEPHES TEST:\n\na: %f, b: %f, res: %f" (myalpha)
-                                                                     (mybeta)
-                                                                     (incbi myalpha mybeta 0.999) in
         let sizes = Z.to_float (SS.stateset_size pset.ss) in
         printf "\nsize of stateset: %f\n" sizes;
         let smax1 = sizes *. (incbi myalpha mybeta 0.999) in

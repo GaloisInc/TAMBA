@@ -167,7 +167,9 @@ module MAKE_PSYSTEM (ESYS: EVAL_SYSTEM) = struct
   let policysystem_answer (ps: policysystem) (query: (Lang.varid list * Lang.varid list * Lang.stmt)) (queryinput_stmt: Lang.stmt) :  policysystemresult =
     (* todo: simplify some of this query preparation, factor out to someplace else, also done repeatedly in prob.ml *)
 
-    printf "\nstart belief:\n"; ESYS.print_psrep ps.belief;
+    ifnot_quiet (
+      printf "\nstart belief:\n"; ESYS.print_psrep ps.belief
+    );
 
     let (inlist, outlist, querystmt) = query in
     let secretvars = ESYS.psrep_vars ps.belief in
@@ -197,29 +199,24 @@ module MAKE_PSYSTEM (ESYS: EVAL_SYSTEM) = struct
 
     inputstate_full#merge ps.valcache;
 
-    printf "\nquery inputs:\n\t"; inputstate#print; printf "\n";
-
     (*let inputdist = ESYS.psrep_set_all ps.belief inputstate in *) (* inputs are now substituted above using Preeval.predefine *)
     let inputdist = ps.belief in
 
     (*ISSUE: Maybe remove record from valcache *)
     let secretdist = ESYS.psrep_point (ESYS.srep_point ps.valcache) in
 
-    printf "\ninput belief:\n"; ESYS.print_psrep inputdist;
+    ifnot_quiet (
+      printf "\ninput belief:\n"; ESYS.print_psrep inputdist
+    );
 
     let outputdist = ESYS.peval sa_querystmt inputdist in
 
-    printf "\nend belief:\n"; ESYS.print_psrep outputdist;
+    ifnot_quiet (
+      printf "\nend belief:\n"; ESYS.print_psrep outputdist
+    );
 
-    printf "=============================\n";
-    printf "Input state from within policy.ml: %s\n" inputstate_full#to_string;
-    printf "=============================\n";
     let (ignored, outputstate_temp) = Evalstate.eval sa_querystmt
         inputstate_full in
-
-    printf "=============================\n";
-    printf "Output state from within policy.ml: %s\n" outputstate_temp#to_string;
-    printf "=============================\n";
 
     let outputstate = outputstate_temp#copy in
     outputstate#project outlist;
@@ -240,10 +237,15 @@ module MAKE_PSYSTEM (ESYS: EVAL_SYSTEM) = struct
                 let endrelent = ESYS.psrep_relative_entropy enddist secretdist in
               *)
 
-    printf "\ninput state:\n\t"; inputstate_full#print; printf "\n";
+    ifnot_quiet (
+      printf "\ninput state:\n\t"; inputstate_full#print; printf "\n";
+    );
 
     printf "\noutput view:\n\t"; outputstate#print; printf "\n";
-    printf "\nrevised belief\n"; ESYS.print_psrep enddist;
+
+    ifnot_quiet (
+      printf "\nrevised belief\n"; ESYS.print_psrep enddist
+    );
 
     (* printf "relative entropy (start -> secret): %f\n" startrelent;
        printf "relative entropy (revised -> secret): %f\n" endrelent;

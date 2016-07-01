@@ -54,12 +54,6 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
     let out_and_expected = make_expected_pairs outlist outputstate in
 
 
-    printf "\n\n---------------------------------\n";
-    printf "State in triple: %s\n\n" inputstate_temp#to_string;
-    printf "query in triple:\n"; print_stmt progstmt; printf "\n\n";
-    printf "outlist in triple: %s\n\n" (varid_list_to_string outlist);
-    printf "---------------------------------\n";
-    (* printf "\n\n------------------------------\nState before sampling: %s\n" inputstate_temp#to_string; *)
     (initial_state, (Evalstate.eval progstmt), out_and_expected)
 
   let sample_final queries querydefs ps =
@@ -146,8 +140,11 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
 
         let ab_env = map_from_list (List.map (fun x -> x, Static) inlist) in
         let res_map = static_check progstmt ab_env false in
-        printf "The status of arguments and locals:\n\t";
-        print_abs_env res_map;
+
+        ifnot_quiet (
+          printf "The status of arguments and locals:\n\t";
+          print_abs_env res_map
+        );
 
         ifverbose
           (printf "query (single assignment):\n"; print_stmt progstmt; printf "\n");
@@ -304,6 +301,9 @@ let main () =
       ("--debug",
        Arg.Set Globals.output_debug,
        "debug output");
+      ("--quiet",
+       Arg.Set Globals.quiet_output,
+       "silence majority of output");
       ("--simplify",
        Arg.String (fun (s) ->
                      Globals.simplifier :=

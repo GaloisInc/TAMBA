@@ -26,6 +26,7 @@ let simplify_steps = ref 0;;
 let use_dsa = ref false;;
 let output_verbose = ref false;;
 let output_debug   = ref false;;
+let quiet_output   = ref false;;
 let output_bench   = ref false;;
 let output_bench_latte = ref false;;
 let output_latte_count = ref false;;
@@ -51,6 +52,8 @@ let do_ifverbose f =
   if !output_verbose then f ();;
 let do_ifdebug f =
   if !output_debug then f ();;
+let do_if_not_quiet f =
+  if not (!quiet_output) then f ();;
 let do_ifbench f =
   if !output_bench then f ();;
 let do_ifbench_latte f =
