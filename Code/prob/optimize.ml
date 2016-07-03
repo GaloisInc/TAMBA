@@ -188,6 +188,11 @@ let rec get_succ_ins cstmt =
     match cstmt with
       | SLivenessAnnot ((u, d, o, i), s1) -> i
       | SSeq (s1, s2) -> get_succ_ins s1
+
+let rec get_succ_ins_if cstmt =
+    match cstmt with
+      | SLivenessAnnot ((u, d, o, i), s1) -> i
+      | SSeq (s1, s2) -> get_succ_ins_if s2
       
 let rec liveness_analysis_rev cstmt vids =
   match cstmt with
@@ -196,13 +201,9 @@ let rec liveness_analysis_rev cstmt vids =
     | SUniform (v, i1, i2) -> SUniform (v, i1, i2)
     | SDefine  (name, d_type) -> SDefine (name, d_type)
     | SLivenessAnnot ((u, d, o, i), SIf (lex, s1,s2)) ->
-        print_lexp lex; printf "\n";
-        print_stmt_type_no_ann s1;
-        printf "succ_ins pre-analysis %s\n" (varid_list_to_string (get_succ_ins s1));
         let s12 = liveness_analysis_rev s1 vids in
         let s22 = liveness_analysis_rev s2 vids in
-        let succ_ins = list_unique (List.append (get_succ_ins s12) (get_succ_ins s22)) in
-        printf "succ_ins: %s\n" (varid_list_to_string succ_ins);
+        let succ_ins = list_unique (List.append (get_succ_ins_if s12) (get_succ_ins_if s22)) in
         let in1 = list_unique (List.append u (diff succ_ins d)) in
         SLivenessAnnot ((u,d,succ_ins,in1),SIf (lex, s12, s22))
     | SLivenessAnnot ((u, d, o, i), stmt) ->
