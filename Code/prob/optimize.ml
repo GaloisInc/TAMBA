@@ -10,6 +10,17 @@ type context = bool
 
 let diff l1 l2 = List.filter (fun x -> not (List.mem x l2)) l1
 
+let rec sub_member (vid, aexp) ps =
+  match ps with
+    | [] -> false
+    | ((vid1, aexp1)::pss) -> (vid = vid1 && equal_aexp aexp aexp1) || sub_member (vid, aexp) pss
+
+let intersect l1 l2 = List.filter (fun x -> (sub_member x l2)) l1
+
+let extend (vid, aexp) a_stack =
+  printf "\n!!!!! Extending a_stack with: %s\n" (varid_to_string vid);
+  (vid,aexp) :: List.filter (fun (vid1, _) -> not (vid = vid1)) a_stack
+
 (* static_check : stmt -> abs_env -> context -> (int * abs_env) *)
 let rec static_check cstmt env cntx : abs_env = 
   match cstmt with
@@ -47,40 +58,43 @@ let rec static_check cstmt env cntx : abs_env =
 
     | s -> failwith "Output and While loops not supported in analysis"
 
-let rec sub_aexp raexp env stck =
+let rec sub_aexp raexp stck =
   match raexp with
-    | AEVar vid            -> (match safe_assoc vid env with
-                                | Some (Some v) -> v
-                                | None   -> (match safe_assoc vid stck with
-                                                | Some v -> v
-                                                | None   -> AEVar vid))
+    | AEVar vid            -> (match safe_assoc vid stck with
+                                  | Some v -> v
+                                  | None   -> AEVar vid)
     | AEInt i              -> AEInt i
-    | AEBinop (op, a1, a2) -> AEBinop (op, sub_aexp a1 env stck, sub_aexp a2 env stck)
+    | AEBinop (op, a1, a2) -> AEBinop (op, sub_aexp a1 stck, sub_aexp a2 stck)
     | AERecord rc          -> failwith "Records should be desugared before analysis!"
 
-let rec sub_lexp rlexp env stck : Lang.lexp =
+let rec sub_lexp rlexp stck : Lang.lexp =
   match rlexp with
     | LEBool b             -> LEBool b
-    | LEBinop (op, l1, l2) -> LEBinop (op, sub_lexp l1 env stck, sub_lexp l2 env stck)
-    | LEReln (rel, a1, a2) -> LEReln (rel, sub_aexp a1 env stck, sub_aexp a2 env stck)
+    | LEBinop (op, l1, l2) -> LEBinop (op, sub_lexp l1 stck, sub_lexp l2 stck)
+    | LEReln (rel, a1, a2) -> LEReln (rel, sub_aexp a1 stck, sub_aexp a2 stck)
 
 (* take a variable and an assignment stack and create the explicit assignment
    odd order of arguments is to facilitate mapping
  *)
 let write_assign ass_stack varid =
   match safe_assoc varid ass_stack with
-    | None -> failwith "Trying to write out an assignment that doesn't exist in assignment stack"
+    | None -> failwith (String.concat " " ["Trying to write out an assignment"
+                                          ;"that doesn't exist in assignment"
+                                          ;"stack: "
+                                          ;(varid_to_string varid)
+                                          ])
     | Some aexp -> SAssign (varid, aexp)
 
-let rec rewrite_stmt cstmt s_vars env assign_stack : ((varid * aexp option) list * (varid * aexp) list * stmt) =
+let rec rewrite_stmt cstmt s_vars assign_stack : ((varid * aexp) list * stmt) =
   match cstmt with
     | SSeq (s1, s2) ->
-        let (env1, stk1, s11) = rewrite_stmt s1 s_vars env assign_stack in
-        let (env2, stk2, s22) = rewrite_stmt s2 s_vars env1 stk1 in
-        (env2, stk2, SSeq (s11, s22))
-    | SSkip -> (env, assign_stack, SSkip)
-    | SLivenessAnnot (info,SDefine (v,t))    -> (env, assign_stack, SDefine (v,t))
-    | SLivenessAnnot (info,SUniform (v,i,j)) -> (env, assign_stack, SUniform (v,i,j))
+        let (stk1, s11) = rewrite_stmt s1 s_vars assign_stack in
+        let (stk2, s22) = rewrite_stmt s2 s_vars stk1 in
+        (stk2, SSeq (s11, s22))
+    | SSkip -> (assign_stack, SSkip)
+    | SLivenessAnnot ((u,d,o,i), SSkip) -> (assign_stack, SSkip)
+    | SLivenessAnnot (info,SDefine (v,t))    -> (assign_stack, SDefine (v,t))
+    | SLivenessAnnot (info,SUniform (v,i,j)) -> (assign_stack, SUniform (v,i,j))
 
     (* For assignment we check to see if the lhs is known to be static.
        If it is, then we either know its value and can replace the statement
@@ -92,37 +106,37 @@ let rec rewrite_stmt cstmt s_vars env assign_stack : ((varid * aexp option) list
           the assignment stack.
      *)
     | SLivenessAnnot (info, SAssign (name, varaexp)) ->
-        let lkup = safe_assoc name env in
-        let rhs1 = sub_aexp varaexp env assign_stack in
-        (match lkup with
-           | Some v -> (match v with
-                          | Some y -> (env, assign_stack, SSkip)
-                          | None   -> (((name, Some rhs1)::env), assign_stack, SSkip))
-           | None   -> (env, (name, rhs1)::assign_stack, SSkip))
+        let rhs1 = sub_aexp varaexp assign_stack in
+        printf "\nAssignment firing\n";
+        (extend (name, rhs1) assign_stack, SSkip)
 
     | SLivenessAnnot ((u,d,o,i),SPSeq (s1,s2,q,i1,i2)) ->
-        let needed = diff o s_vars in
-        let new_assigns = List.map (write_assign assign_stack) needed in
-        let (_,_,s12) = rewrite_stmt s1 s_vars env assign_stack in
-        let (_,_,s22) = rewrite_stmt s2 s_vars env assign_stack in
+        let (a_stack1, new_assigns, s12, s22) = manage_branch o s_vars assign_stack s1 s2 in
         let stmt2 = SPSeq (s12, s22, q, i1, i2) in
-        (env, assign_stack, List.fold_right (fun s1 s2 -> SSeq (s1,s2)) new_assigns stmt2)
+        (a_stack1, List.fold_right (fun s1 s2 -> SSeq (s1,s2)) new_assigns stmt2)
     | SLivenessAnnot ((u,d,o,i),SIf (p, st, sf)) ->
-        let p1 : Lang.lexp = sub_lexp p env assign_stack in
+        printf "\PIF firing\n";
+        let p1 = sub_lexp p assign_stack in
         let vs = lexp_vars p1 in
         (match vs with
-           | (_::_) -> failwith "do it"(* Keep the if, recurse into branches *)
-     (*   let needed = diff o s_vars in
-        let new_assigns = List.map (write_assign assign_stack) needed in
-        let s12 = rewrite_stmt s1 s_vars env assign_stack in
-        let s22 = rewrite_stmt s2 s_vars env assign_stack in
-        let stmt2 = SPSeq (s12, s22, q, i1, i2) in
-        List.fold_right (fun s1 s2 -> SSeq s1 s2) new_assigns stmt2 *)
+           | (_::_) ->
+             let (a_stack1, new_assigns, st2, sf2) = manage_branch o s_vars assign_stack st sf in
+             let stmt2 = SIf (p, st2, sf2) in
+             (a_stack1, List.fold_right (fun s1 s2 -> SSeq (s1, s2)) new_assigns stmt2)
            | []      -> let res = Evalstate.eval_lexp p1 (new State.state_empty) in
                           (match res with
-                            | 0 -> rewrite_stmt sf s_vars env assign_stack
-                            | 1 -> rewrite_stmt st s_vars env assign_stack
+                            | 0 -> rewrite_stmt sf s_vars assign_stack
+                            | 1 -> rewrite_stmt st s_vars assign_stack
                             | _ -> failwith "the impossible happened, predicate returned non-bool"))
+    | p -> print_stmt p; failwith "Need to implement"
+
+and manage_branch out_live s_vars a_stack s1 s2 =
+  let needed = diff out_live s_vars in
+  let new_assigns = List.map (write_assign a_stack) needed in
+  let (a_stack1,s12) = rewrite_stmt s1 s_vars a_stack in
+  let (a_stack2,s22) = rewrite_stmt s2 s_vars a_stack in
+  (intersect a_stack1 a_stack2, new_assigns, s12, s22)
+
 
 
 let rec flip_seq cstmt =
@@ -184,13 +198,25 @@ let rec liveness_analysis cstmt vids =
     | s -> print_stmt_type s; failwith " is not yet supported in liveness analysis\n"
 *)
 
+let rec clear_liveness cstmt =
+  match cstmt with
+    | SLivenessAnnot ((u,d,_,_), s1) ->
+        SLivenessAnnot ((u,d,[],[]), clear_liveness s1)
+    | SSeq (s1, s2)                  ->
+        SSeq (clear_liveness s1, clear_liveness s2)
+    | SIf (lex, s1, s2)              ->
+        SIf (lex, clear_liveness s1, clear_liveness s2)
+    | SPSeq (s1, s2, q, i1, i2)      ->
+        SPSeq (clear_liveness s1, clear_liveness s2, q, i1, i2)
+    | s -> s
+
 let rec get_succ_ins cstmt =
-    match cstmt with
+  match cstmt with
       | SLivenessAnnot ((u, d, o, i), s1) -> i
       | SSeq (s1, s2) -> get_succ_ins s1
 
 let rec get_succ_ins_if cstmt =
-    match cstmt with
+  match cstmt with
       | SLivenessAnnot ((u, d, o, i), s1) -> i
       | SSeq (s1, s2) -> get_succ_ins_if s2
       

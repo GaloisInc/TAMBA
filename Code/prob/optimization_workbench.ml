@@ -18,9 +18,10 @@ end;;
 module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
   module PSYS = MAKE_PSYSTEM(ESYS)
 
-  let rec pmock_queries queries querydefs = match queries with
-    | [] -> ()
-    | (queryname, querystmt) :: t ->
+  let rec pmock_queries queries querydefs s_vars =
+    match queries with
+      | [] -> ()
+      | (queryname, querystmt) :: t ->
 
         let querytuple = List.assoc queryname querydefs  in
         let (inlist, outlist, progstmt) = querytuple in
@@ -43,6 +44,9 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
         print_stmt progstmt; printf "\n";
         printf "-------------------------------------------------\n";
 
+        (*-------------------------------------------------------------------*)
+        (*---------------------------- Original -----------------------------*)
+        (*-------------------------------------------------------------------*)
         let ab_env = map_from_list (List.map (fun x -> x, Static) inlist) in
         let res_map = static_check progstmt ab_env false in
         printf "The status of arguments and locals:\n\t";
@@ -52,25 +56,27 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
         let flipped = flip_seq progstmt in
         let fannotated = ann_use_def flipped in
         print_stmt (fannotated); printf "\n--------------\n";
+
+        (*-------------------------------------------------------------------*)
+        (*---------------------------- Liveness -----------------------------*)
+        (*-------------------------------------------------------------------*)
         let rec fix_live i vs stmts =
           let lived = liveness_analysis_rev stmts vs in
-          (* printf "-------------------------------------------------\n";
-             printf "Iteration %d of liveness_analysis\n" i;
-             printf "-------------------------------------------------\n";
-             print_stmt lived; printf "\n";
-          *)
-
           let res = if equal_stmts stmts lived
                     then lived
                     else fix_live (i + 1) vs lived in
           res in
-
         let analed = fix_live 0 outlist fannotated in
+        print_stmt (flip_seq analed); printf "\n--------------\n";
 
-        print_stmt (flip_seq analed); printf "\n";
+        (*-------------------------------------------------------------------*)
+        (*---------------------------- Liveness -----------------------------*)
+        (*-------------------------------------------------------------------*)
+        let ignored_vids = List.concat [s_vars;inlist] in
+        let (_,rewritten) = rewrite_stmt (flip_seq analed) ignored_vids [] in
+        print_stmt rewritten; printf "\n--------------\n";
 
-
-        pmock_queries t querydefs
+        pmock_queries t querydefs s_vars
 
   let pmock asetup =
     Printexc.record_backtrace true;
@@ -96,7 +102,7 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
 
       let startdist = ESYS.peval_start sa_beliefstmt in
 
-      pmock_queries queries querydefs
+      pmock_queries queries querydefs secretvars
 
 end
 ;;

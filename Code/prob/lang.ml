@@ -369,11 +369,9 @@ let rec print_stmt_pretty s tabs =
         print_string tabs;
         printf "%s %s" (render_datatype vartype) (varid_to_string varid)
     | SSeq (s1, s2) ->
-        printf "Seq (";
         print_stmt_pretty s1 tabs;
         print_string ";\n";
-        print_stmt_pretty s2 tabs;
-        printf ")"
+        print_stmt_pretty s2 tabs
     | SLivenessAnnot ((u,d,o,i),s1) ->
         printf "(used: [%s] " (varid_list_to_string u);
         printf "defd: [%s] " (varid_list_to_string d);
