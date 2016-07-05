@@ -18,7 +18,7 @@ let rec sub_member (vid, aexp) ps =
 let intersect l1 l2 = List.filter (fun x -> (sub_member x l2)) l1
 
 let extend (vid, aexp) a_stack =
-  printf "\n!!!!! Extending a_stack with: %s\n" (varid_to_string vid);
+  ifverbose1 (printf "\n!!!!! Extending a_stack with: %s\n" (varid_to_string vid));
   (vid,aexp) :: List.filter (fun (vid1, _) -> not (vid = vid1)) a_stack
 
 (* static_check : stmt -> abs_env -> context -> (int * abs_env) *)
@@ -109,7 +109,6 @@ let rec rewrite_stmt cstmt s_vars assign_stack : (varid list * (varid * aexp) li
      *)
     | SLivenessAnnot (info, SAssign (name, varaexp)) ->
         let rhs1 = sub_aexp varaexp assign_stack in
-        printf "\nAssignment firing\n";
         if List.mem name s_vars
         then (s_vars, assign_stack, SAssign (name, rhs1))
         else (s_vars, extend (name, rhs1) assign_stack, SSkip)
@@ -120,7 +119,6 @@ let rec rewrite_stmt cstmt s_vars assign_stack : (varid list * (varid * aexp) li
         let stmt2 = SPSeq (s12, s22, q, i1, i2) in
         (a_vars, a_stack1, List.fold_right (fun s1 s2 -> SSeq (s1,s2)) new_assigns stmt2)
     | SLivenessAnnot ((u,d,o,i),SIf (p, st, sf)) ->
-        printf "\PIF firing\n";
         let p1 = sub_lexp p assign_stack in
         let vs = lexp_vars p1 in
         (match vs with

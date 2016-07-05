@@ -28,6 +28,16 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
         printf "Outlist: ";
         printf "%s\n" (varid_list_to_string outlist);
 
+        let (ignored, inputstate_temp) = Evalstate.eval querystmt (new state_empty) in
+
+        let expanded_inlist =
+          List.fold_left (fun a varname ->
+              if (inputstate_temp#is_record (varname)) then
+                let (_, varname_str) = varname in
+                (List.map (fun (agent, field) -> (agent, varname_str^"."^field)) (inputstate_temp#get_vals (varname)))@a
+              else varname::a) [] inlist in
+
+        inputstate_temp#project expanded_inlist;
 
         (* TODO: Single assignment not working with records, maybe because
          * arguments not being expanded yet and inlist doesn't contain
@@ -68,7 +78,8 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
         (*---------------------------- Liveness -----------------------------*)
         (*-------------------------------------------------------------------*)
         let ignored_vids = List.concat [s_vars;inlist] in
-        let (_, _,rewritten) = rewrite_stmt (flip_seq analed) ignored_vids [] in
+        let inlinable    = List.map (fun x -> (x, AEInt (inputstate_temp#get x))) expanded_inlist in
+        let (_, _,rewritten) = rewrite_stmt (flip_seq analed) ignored_vids inlinable in
         print_stmt rewritten; printf "\n--------------\n";
 
         pmock_queries t querydefs s_vars
