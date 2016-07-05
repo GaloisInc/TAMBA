@@ -222,7 +222,7 @@ module MAKE_PSYSTEM (ESYS: EVAL_SYSTEM) = struct
     (*-------------------------------------------------------------------*)
     let ignored_vids = List.concat [secretvars;expanded_inlist] in
     let inlinable    = List.map (fun x -> (x, AEInt (inputstate_full#get x))) expanded_inlist in
-    let (_,rewritten) = rewrite_stmt analed ignored_vids inlinable in
+    let (_,_,rewritten) = rewrite_stmt analed ignored_vids inlinable in
     print_stmt rewritten; printf "\n--------------\n";
 
 

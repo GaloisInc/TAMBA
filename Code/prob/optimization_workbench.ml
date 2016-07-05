@@ -37,21 +37,16 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
         printf "Inlist: ";
         printf "%s\n" (varid_list_to_string inlist);
 
+        (*-------------------------------------------------------------------*)
+        (*---------------------------- Original -----------------------------*)
+        (*-------------------------------------------------------------------*)
+
         printf "query %s from %s to %s\n"
           queryname
           (String.concat " " (List.map Lang.varid_to_string inlist))
           (String.concat " " (List.map Lang.varid_to_string outlist));
         print_stmt progstmt; printf "\n";
         printf "-------------------------------------------------\n";
-
-        (*-------------------------------------------------------------------*)
-        (*---------------------------- Original -----------------------------*)
-        (*-------------------------------------------------------------------*)
-        let ab_env = map_from_list (List.map (fun x -> x, Static) inlist) in
-        let res_map = static_check progstmt ab_env false in
-        printf "The status of arguments and locals:\n\t";
-        print_abs_env res_map;
-        printf "\n\n";
 
         let flipped = flip_seq progstmt in
         let fannotated = ann_use_def flipped in
@@ -73,7 +68,7 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
         (*---------------------------- Liveness -----------------------------*)
         (*-------------------------------------------------------------------*)
         let ignored_vids = List.concat [s_vars;inlist] in
-        let (_,rewritten) = rewrite_stmt (flip_seq analed) ignored_vids [] in
+        let (_, _,rewritten) = rewrite_stmt (flip_seq analed) ignored_vids [] in
         print_stmt rewritten; printf "\n--------------\n";
 
         pmock_queries t querydefs s_vars

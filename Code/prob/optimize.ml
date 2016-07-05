@@ -78,23 +78,25 @@ let rec sub_lexp rlexp stck : Lang.lexp =
  *)
 let write_assign ass_stack varid =
   match safe_assoc varid ass_stack with
-    | None -> failwith (String.concat " " ["Trying to write out an assignment"
+    | None -> SSkip
+        (* failwith (String.concat " " ["Trying to write out an assignment"
                                           ;"that doesn't exist in assignment"
                                           ;"stack: "
                                           ;(varid_to_string varid)
                                           ])
+         *)
     | Some aexp -> SAssign (varid, aexp)
 
-let rec rewrite_stmt cstmt s_vars assign_stack : ((varid * aexp) list * stmt) =
+let rec rewrite_stmt cstmt s_vars assign_stack : (varid list * (varid * aexp) list * stmt) =
   match cstmt with
     | SSeq (s1, s2) ->
-        let (stk1, s11) = rewrite_stmt s1 s_vars assign_stack in
-        let (stk2, s22) = rewrite_stmt s2 s_vars stk1 in
-        (stk2, SSeq (s11, s22))
-    | SSkip -> (assign_stack, SSkip)
-    | SLivenessAnnot ((u,d,o,i), SSkip) -> (assign_stack, SSkip)
-    | SLivenessAnnot (info,SDefine (v,t))    -> (assign_stack, SDefine (v,t))
-    | SLivenessAnnot (info,SUniform (v,i,j)) -> (assign_stack, SUniform (v,i,j))
+        let (a_vars, stk1, s11)  = rewrite_stmt s1 s_vars assign_stack in
+        let (a_vars1, stk2, s22) = rewrite_stmt s2 (List.append a_vars s_vars) stk1 in
+        (a_vars, stk2, SSeq (s11, s22))
+    | SSkip -> (s_vars, assign_stack, SSkip)
+    | SLivenessAnnot ((u,d,o,i), SSkip) -> (s_vars, assign_stack, SSkip)
+    | SLivenessAnnot (info,SDefine (v,t))    -> (s_vars, assign_stack, SDefine (v,t))
+    | SLivenessAnnot (info,SUniform (v,i,j)) -> (s_vars, assign_stack, SUniform (v,i,j))
 
     (* For assignment we check to see if the lhs is known to be static.
        If it is, then we either know its value and can replace the statement
@@ -108,21 +110,25 @@ let rec rewrite_stmt cstmt s_vars assign_stack : ((varid * aexp) list * stmt) =
     | SLivenessAnnot (info, SAssign (name, varaexp)) ->
         let rhs1 = sub_aexp varaexp assign_stack in
         printf "\nAssignment firing\n";
-        (extend (name, rhs1) assign_stack, SSkip)
+        if List.mem name s_vars
+        then (s_vars, assign_stack, SAssign (name, rhs1))
+        else (s_vars, extend (name, rhs1) assign_stack, SSkip)
 
     | SLivenessAnnot ((u,d,o,i),SPSeq (s1,s2,q,i1,i2)) ->
-        let (a_stack1, new_assigns, s12, s22) = manage_branch o s_vars assign_stack s1 s2 in
+        let (a_vars, a_stack1, new_assigns, s12, s22) =
+              manage_branch o s_vars assign_stack s1 s2 in
         let stmt2 = SPSeq (s12, s22, q, i1, i2) in
-        (a_stack1, List.fold_right (fun s1 s2 -> SSeq (s1,s2)) new_assigns stmt2)
+        (a_vars, a_stack1, List.fold_right (fun s1 s2 -> SSeq (s1,s2)) new_assigns stmt2)
     | SLivenessAnnot ((u,d,o,i),SIf (p, st, sf)) ->
         printf "\PIF firing\n";
         let p1 = sub_lexp p assign_stack in
         let vs = lexp_vars p1 in
         (match vs with
            | (_::_) ->
-             let (a_stack1, new_assigns, st2, sf2) = manage_branch o s_vars assign_stack st sf in
+             let (a_vars, a_stack1, new_assigns, st2, sf2) =
+                    manage_branch o s_vars assign_stack st sf in
              let stmt2 = SIf (p, st2, sf2) in
-             (a_stack1, List.fold_right (fun s1 s2 -> SSeq (s1, s2)) new_assigns stmt2)
+             (a_vars, a_stack1, List.fold_right (fun s1 s2 -> SSeq (s1, s2)) new_assigns stmt2)
            | []      -> let res = Evalstate.eval_lexp p1 (new State.state_empty) in
                           (match res with
                             | 0 -> rewrite_stmt sf s_vars assign_stack
@@ -133,9 +139,14 @@ let rec rewrite_stmt cstmt s_vars assign_stack : ((varid * aexp) list * stmt) =
 and manage_branch out_live s_vars a_stack s1 s2 =
   let needed = diff out_live s_vars in
   let new_assigns = List.map (write_assign a_stack) needed in
-  let (a_stack1,s12) = rewrite_stmt s1 s_vars a_stack in
-  let (a_stack2,s22) = rewrite_stmt s2 s_vars a_stack in
-  (intersect a_stack1 a_stack2, new_assigns, s12, s22)
+  let dont_remove = List.append needed s_vars in
+  let (_,a_stack1,s12) = rewrite_stmt s1 dont_remove a_stack in
+  let (_,a_stack2,s22) = rewrite_stmt s2 dont_remove a_stack in
+  (dont_remove, intersect a_stack1 a_stack2, new_assigns, s12, s22)
+(* above we are assuming a well formed program!
+   If a nested if flushed out an assignment we ignore it since it should have
+   been flushed out at the top-level if (liveness analysis should tell us this
+ *)
 
 
 
