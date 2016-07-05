@@ -269,7 +269,7 @@ module MAKE_PSYSTEM (ESYS: EVAL_SYSTEM) = struct
       printf "\ninput state:\n\t"; inputstate_full#print; printf "\n";
     );
 
-    printf "query %s" queryname; inputstate_full#print_as_args;
+    printf "query %s" queryname; inputstate#print_as_args;
 
     printf " = "; outputstate#print_as_args; printf "\n";
 
