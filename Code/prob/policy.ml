@@ -8,6 +8,7 @@ open Gmp
 open Gmp.Q.Infixes
 open Pdefs
 open Preeval
+open Optimize
 
 type policytype =
   | PMinRelEnt
@@ -203,6 +204,28 @@ module MAKE_PSYSTEM (ESYS: EVAL_SYSTEM) = struct
              Lang.print_stmt_pretty sa_querystmt "";
              printf "--- end of predefined ---\n");
 
+    (*-------------------------------------------------------------------*)
+    (*---------------------------- Liveness -----------------------------*)
+    (*-------------------------------------------------------------------*)
+    let rec fix_live i vs stmts =
+      let lived = liveness_analysis_rev stmts vs in
+      let res = if equal_stmts stmts lived
+                then lived
+                else fix_live (i + 1) vs lived in
+      res in
+    let fannotated = ann_use_def (flip_seq sa_querystmt) in
+    let analed = flip_seq (fix_live 0 outlist fannotated) in
+    print_stmt analed; printf "\n--------------\n";
+
+    (*-------------------------------------------------------------------*)
+    (*---------------------------- Inlining -----------------------------*)
+    (*-------------------------------------------------------------------*)
+    let ignored_vids = List.concat [secretvars;expanded_inlist] in
+    let inlinable    = List.map (fun x -> (x, AEInt (inputstate_full#get x))) expanded_inlist in
+    let (_,rewritten) = rewrite_stmt analed ignored_vids inlinable in
+    print_stmt rewritten; printf "\n--------------\n";
+
+
     inputstate_full#merge ps.valcache;
 
     (*let inputdist = ESYS.psrep_set_all ps.belief inputstate in *) (* inputs are now substituted above using Preeval.predefine *)
@@ -215,13 +238,13 @@ module MAKE_PSYSTEM (ESYS: EVAL_SYSTEM) = struct
       printf "\ninput belief:\n"; ESYS.print_psrep inputdist
     );
 
-    let outputdist = ESYS.peval sa_querystmt inputdist in
+    let outputdist = ESYS.peval rewritten inputdist in
 
     ifverbose1 (
       printf "\nend belief:\n"; ESYS.print_psrep outputdist
     );
 
-    let (ignored, outputstate_temp) = Evalstate.eval sa_querystmt
+    let (ignored, outputstate_temp) = Evalstate.eval rewritten
         inputstate_full in
 
     let outputstate = outputstate_temp#copy in
