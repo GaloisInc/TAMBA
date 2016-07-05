@@ -1,0 +1,83 @@
+secret:
+(* gender : 0 = male, 1 = female *)
+  int person1_gender   = 1;
+  int person1_infected = 0;
+
+  int person2_gender   = 1;
+  int person2_infected = 1;
+
+(*  int person3_gender   = 0; *)
+(*  int person3_infected = 1; *)
+
+(*  int person4_gender   = 0; *)
+(*  int person4_infected = 1; *)
+
+(*  int person5_gender   = 0; *)
+(*  int person5_infected = 0; *)
+
+belief:  
+  int person1_gender   = uniform 0 1;
+  int person2_gender   = uniform 0 1;
+(*  int person3_gender   = uniform 0 1;
+  int person4_gender   = uniform 0 1;
+  int person5_gender   = uniform 0 1; *)
+
+(*  infected_dist person =
+    if person.gender == 1 then person.infected = bool_dist 1:3
+    else person.infected = bool_dist 1:1
+
+  iid person infected_dist*)
+
+  if person1_gender == 1 then
+    pif 1:3 then
+      int person1_infected = 1
+    else
+      int person1_infected = 0
+    endpif
+  else
+    pif 1:1 then
+      int person1_infected = 1
+    else
+      int person1_infected = 0
+    endpif
+  endif;
+
+  if person2_gender == 1 then
+    pif 1:3 then
+      int person2_infected = 1
+    else
+      int person2_infected = 0
+    endpif
+  else
+    pif 1:1 then
+      int person2_infected = 1
+    else
+      int person2_infected = 0
+    endpif
+  endif
+
+policy:
+  max_prob_output [person1_infected person1_gender person2_infected person2_gender] 9999.0
+
+querydef num_infected -> result :
+  int result = 0;
+  result = result + person1_infected + person2_infected;
+
+querydef gender1 -> result :
+  int result = 0;
+  result = person1_gender;
+
+querydef gender2 -> result :
+  int result = 0;
+  result = person2_gender;
+
+query gender1:
+  skip;
+query gender2:
+  skip;
+query num_infected: 
+  skip;
+query num_infected: 
+  skip;
+query num_infected: 
+  skip;
