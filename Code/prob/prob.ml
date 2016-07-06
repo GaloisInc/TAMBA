@@ -65,8 +65,10 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
       let b_dist = beta (float_of_int (y + 1)) (float_of_int (n + 1)) in
       let { beta_alpha; beta_beta } = b_dist in
       let m_belief = ESYS.psrep_max_belief enddist2 in
-      printf "\n--- Sampling -------------------\n";
-      printf "max-belief (post-sampling): %s\n" (Q.to_string m_belief);
+      ifsampling (
+        printf "\n--- Sampling -------------------\n";
+        printf "max-belief (post-sampling): %s\n" (Q.to_string m_belief);
+      );
       ifverbose1 (
         printf "alpha: %f, beta: %f\n" beta_alpha beta_beta
       );
