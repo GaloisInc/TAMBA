@@ -87,6 +87,10 @@ let write_assign ass_stack varid =
          *)
     | Some aexp -> SAssign (varid, aexp)
 
+let get_new_assigns out_live s_vars a_stack =
+  let needed = diff out_live s_vars in
+  (needed, List.map (write_assign a_stack) needed)
+
 let rec rewrite_stmt cstmt s_vars assign_stack : (varid list * (varid * aexp) list * stmt) =
   match cstmt with
     | SSeq (s1, s2) ->
@@ -95,6 +99,9 @@ let rec rewrite_stmt cstmt s_vars assign_stack : (varid list * (varid * aexp) li
         (a_vars, stk2, SSeq (s11, s22))
     | SSkip -> (s_vars, assign_stack, SSkip)
     | SLivenessAnnot ((u,d,o,i), SSkip) -> (s_vars, assign_stack, SSkip)
+    | SLivenessAnnot ((u,d,o,i), SHalt) ->
+        let (_, new_assigns) = get_new_assigns o s_vars assign_stack in
+        (s_vars, assign_stack, List.fold_right (fun s1 s2 -> SSeq (s1, s2)) new_assigns SHalt)
     | SLivenessAnnot (info,SDefine (v,t))    -> (s_vars, assign_stack, SDefine (v,t))
     | SLivenessAnnot (info,SUniform (v,i,j)) -> (s_vars, assign_stack, SUniform (v,i,j))
 
@@ -135,8 +142,7 @@ let rec rewrite_stmt cstmt s_vars assign_stack : (varid list * (varid * aexp) li
     | p -> print_stmt p; failwith "Need to implement"
 
 and manage_branch out_live s_vars a_stack s1 s2 =
-  let needed = diff out_live s_vars in
-  let new_assigns = List.map (write_assign a_stack) needed in
+  let (needed, new_assigns) = get_new_assigns out_live s_vars a_stack in
   let dont_remove = List.append needed s_vars in
   let (_,a_stack1,s12) = rewrite_stmt s1 dont_remove a_stack in
   let (_,a_stack2,s22) = rewrite_stmt s2 dont_remove a_stack in
@@ -157,9 +163,15 @@ let rec flip_seq cstmt =
      | SLivenessAnnot (i, s1)  -> SLivenessAnnot (i, flip_seq s1)
      | s                       -> s
 
+let rec add_halt cstmt =
+  match cstmt with
+     | SSeq (s1, s2) -> SSeq (s1, add_halt s2)
+     | s             -> SSeq (s, SHalt)
+
 let rec ann_use_def cstmt =
   match cstmt with
    | SSkip -> SLivenessAnnot (empty_info, SSkip)
+   | SHalt -> SLivenessAnnot (empty_info, SHalt)
    | SSeq  (s1, s2) -> SSeq (ann_use_def s1, ann_use_def s2)
    | SPSeq (s1, s2, q, i1, i2) -> let s12 = ann_use_def s1 in
                                   let s22 = ann_use_def s2 in
@@ -232,6 +244,7 @@ let rec get_succ_ins_if cstmt =
 let rec liveness_analysis_rev cstmt vids =
   match cstmt with
     | SSkip -> SSkip
+    | SHalt -> SHalt
     | SAssign (name, rhs) -> SAssign (name, rhs)
     | SUniform (v, i1, i2) -> SUniform (v, i1, i2)
     | SDefine  (name, d_type) -> SDefine (name, d_type)

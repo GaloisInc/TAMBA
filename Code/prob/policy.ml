@@ -213,7 +213,7 @@ module MAKE_PSYSTEM (ESYS: EVAL_SYSTEM) = struct
                 then lived
                 else fix_live (i + 1) vs lived in
       res in
-    let fannotated = ann_use_def (flip_seq sa_querystmt) in
+    let fannotated = ann_use_def (flip_seq (add_halt sa_querystmt)) in
     let analed = flip_seq (fix_live 0 outlist fannotated) in
     print_stmt analed; printf "\n--------------\n";
 

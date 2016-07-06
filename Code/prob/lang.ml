@@ -118,6 +118,7 @@ let rec equal_lexp l1 l2 =
 
 type stmt =
   | SSkip
+  | SHalt
   | SSeq     of stmt * stmt
   | SPSeq    of stmt * stmt * Q.t * int * int
   | SAssign  of varid * aexp
@@ -131,6 +132,7 @@ type stmt =
 let rec stmt_vars stm =
   match stm with
     | SSkip                   -> []
+    | SHalt                   -> []
     | SSeq (s1, s2)           -> List.append (stmt_vars s1) (stmt_vars s2)
     | SPSeq (s1, s2, _, _, _) -> List.append (stmt_vars s1) (stmt_vars s2)
     | SAssign  (v, a1)        -> v::aexp_vars a1
@@ -147,6 +149,8 @@ let print_stmt_type s =
   match s with
     | SSkip ->
         printf "skip"
+    | SHalt ->
+        printf "halt"
     | SPSeq (_, _, _, _, _) ->
         printf "pif"
     | SSeq (_, _) ->
@@ -171,6 +175,8 @@ let rec print_stmt_type_no_ann s =
   match s with
     | SSkip ->
         printf "skip"
+    | SHalt ->
+        printf "halt"
     | SPSeq (_, _, _, _, _) ->
         printf "pif"
     | SSeq (_, _) ->
@@ -197,6 +203,7 @@ let rec equal_stmts s1 s2 =
 *)
   match (s1, s2) with
     | (SSkip, SSkip) -> true
+    | (SHalt, SHalt) -> true
     | (SSeq (sa,sb), SSeq (s1,s2)) -> equal_stmts sa s1 && equal_stmts sb s2
     | (SPSeq (sa,sb,a,b,c), SPSeq (s1,s2,d,e,f)) -> equal_stmts sa s1 &&
                                                     equal_stmts sb s2 &&
@@ -312,6 +319,9 @@ let rec print_stmt_pretty s tabs =
     | SSkip ->
         print_string tabs;
         print_string "skip"
+    | SHalt ->
+        print_string tabs;
+        print_string "halt"
     | SPSeq (s1, s2, p, n1, n2) ->
         print_string tabs;
         printf "pif %d : %d then\n" n1 n2;
@@ -444,6 +454,8 @@ let rec render_stmt_pretty_latex s tabs =
         render_stmt_pretty_latex s tabs
     | SSkip ->
         "\\sskip"
+    | SHalt ->
+        "\\shalt"
     | SPSeq (s1, SSkip, p, n1, n2) ->
         sprintf "\\spifk\\; %d/%d \\; \\sthenk\\\\\n%s%s" n1 (n1 + n2)
           ntabs
@@ -556,6 +568,7 @@ let rec collect_vars s =
   match s with
     | SAssign (name, varaexp) -> name :: (collect_vars_aexp varaexp)
     | SSkip -> []
+    | SHalt -> []
     | SSeq (s1, s2) -> List.append (collect_vars s1) (collect_vars s2)
     | SPSeq (s1, s2, p, n1, n2) -> List.append (collect_vars s1) (collect_vars s2)
     | SIf (guardlexp, s1, s2) ->
@@ -664,6 +677,7 @@ let rec _sa_of_stmt_subst_stmt indices s =
             (SAssign (_sa_of_stmt_newname newindices name, newvaraexp),
              newindices)
       | SSkip -> (s, indices)
+      | SHalt -> (s, indices)
       | SSeq (s1, s2) ->
           let (news1, newindices1) = rstmt s1 in
           let (news2, newindices2) = _sa_of_stmt_subst_stmt newindices1 s2 in
@@ -741,6 +755,7 @@ let rec fold_stmt f astmt a =
     | SAssign (name, varexp) -> f astmt a
     | SDefine (name, vartype) -> f astmt a
     | SSkip -> f astmt a
+    | SHalt -> f astmt a
     | SSeq (s1, s2) ->  fold_stmt f s2 (fold_stmt f s1 (f astmt a))
     | SPSeq (s1, s2, p, n1, n2) -> fold_stmt f s2 (fold_stmt f s1 (f astmt a))
     | SIf (guardexp, s1, s2) -> fold_stmt f s2 (fold_stmt f s1 (f astmt a))

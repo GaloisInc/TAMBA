@@ -73,6 +73,7 @@ exception Eval_error of string;;
                | _ -> raise (Eval_error ("guard expression did not evaluate to 0 or 1"))
             ) (* !!! infinite loop potential *)
         | SSkip -> (0, cstate)
+        | SHalt -> (0, cstate) (* should be at end anyway *)
         | SUniform (varid, blower, bupper) ->
             let a = (Random.int (bupper - blower + 1)) + blower in
               (a, (cstate#set varid a; cstate))

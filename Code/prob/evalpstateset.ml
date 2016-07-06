@@ -28,6 +28,7 @@ struct
         flush stdout
       );
     match cstmt with
+      | SHalt -> p
       | SSkip -> p
 
       | SDefine (name, datatype) ->
