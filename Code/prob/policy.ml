@@ -215,7 +215,7 @@ module MAKE_PSYSTEM (ESYS: EVAL_SYSTEM) = struct
       res in
     let fannotated = ann_use_def (flip_seq (add_halt sa_querystmt)) in
     let analed = flip_seq (fix_live 0 outlist fannotated) in
-    print_stmt analed; printf "\n--------------\n";
+    ifdebug (print_stmt analed; printf "\n--------------\n");
 
     (*-------------------------------------------------------------------*)
     (*---------------------------- Inlining -----------------------------*)
@@ -223,7 +223,7 @@ module MAKE_PSYSTEM (ESYS: EVAL_SYSTEM) = struct
     let ignored_vids = List.concat [secretvars;expanded_inlist] in
     let inlinable    = List.map (fun x -> (x, AEInt (inputstate_full#get x))) expanded_inlist in
     let (_,_,rewritten) = rewrite_stmt analed ignored_vids inlinable in
-    print_stmt rewritten; printf "\n--------------\n";
+    ifverbose1 (print_stmt rewritten; printf "\n--------------\n");
 
 
     inputstate_full#merge ps.valcache;
