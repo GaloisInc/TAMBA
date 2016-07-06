@@ -125,7 +125,7 @@ let rec rewrite_stmt cstmt s_vars assign_stack : (varid list * (varid * aexp) li
            | (_::_) ->
              let (a_vars, a_stack1, new_assigns, st2, sf2) =
                     manage_branch o s_vars assign_stack st sf in
-             let stmt2 = SIf (p, st2, sf2) in
+             let stmt2 = SIf (p1, st2, sf2) in
              (a_vars, a_stack1, List.fold_right (fun s1 s2 -> SSeq (s1, s2)) new_assigns stmt2)
            | []      -> let res = Evalstate.eval_lexp p1 (new State.state_empty) in
                           (match res with
