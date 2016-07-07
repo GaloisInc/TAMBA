@@ -25,6 +25,7 @@ let simplify_steps = ref 0;;
 
 let use_dsa = ref false;;
 let output_verbose = ref 0;;
+let opt_inline     = ref false;;
 let output_debug   = ref false;;
 let output_bench   = ref false;;
 let output_bench_latte = ref false;;

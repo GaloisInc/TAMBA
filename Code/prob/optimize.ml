@@ -18,7 +18,7 @@ let rec sub_member (vid, aexp) ps =
 let intersect l1 l2 = List.filter (fun x -> (sub_member x l2)) l1
 
 let extend (vid, aexp) a_stack =
-  ifverbose1 (printf "\n!!!!! Extending a_stack with: %s\n" (varid_to_string vid));
+  ifdebug (printf "\n!!!!! Extending a_stack with: %s\n" (varid_to_string vid));
   (vid,aexp) :: List.filter (fun (vid1, _) -> not (vid = vid1)) a_stack
 
 (* static_check : stmt -> abs_env -> context -> (int * abs_env) *)

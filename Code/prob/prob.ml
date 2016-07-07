@@ -163,9 +163,7 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
         ifverbose
           (printf "\nquery (single assignment):\n"; print_stmt progstmt; printf "\n");
 
-        ifnotverbose (
-          printf "\n--- Query #%d ------------------\n" count
-        );
+        printf "\n--- Query #%d ------------------\n" count;
 
         let ans = PSYS.policysystem_answer ps (queryname, querytuple) querystmt in
         let res = ans.PSYS.result in
@@ -320,6 +318,9 @@ let main () =
       ("--debug",
        Arg.Set Globals.output_debug,
        "debug output");
+      ("--inline",
+       Arg.Set Globals.opt_inline,
+       "Perform an inlining transformation on the queries before execution");
       ("--simplify",
        Arg.String (fun (s) ->
                      Globals.simplifier :=

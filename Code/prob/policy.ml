@@ -222,9 +222,13 @@ module MAKE_PSYSTEM (ESYS: EVAL_SYSTEM) = struct
     (*-------------------------------------------------------------------*)
     let ignored_vids = List.concat [secretvars;expanded_inlist] in
     let inlinable    = List.map (fun x -> (x, AEInt (inputstate_full#get x))) expanded_inlist in
-    let (_,_,rewritten) = rewrite_stmt analed ignored_vids inlinable in
-    ifverbose1 (print_stmt rewritten; printf "\n--------------\n");
 
+    let final_stmt = if !Globals.opt_inline
+                     then let (_,_,rewritten) = rewrite_stmt analed ignored_vids inlinable in
+                          rewritten
+                     else sa_querystmt in
+
+    ifverbose1 (print_stmt final_stmt; printf "\n--------------\n");
 
     inputstate_full#merge ps.valcache;
 
@@ -238,13 +242,13 @@ module MAKE_PSYSTEM (ESYS: EVAL_SYSTEM) = struct
       printf "\ninput belief:\n"; ESYS.print_psrep inputdist
     );
 
-    let outputdist = ESYS.peval rewritten inputdist in
+    let outputdist = ESYS.peval final_stmt inputdist in
 
     ifverbose1 (
       printf "\nend belief:\n"; ESYS.print_psrep outputdist
     );
 
-    let (ignored, outputstate_temp) = Evalstate.eval rewritten
+    let (ignored, outputstate_temp) = Evalstate.eval final_stmt
         inputstate_full in
 
     let outputstate = outputstate_temp#copy in
