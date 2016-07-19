@@ -63,6 +63,9 @@ let do_ifbench_latte f =
 let do_ifsampling f =
   if !sample_count > 0 then f ();;
 
+(* Initial max belief which is used to calculate cumulative leakage *)
+let init_max_belief = ref 0.0;;
+
 (* latte timing recording *)
 let chan_bench_latte = ref Pervasives.stdout;;
 let set_bench_latte s =

@@ -227,7 +227,9 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
         ifverbose (printf "initial belief generator:\n"; print_stmt beliefstmt; printf "\n");
         ifverbose (printf "initial belief generator (single assignment):\n"; print_stmt sa_beliefstmt; printf "\n");
         ifverbose1 (printf "initial belief:\n"; ESYS.print_psrep startdist);
-        printf "\nInitial max-belief: %s\n" (Gmp.Q.to_string (ESYS.psrep_max_belief startdist));
+        let init_max = ESYS.psrep_max_belief startdist in
+        printf "\nInitial max-belief: %s\n" (Gmp.Q.to_string init_max);
+        Globals.init_max_belief := Gmp.Q.to_float init_max;
         (*printf "relative entropy (initial -> secret): %f\n" startrelent; *)
 
         let ps = {PSYS.policies =
