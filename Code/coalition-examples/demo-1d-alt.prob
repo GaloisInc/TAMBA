@@ -84,11 +84,6 @@ querydef enough_berths ship berths_needed -> result :
     ship_berths = ship5_berths
   endif;
 
-  int dist = ship_loc - dest;
-  if dist < 0 then
-    dist = -1 * dist
-  endif;
-
   int result = 0;
   if (ship_berths >= berths_needed) then
     result = 1
