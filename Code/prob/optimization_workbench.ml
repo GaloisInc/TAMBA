@@ -18,7 +18,7 @@ end;;
 module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
   module PSYS = MAKE_PSYSTEM(ESYS)
 
-  let rec pmock_queries queries querydefs s_vars =
+  let rec pmock_queries queries querydefs s_vars s_state =
     match queries with
       | [] -> ()
       | (queryname, querystmt) :: t ->
@@ -28,16 +28,16 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
         printf "Outlist: ";
         printf "%s\n" (varid_list_to_string outlist);
 
-        let (ignored, inputstate_temp) = Evalstate.eval querystmt (new state_empty) in
+        let (ignored, inputstate) = Evalstate.eval querystmt (new state_empty) in
 
         let expanded_inlist =
           List.fold_left (fun a varname ->
-              if (inputstate_temp#is_record (varname)) then
+              if (inputstate#is_record (varname)) then
                 let (_, varname_str) = varname in
-                (List.map (fun (agent, field) -> (agent, varname_str^"."^field)) (inputstate_temp#get_vals (varname)))@a
+                (List.map (fun (agent, field) -> (agent, varname_str^"."^field)) (inputstate#get_vals (varname)))@a
               else varname::a) [] inlist in
 
-        inputstate_temp#project expanded_inlist;
+        inputstate#project expanded_inlist;
 
         (* TODO: Single assignment not working with records, maybe because
          * arguments not being expanded yet and inlist doesn't contain
@@ -60,7 +60,9 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
 
         let flipped = flip_seq progstmt in
         let fannotated = ann_use_def flipped in
+        (* only need to print when debugging
         print_stmt (fannotated); printf "\n--------------\n";
+        *)
 
         (*-------------------------------------------------------------------*)
         (*---------------------------- Liveness -----------------------------*)
@@ -72,17 +74,25 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
                     else fix_live (i + 1) vs lived in
           res in
         let analed = fix_live 0 outlist fannotated in
+        (* only need to print when debugging
         print_stmt (flip_seq analed); printf "\n--------------\n";
+        *)
 
         (*-------------------------------------------------------------------*)
-        (*---------------------------- Liveness -----------------------------*)
+        (*---------------------------- Inlining -----------------------------*)
         (*-------------------------------------------------------------------*)
         let ignored_vids = List.concat [s_vars;inlist] in
-        let inlinable    = List.map (fun x -> (x, AEInt (inputstate_temp#get x))) expanded_inlist in
+        let inlinable    = List.map (fun x -> (x, AEInt (inputstate#get x))) expanded_inlist in
         let (_, _,rewritten) = rewrite_stmt (flip_seq analed) ignored_vids inlinable in
         print_stmt rewritten; printf "\n--------------\n";
 
-        pmock_queries t querydefs s_vars
+        printf "query %s" queryname; inputstate#print_as_args;
+        inputstate#merge s_state;
+        let (_, outputstate) = Evalstate.eval rewritten inputstate in
+        outputstate#project outlist;
+        printf " = "; outputstate#print_as_args; printf "\n";
+
+        pmock_queries t querydefs s_vars s_state
 
   let pmock asetup =
     Printexc.record_backtrace true;
@@ -108,7 +118,7 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
 
       let startdist = ESYS.peval_start sa_beliefstmt in
 
-      pmock_queries queries querydefs secretvars
+      pmock_queries queries querydefs secretvars secretstate
 
 end
 ;;
