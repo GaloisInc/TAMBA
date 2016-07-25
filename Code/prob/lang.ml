@@ -136,8 +136,8 @@ let rec stmt_vars stm =
     | SSeq (s1, s2)           -> List.append (stmt_vars s1) (stmt_vars s2)
     | SPSeq (s1, s2, _, _, _) -> List.append (stmt_vars s1) (stmt_vars s2)
     | SAssign  (v, a1)        -> v::aexp_vars a1
-    | SDefine  (v, _)         -> [v] (* TODO: Is this the correct bahavior? *)
-    | SUniform (v, _, _)      -> [v] (* TODO: Is this the correct bahavior? *)
+    | SDefine  (_, _)         -> [] (* TODONE: If you want the assignee included  *)
+    | SUniform (_, _, _)      -> [] (* TODONE: use collect_vars *)
     | SIf      (l1, s1, s2)   -> List.append (List.append (lexp_vars l1)
                                                           (stmt_vars s1))
                                              (stmt_vars s2)

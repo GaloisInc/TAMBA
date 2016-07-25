@@ -38,6 +38,7 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
               else varname::a) [] inlist in
 
         inputstate#project expanded_inlist;
+        let inputstate_orig = inputstate#copy in
 
         (* TODO: Single assignment not working with records, maybe because
          * arguments not being expanded yet and inlist doesn't contain
@@ -45,6 +46,9 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
          * *)
 
         printf "Inlist: ";
+        printf "%s\n" (varid_list_to_string inlist);
+
+        printf "Expanded Inlist: ";
         printf "%s\n" (varid_list_to_string inlist);
 
         (*-------------------------------------------------------------------*)
@@ -58,35 +62,41 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
         print_stmt progstmt; printf "\n";
         printf "-------------------------------------------------\n";
 
-        let flipped = flip_seq progstmt in
+        let flipped = flip_seq (add_halt progstmt) in
         let fannotated = ann_use_def flipped in
-        (* only need to print when debugging
-        print_stmt (fannotated); printf "\n--------------\n";
-        *)
+        (* only need to print when debugging *)
+        print_stmt (fannotated); printf "\n----- ^annotated ---------\n";
 
         (*-------------------------------------------------------------------*)
         (*---------------------------- Liveness -----------------------------*)
         (*-------------------------------------------------------------------*)
         let rec fix_live i vs stmts =
+          print_stmt (stmts); printf "\n----- ^input to fix_live %d ---------\n" i;
           let lived = liveness_analysis_rev stmts vs in
           let res = if equal_stmts stmts lived
                     then lived
                     else fix_live (i + 1) vs lived in
           res in
-        let analed = fix_live 0 outlist fannotated in
-        (* only need to print when debugging
-        print_stmt (flip_seq analed); printf "\n--------------\n";
-        *)
+        let analed = flip_seq (fix_live 0 outlist fannotated) in
+        (* only need to print when debugging *)
+        print_stmt (analed); printf "\n----- ^analyzed ---------\n";
 
         (*-------------------------------------------------------------------*)
         (*---------------------------- Inlining -----------------------------*)
         (*-------------------------------------------------------------------*)
-        let ignored_vids = List.concat [s_vars;inlist] in
+        let ignored_vids = List.concat [s_vars;expanded_inlist] in
         let inlinable    = List.map (fun x -> (x, AEInt (inputstate#get x))) expanded_inlist in
-        let (_, _,rewritten) = rewrite_stmt (flip_seq analed) ignored_vids inlinable in
-        print_stmt rewritten; printf "\n--------------\n";
+        let (_, _,rewritten) = rewrite_stmt analed ignored_vids inlinable in
+        let clean = rem_redundant_decl rewritten in
+        print_stmt clean; printf "\n----- ^rewritten ---------\n";
 
-        printf "query %s" queryname; inputstate#print_as_args;
+        printf "query (without inlining) %s" queryname; inputstate_orig#print_as_args;
+        inputstate_orig#merge s_state;
+        let (_, outputstate) = Evalstate.eval progstmt inputstate_orig in
+        outputstate#project outlist;
+        printf " = "; outputstate#print_as_args; printf "\n";
+
+        printf "query (with inlining) %s" queryname; inputstate#print_as_args;
         inputstate#merge s_state;
         let (_, outputstate) = Evalstate.eval rewritten inputstate in
         outputstate#project outlist;
