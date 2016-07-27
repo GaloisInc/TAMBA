@@ -1,0 +1,20 @@
+secret:
+  int x = 10;
+
+belief:
+  int x = uniform 0 1000;
+
+querydef fun i -> y :
+  int z = x + i;
+  int w = x + x;
+  int y = z + w;
+
+query fun:
+  int i = 1;
+
+(* This program should get rid of z and w because they are not necessary for
+   the control flow of the program or part of the result set.
+
+    int y;
+    y = (x + 1) + (x + x);
+*)
