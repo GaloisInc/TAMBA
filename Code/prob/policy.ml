@@ -25,10 +25,10 @@ type policy = {plabel: string;
 let policytype_of_string pname =
   match pname with
   | "max_prob_output" -> PMaxProbOut
-  | "max_prob_all"    -> PMaxProbAll
-  | "max_prob"        -> PMaxProb
+(*  | "max_prob_all"    -> PMaxProbAll
+    | "max_prob"        -> PMaxProb*)
   | "min_rel_entropy" -> PMinRelEnt
-  | _ -> raise (General_error ("unknown polict type " ^ pname))
+  | _ -> raise (General_error ("unknown policy type " ^ pname))
 ;;
 
 let policy_new plabel pname vars param = {plabel = plabel;
@@ -99,8 +99,9 @@ module MAKE_PSYSTEM (ESYS: EVAL_SYSTEM) = struct
       (distactual: ESYS.psrep)
       (outputs: Lang.varid list)
     : bool =
-    (* TODO: the below needs to be fixed to include variables that are not mentioned in the policy but are used to probabilistically build up
-       the ones mentioned *)
+    (* TODO: the below needs to be fixed to include variables that are
+       not mentioned in the policy but are used to probabilistically
+       build up the ones mentioned *)
     match p.ptype with
     | PMinRelEnt ->
       let bred = ESYS.psrep_on_vars distbelief p.pvars in
@@ -146,9 +147,9 @@ module MAKE_PSYSTEM (ESYS: EVAL_SYSTEM) = struct
   let rec policysystem_check_policies
       (count: int)
       (policies: policy list)
-      (distout: ESYS.psrep) (* output distribution *)
-      (distbelief: ESYS.psrep) (* revised distribution *)
-      (distactual: ESYS.psrep)
+      (distout:    ESYS.psrep) (* output distribution *)
+      (distbelief: ESYS.psrep) (* revised distribution, distout conditioned on something *)
+      (distactual: ESYS.psrep) (* point distribution describing the secret values *)
       (outputs: Lang.varid list)
     : string option =
     (* let max_prob = find_max_belief distout outputs policies.pvars in *)
@@ -297,8 +298,8 @@ module MAKE_PSYSTEM (ESYS: EVAL_SYSTEM) = struct
       printf "Cumulative leakage: %s\n" (string_of_float cuma_leakage)
     );
 
-    (*      match policysystem_check_policies 0 ps.policies outputdist enddist secretdist outlist with *)
-    match policysystem_check_policies 0 ps.policies outputdist outputdist secretdist outlist with
+    match policysystem_check_policies 0 ps.policies outputdist enddist secretdist outlist with
+        (*match policysystem_check_policies 0 ps.policies outputdist outputdist secretdist outlist with*)
     (*        | None -> {result = RTrueValue (outputstate#canon);*)
     | None -> {result = RTrueValue ([]);
                update = ps_updater}
