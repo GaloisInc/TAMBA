@@ -1,25 +1,67 @@
-open Sys
-open Benchmark
-open Printf
-open Filename
-open Unix
 open Util
+       
+(* options *)
+let opt_latte_minmax = ref false
+let opt_dsa = ref false
+let opt_precision = ref 0
+let opt_samples = ref 0
+let opt_blackbox = ref false
+let opt_split_factor = ref 1
+let opt_domain = ref 4
+(* space saved for bench *)
+let opt_count_latte = ref false
+(* space saved for bench latte *)
+let opt_verbose = ref 0
+let opt_debug = ref false
+let opt_inline = ref false
+let opt_simplify = ref 0
+let opt_seed = ref 0
+
+(* setters for options *)
+let set_domain str =
+  opt_domain := (
+    match str with
+      | "list" -> 0
+      | "box" -> 1
+      | "octa" -> 2
+      | "octalatte" -> 3
+      | "poly" -> 4
+      | _ -> raise (General_error ("unknown domain: " ^ str)))
+
+let set_simplify str =
+  opt_simplify := (
+    match str with
+    | "halfs" -> 0
+    | "simple" -> 1
+    | "slack" -> 2
+    | "random" -> 3
+    | _ -> raise (General_error ("unknown simplifier: " ^ str)))
+
+(* args *)
+let input_file = ref "-"
 
 
+
+(*
 
 let currently_parsing = ref "";;
 
+let simplifier = ref 0;;
 let latte_count = ref 0;;
 
 let inc_latte_count =
   latte_count := !latte_count + 1;;
 
+
 let renderlatex = ref false;;
 
 let simplify_steps = ref 0;;
 
+let use_dsa = ref false;;
+let output_debug   = ref false;;
 let output_bench   = ref false;;
 let output_bench_latte = ref false;;
+let output_latte_count = ref false;;
 
 let current_executable = Sys.argv.(0);;
 let current_dir = Filename.dirname current_executable;;
@@ -39,19 +81,19 @@ let file_abs f = (* assuming f is specified relative to new environment *)
     f
 
 let do_ifverbose f =
-  if !Cmd.opt_verbose = 2 then f ();;
+  if !output_verbose = 2 then f ();;
 let do_ifverbose1 f =
-  if !Cmd.opt_verbose = 1 then f ();;
+  if !output_verbose = 1 then f ();;
 let do_if_not_verbose f =
-  if !Cmd.opt_verbose = 0 then f ();;
+  if !output_verbose = 0 then f ();;
 let do_ifdebug f =
-  if !Cmd.opt_debug then f ();;
+  if !output_debug then f ();;
 let do_ifbench f =
   if !output_bench then f ();;
 let do_ifbench_latte f =
   if !output_bench_latte then f ();;
 let do_ifsampling f =
-  if !Cmd.opt_samples > 0 then f ();;
+  if !sample_count > 0 then f ();;
 
 (* Initial max belief which is used to calculate cumulative leakage *)
 let init_max_belief = ref 0.0;;
@@ -140,3 +182,4 @@ let memoize_named2 name f =
 ;;
 
 Unix.chdir current_dir;;
+ *)

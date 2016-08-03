@@ -191,7 +191,7 @@ module MAKE_PSYSTEM (ESYS: EVAL_SYSTEM) = struct
             (List.map (fun (agent, field) -> (agent, varname_str^"."^field)) (inputstate_temp#get_vals (varname)))@a
           else varname::a) [] inlist in
 
-    let sa_querystmt = if !Globals.use_dsa then
+    let sa_querystmt = if !Cmd.opt_dsa then
         (sa_of_stmt querystmt (List.append secretvars expanded_inlist) outlist)
       else
         querystmt in
@@ -224,7 +224,7 @@ module MAKE_PSYSTEM (ESYS: EVAL_SYSTEM) = struct
     let ignored_vids = List.concat [secretvars;expanded_inlist] in
     let inlinable    = List.map (fun x -> (x, AEInt (inputstate_full#get x))) expanded_inlist in
 
-    let final_stmt = if !Globals.opt_inline
+    let final_stmt = if !Cmd.opt_inline
                      then let (_,_,rewritten) = rewrite_stmt analed ignored_vids inlinable in
                           rewritten
                      else sa_querystmt in

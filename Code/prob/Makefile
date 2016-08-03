@@ -26,6 +26,7 @@ endif
 SOURCES_COMMON :=\
 	util.ml \
 	benchmark.ml \
+	cmd.ml \
 	globals.ml \
 	lang.ml \
 	logical.ml \
