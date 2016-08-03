@@ -1,3 +1,4 @@
+.vagrant/
 *.pdf
 *.swp
 qif/
