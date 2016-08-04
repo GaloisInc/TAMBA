@@ -11,6 +11,12 @@
 - name: install pkg-config
   apt: name=pkg-config state=present
 
+- name: install autoconf
+  apt: name=autoconf state=present
+
+- name: install libtool
+  apt: name=libtool state=present
+
 - name: install vim
   apt: name=vim state=present
 

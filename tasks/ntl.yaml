@@ -1,0 +1,27 @@
+---
+
+- name: Get NTL Source archive
+  get_url: url=http://shoup.net/ntl/ntl-9.10.0.tar.gz dest=/usr/share/ntl-9.10.0.tar.gz
+
+- name: Unarchive NTL source
+  unarchive: src=/usr/share/ntl-9.10.0.tar.gz dest=/usr/share/ copy=no
+
+- name: run configure for NTL lib
+  become: yes
+  become_user: vagrant
+  shell: ./configure NTL_GMP_LIP=on
+  args:
+    chdir: /usr/share/ntl-9.10.0/src
+    creates: /usr/share/ntl-9.10.0/src/Makefile
+
+- name: make NTL
+  become: yes
+  shell: make
+  args:
+    chdir: /usr/share/ntl-9.10.0/src
+
+- name: Install NTL
+  become: yes
+  shell: make install
+  args:
+    chdir: /usr/share/ntl-9.10.0/src

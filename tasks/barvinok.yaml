@@ -1,0 +1,54 @@
+---
+
+- name: Get libBarvinok sources
+  git: repo=http://repo.or.cz/barvinok.git
+       dest=/home/vagrant/barvinok
+       accept_hostkey=yes
+       update=no
+
+- name: Get Barvinok submodules
+  shell: ./get_submodules.sh && touch /home/vagrant/.barvinok_submoduled
+  args:
+    chdir: /home/vagrant/barvinok
+    creates: /home/vagrant/.barvinok_submoduled
+
+- name: Create configuration
+  shell: sh autogen.sh
+  args:
+    chdir: /home/vagrant/barvinok
+    creates: /home/vagrant/barvinok/configure
+
+- name: run configure for Barvinok
+  become: yes
+  shell: ./configure
+  args:
+    chdir: /home/vagrant/barvinok
+    creates: /home/vagrant/barvinok/Makefile
+
+- name: make Barvinok
+  become: yes
+  shell: make
+  args:
+    chdir: /home/vagrant/barvinok
+    creates: /home/vagrant/barviok/barvinok_count
+
+- name: make check Barvinok
+  become: yes
+  shell: make check && touch /home/vagrant/.barvinok_checked
+  args:
+    chdir: /home/vagrant/barvinok
+    creates: /home/vagrant/.barvinok_checked
+
+- name: make install Barvinok
+  become: yes
+  shell: make install
+  args:
+    chdir: /home/vagrant/barvinok
+    creates: /usr/local/bin/barvinok_count
+
+- name: Install latte2polylib.pl
+  become: yes
+  shell: cp latte2polylib.pl /usr/local/bin/latte2polylib
+  args:
+    chdir: /home/vagrant/barvinok
+    creates: /usr/local/bin/latte2polylib
