@@ -211,7 +211,7 @@ module Ppldomainpoly: (PPLDOMAIN_TYPE with type region = polyhedron) =
           (zone, lout +! zone)
 
     let region_min_max_height r vnum1 =
-      (if !Globals.use_latte_minmax
+      (if !Cmd.opt_latte_minmax
        then _region_min_max_height_latte
        else _region_min_max_height_points) r vnum1
 

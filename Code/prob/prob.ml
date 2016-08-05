@@ -23,7 +23,7 @@ let add_policy_records aexp =
     aexp.policies;;
 
 module type EXP_SYSTEM = sig
-  val pmock: Pdefs.tpmocksetup -> unit
+  val run: Pdefs.tpmocksetup -> unit
 end;;
 
 module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
@@ -59,7 +59,7 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
   let sample_final queries querydefs ps =
     let enddist = ps.PSYS.belief in
       let trips = List.map (make_trip querydefs ps) queries in
-      let enddist2 = try (ESYS.psrep_sample enddist !Globals.sample_count trips)
+      let enddist2 = try (ESYS.psrep_sample enddist !Cmd.opt_samples trips)
                      with e -> enddist in
       let (y,n) = ESYS.get_alpha_beta enddist2 in
       let b_dist = beta (float_of_int (y + 1)) (float_of_int (n + 1)) in
@@ -188,13 +188,13 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
 
         flush stdout;
 
-        let ps_out = if !Globals.black_box
+        let ps_out = if !Cmd.opt_blackbox
                      then ps_in
                      else ps in
 
         pmock_queries (count + 1) t querydefs ps_out
 
-  let pmock asetup =
+  let run asetup =
     Printexc.record_backtrace true;
 (*      let vars = pmock_all_vars asetup in*)
       let secretstmt = Preeval.preeval asetup.secret in
@@ -215,7 +215,7 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
       let secretvars = Lang.all_vars beliefstmt in
 
       let sa_beliefstmt = (sa_of_stmt beliefstmt [] secretvars) in
-      let sa_beliefstmt = (if !Globals.use_dsa then sa_beliefstmt else beliefstmt) in
+      let sa_beliefstmt = (if !Cmd.opt_dsa then sa_beliefstmt else beliefstmt) in
       (*let sa_beliefstmt = beliefstmt in*)
 
       let startdist = ESYS.peval_start sa_beliefstmt in
@@ -240,7 +240,7 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
 
           ifdebug (printf "\n\nBefore pmock_queries\n\n");
           let final_dist = pmock_queries 1 queries querydefs ps in
-          if !Globals.output_latte_count
+          if !Cmd.opt_count_latte
           then printf "Number of calls to LattE: %d\n" !Globals.latte_count;
           sample_final queries querydefs final_dist
   (*with
@@ -258,117 +258,96 @@ module EVALS_PPSS_OCTA = MAKE_EVALS(ESYS_PPSS_OCTA);;
 module EVALS_PPSS_OCTALATTE = MAKE_EVALS(ESYS_PPSS_OCTALATTE);;
 
 let main () =
-  let infile = ref "-" in
-  let opt_esys = ref 3 in
-  let opt_pmock = ref 1 in
-  let seed = ref 0 in
-    Arg.parse [
-      ("--use-latte-minmax",
-       Arg.Set Globals.use_latte_minmax,
-       "use latte for maximization, constant 1 for minimization");
-      ("--use-dsa",
-       Arg.Set Globals.use_dsa,
-       "convert to dynamic single assignment");
-      ("--precision",
-       Arg.Set_int Globals.precision,
-       "set the precision");
-      ("--samples",
-       Arg.Set_int Globals.sample_count,
-       "set the number of samples to use");
-      ("--blackbox",
-       Arg.Set Globals.black_box,
-       "reset the belief to uniform between each query");
-      ("--split-factor",
-       Arg.Set_int Globals.split_uniforms_factor,
-       "set the uniforms split factor, default = 1");
-      ("--pmock",
-       Arg.Unit (fun () -> opt_pmock := 1),
-       "run the mock policy");
-      ("--domain",
-       Arg.String (fun (s) ->
-                     opt_esys :=
-                       (match s with
-                          | "octalatte" -> 4
-                          | "octa" -> 2
-                          | "poly" -> 3
-                          | "box"  -> 1
-                          | "list" -> 0
-                          | _ -> raise (General_error ("unknown domain: " ^ s)))),
-       "base domain: list, box, octalatte, poly");
-      ("--bench",
-       Arg.String (fun s ->
-                     if s <> "--" then Globals.set_bench s;
-                     Globals.output_bench := true
-                  ),
-       "write out timing information, use -- to designate stdout");
-      ("--count-latte",
-       Arg.String (fun s ->
-                     Globals.output_latte_count := true
-                  ),
-       "count number of calls to count");
-      ("--bench-latte",
-       Arg.String (fun s ->
-                     if s <> "--" then Globals.set_bench s;
-                     Globals.output_bench := true;
-                     if s <> "--" then Globals.set_bench_latte s;
-                     Globals.output_bench_latte := true
-                  ),
-       "write out latte timing information, use -- to designate stdout");
-      ("--verbose",
-       Arg.Set_int Globals.output_verbose,
-       "verbose output");
-      ("--debug",
-       Arg.Set Globals.output_debug,
-       "debug output");
-      ("--inline",
-       Arg.Set Globals.opt_inline,
-       "Perform an inlining transformation on the queries before execution");
-      ("--simplify",
-       Arg.String (fun (s) ->
-                     Globals.simplifier :=
-                       (match s with
-                          | "simple" -> 1
-                          | "halfs"  -> 0
-                          | "random" -> 3
-                          | "slack"  -> 2
-                          | _ -> raise (General_error ("unknown simplifier: " ^ s)))),
-       "precision simplifier: simple, halfs, random, slack");
-      ("--seed",
-       Arg.Set_int seed,
-       "set the random seed, default 0")
-        ] (function s -> infile := s) "";
-    (*if !opt_esys <> 3 then Globals.split_uniforms := true;*)
-    Random.init(!seed);
-    ifdebug Printexc.record_backtrace true;
-    try
-      let aexperiment = parse !infile Parser.pmock in
-        ifbench (add_policy_records aexperiment;
-                 Globals.print_header ());
-        Globals.bench_latte_out_header ();
-        let module E =
-          (val (match !opt_esys with
-                  | 0 -> (*printf "running with lists\n";
-                      (module EVALS_S: EXP_SYSTEM)*)
-                      raise (General_error "list-based peval not implemented")
-                  | 1 -> (module EVALS_PPSS_BOX: EXP_SYSTEM)
-                  | 2 -> (module EVALS_PPSS_OCTA: EXP_SYSTEM)
-                  | 3 -> (module EVALS_PPSS_POLY: EXP_SYSTEM)
-                  | 4 -> (module EVALS_PPSS_OCTALATTE: EXP_SYSTEM)
-                  | _ -> raise Not_expected): EXP_SYSTEM) in
-          ifdebug (printf "\n\nBefore pmock\n\n");
-          E.pmock aexperiment;
-          ifdebug (printf "\n\nAfter pmock\n\n");
-          ifdebug (printf "maximum complexity encountered = %d\n" !Globals.max_complexity);
-          ifbench (Globals.close_bench ());
-          Globals.bench_latte_close ();
-(*          printf "simplification steps: %d\n" !Globals.simplify_steps;
-          printf "no errors\n"*)
-    with
-      | e ->
-          Unix.chdir Globals.original_dir;
-          ifdebug (printf "%s\n" (Printexc.to_string e);
-                   Printexc.print_backtrace stdout);
-          raise e
+  Arg.parse [
+    ("--latte-minmax",
+     Arg.Set Cmd.opt_latte_minmax,
+     "use latte for maximization, constant 1 for minimization");
+    ("--dsa",
+     Arg.Set Cmd.opt_dsa,
+     "convert to dynamic single assignment");
+    ("--precision",
+     Arg.Set_int Cmd.opt_precision,
+     "set the precision");
+    ("--samples",
+     Arg.Set_int Cmd.opt_samples,
+     "set the number of samples to use");
+    ("--blackbox",
+     Arg.Set Cmd.opt_blackbox,
+     "reset the belief to uniform between each query");
+    ("--split-factor",
+     Arg.Set_int Cmd.opt_split_factor,
+     "set the uniforms split factor, default = 1");
+    ("--domain",
+     Arg.String Cmd.set_domain,
+     "set the PPL domain for evaluation (\"list\", \"box\", \"octa\", \"octalatte\", or \"poly\"), default = \"poly\"");
+    ("--bench",
+     Arg.String (fun s ->
+                   if s <> "--" then Globals.set_bench s;
+                   Globals.output_bench := true
+                ),
+     "write out timing information, use -- to designate stdout");
+    ("--count-latte",
+     Arg.Set Cmd.opt_count_latte,
+     "count number of calls to count");
+    ("--bench-latte",
+     Arg.String (fun s ->
+                   if s <> "--" then Globals.set_bench s;
+                   Globals.output_bench := true;
+                   if s <> "--" then Globals.set_bench_latte s;
+                   Globals.output_bench_latte := true
+                ),
+     "write out latte timing information, use -- to designate stdout");
+    ("--verbose",
+     Arg.Set_int Cmd.opt_verbose,
+     "verbose output (0, 1, 2)");
+    ("--debug",
+     Arg.Set Cmd.opt_debug,
+     "debug output");
+    ("--inline",
+     Arg.Set Cmd.opt_inline,
+     "Perform an inlining transformation on the queries before execution");
+    ("--simplify",
+     Arg.String Cmd.set_simplify,
+     "precision simplifier (\"halfs\", \"simple\", \"slack\", \"random\"), default = \"halfs\"");
+    ("--seed",
+     Arg.Set_int Cmd.opt_seed,
+     "set the random seed, default 0")
+    ] (function s -> Cmd.input_file := s) "";
+
+  ifdebug (Printexc.record_backtrace true);
+  Random.init(!Cmd.opt_seed);
+
+  try
+    let policy = parse !Cmd.input_file Parser.pmock in (* note to self: why is this called pmock? What is pmock? *)
+
+    ifbench (add_policy_records policy;
+             Globals.print_header ());
+    Globals.bench_latte_out_header ();
+
+    let module Runner =
+      (val (match !Cmd.opt_domain with
+            | 0 -> raise (General_error "list-based evaluation not implemented")
+            | 1 -> (module EVALS_PPSS_BOX : EXP_SYSTEM)
+            | 2 -> (module EVALS_PPSS_OCTA : EXP_SYSTEM)
+            | 3 -> (module EVALS_PPSS_OCTALATTE : EXP_SYSTEM)
+            | 4 -> (module EVALS_PPSS_POLY : EXP_SYSTEM)
+            | _ -> raise Not_expected) : EXP_SYSTEM) in
+
+    ifdebug(printf "\n\nBefore evaluation\n\n");
+
+    Runner.run policy;
+
+    ifdebug(printf "\n\nAfter evaluation\n\n";
+            printf "maximum complexity encountered = %d\n" !Globals.max_complexity;
+            Globals.close_bench ());
+    Globals.bench_latte_close ();
+
+  with
+    | e ->
+       Unix.chdir Globals.original_dir;
+       ifdebug(printf "%s\n" (Printexc.to_string e);
+               Printexc.print_backtrace stdout);
+       raise e
 ;;
 
-main();;
+main ()

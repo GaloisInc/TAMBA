@@ -62,8 +62,8 @@ struct
           List.append temp1 temp2
 
   let make_uniform vname lower upper =
-    if !Globals.split_uniforms_factor > 1 then
-      _make_uniform_to_precision vname lower upper !Globals.split_uniforms_factor qone
+    if !Cmd.opt_split_factor > 1 then
+      _make_uniform_to_precision vname lower upper !Cmd.opt_split_factor qone
     else
       [PSS.make_uniform vname lower upper]
 
@@ -150,7 +150,7 @@ struct
       ret
 
   let _simplify_to_precision_select () =
-    match !Globals.simplifier with
+    match !Cmd.opt_simplify with
       | 0 -> _simplify_to_precision_halfs
       | 1 -> _simplify_to_precision_simple
       | 2 -> _simplify_to_precision_complex
@@ -164,7 +164,7 @@ struct
       ret
 
   let _simplify pss =
-    _simplify_to_precision pss !Globals.precision
+    _simplify_to_precision pss !Cmd.opt_precision
 
   let make_splitter pss alexp = PSS.make_splitter (List.hd pss) alexp
 
@@ -185,8 +185,8 @@ struct
     if (List.length pss) = 0 then ([], []) else
       (
         let (ins, outs) = split_many pss alexp in
-          (_simplify_to_precision (List.hd ins) !Globals.precision,
-           _simplify_to_precision (List.hd outs) !Globals.precision))
+          (_simplify_to_precision (List.hd ins) !Cmd.opt_precision,
+           _simplify_to_precision (List.hd outs) !Cmd.opt_precision))
 
   let set_all pss sil = List.map (fun apss -> PSS.set_all apss sil) pss
 
@@ -241,11 +241,11 @@ struct
     let numSmaller = List.length pssSmaller in
     let numBigger  = List.length pssBigger in
     Globals.seen_complexity (numSmaller + numBigger);
-    let maxpolies = !Globals.precision in
+    let maxpolies = !Cmd.opt_precision in
     if (maxpolies = 0) || (numSmaller + numBigger >= maxpolies) then List.append pssSmaller pssBigger else
       if (maxpolies = 1) then
         _simplify_to_precision (List.append pssSmaller pssBigger) maxpolies
-      else if !Globals.simplifier = 3 then
+      else if !Cmd.opt_simplify = 3 then
         _simplify_to_precision (List.append pssSmaller pssBigger) maxpolies
       else
         (
