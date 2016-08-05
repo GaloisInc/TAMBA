@@ -1,5 +1,5 @@
 open Util
-       
+
 (* options *)
 let opt_latte_minmax = ref false
 let opt_dsa = ref false
