@@ -286,6 +286,16 @@ let main () =
                    Globals.output_bench := true
                 ),
      "write out timing information, use -- to designate stdout");
+    ("--bakeoff",
+     Arg.String (fun s ->
+                   if s <> "--" then Globals.set_bench_bakeoff s;
+                   Globals.output_bench_bakeoff := true;
+                   if s <> "--" then Globals.set_bench s;
+                   Globals.output_bench := true;
+                   if s <> "--" then Globals.set_bench_latte s;
+                   Globals.output_bench_latte := true
+                ),
+     "compare latte to barvinok -- to designate stdout");
     ("--count-latte",
      Arg.Set Cmd.opt_count_latte,
      "count number of calls to count");

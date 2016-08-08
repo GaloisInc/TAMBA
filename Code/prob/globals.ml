@@ -20,6 +20,7 @@ let simplify_steps = ref 0;;
 
 let output_bench   = ref false;;
 let output_bench_latte = ref false;;
+let output_bench_bakeoff = ref false;;
 
 let current_executable = Sys.argv.(0);;
 let current_dir = Filename.dirname current_executable;;
@@ -50,6 +51,8 @@ let do_ifbench f =
   if !output_bench then f ();;
 let do_ifbench_latte f =
   if !output_bench_latte then f ();;
+let do_ifbench_bakeoff f =
+  if !output_bench_latte then f ();;
 let do_ifsampling f =
   if !Cmd.opt_samples > 0 then f ();;
 
@@ -76,6 +79,26 @@ let bench_latte_close () =
   do_ifbench_latte (fun () -> close_out !chan_bench_latte);;
 (* end of latte timing recording *)
 
+(* bakeoff timing recording *)
+let chan_bench_bakeoff = ref Pervasives.stdout;;
+let set_bench_bakeoff s =
+  chan_bench_bakeoff := (open_out (file_relative s));;
+let timer_bench_bakeoff = new timer;;
+let bench_bakeoff_out_header () =
+  do_ifbench_bakeoff (fun () ->
+                      fprintf !chan_bench_bakeoff "type,dimensions,constraints,time (s),time (real s)\n";
+                      flush !chan_bench_bakeoff);;
+let bench_bakeoff_start () =
+  do_ifbench_bakeoff (fun () -> ignore (timer_bench_bakeoff#mark));;
+let bench_bakeoff_end k =
+  do_ifbench_bakeoff (fun () ->
+                      let (t, tr) = timer_bench_bakeoff#mark in
+                        fprintf !chan_bench_bakeoff "%s,%f,%f\n" k t tr;
+                        flush !chan_bench_bakeoff);;
+let bench_bakeoff_close () =
+  do_ifbench_bakeoff (fun () -> close_out !chan_bench_bakeoff);;
+(* end of bakeoff timing recording *)
+
 let max_complexity = ref 0;;
 let seen_complexity a = if a > !max_complexity then max_complexity := a;;
 
@@ -97,12 +120,14 @@ let set_bench s = b#set_bench (file_relative s);;
 let close_bench () = b#close;;
 
 let timer_count     = "latte count";;
+let timer_barvinok  = "barvinok count";;
 let timer_maximize  = "latte maximize";;
 let timer_simplify  = "simplify";;
 let timer_query     = "query";;
 let record_vertices = "vertices";;
 
 new_timer timer_count;;
+new_timer timer_barvinok;;
 new_timer timer_maximize;;
 new_timer timer_simplify;;
 new_timer timer_query;;

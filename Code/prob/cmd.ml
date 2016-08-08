@@ -16,6 +16,7 @@ let opt_debug = ref false
 let opt_inline = ref false
 let opt_simplify = ref 0
 let opt_seed = ref 0
+let opt_bakeoff = ref false
 
 (* setters for options *)
 let set_domain str =
