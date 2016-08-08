@@ -8,6 +8,7 @@ let opt_samples = ref 0
 let opt_blackbox = ref false
 let opt_split_factor = ref 1
 let opt_domain = ref 4
+let opt_count_bin = ref "count"
 (* space saved for bench *)
 let opt_count_latte = ref false
 (* space saved for bench latte *)

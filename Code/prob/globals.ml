@@ -52,7 +52,7 @@ let do_ifbench f =
 let do_ifbench_latte f =
   if !output_bench_latte then f ();;
 let do_ifbench_bakeoff f =
-  if !output_bench_latte then f ();;
+  if !output_bench_bakeoff then f ();;
 let do_ifsampling f =
   if !Cmd.opt_samples > 0 then f ();;
 
@@ -90,10 +90,10 @@ let bench_bakeoff_out_header () =
                       flush !chan_bench_bakeoff);;
 let bench_bakeoff_start () =
   do_ifbench_bakeoff (fun () -> ignore (timer_bench_bakeoff#mark));;
-let bench_bakeoff_end k =
+let bench_bakeoff_end k d c =
   do_ifbench_bakeoff (fun () ->
                       let (t, tr) = timer_bench_bakeoff#mark in
-                        fprintf !chan_bench_bakeoff "%s,%f,%f\n" k t tr;
+                        fprintf !chan_bench_bakeoff "%s,%d,%d,%f,%f\n" k d c t tr;
                         flush !chan_bench_bakeoff);;
 let bench_bakeoff_close () =
   do_ifbench_bakeoff (fun () -> close_out !chan_bench_bakeoff);;

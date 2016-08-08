@@ -25,6 +25,10 @@ EXTEND
           <:expr< Globals.do_ifbench (fun () -> $e1$) >>
       ]
   |
+      [ "ifbakeoff"; e1 = expr ->
+          <:expr< Globals.do_ifbench_bakeoff (fun () -> $e1$) >>
+      ]
+  |
       [ "ifsampling"; e1 = expr ->
           <:expr< Globals.do_ifsampling (fun () -> $e1$) >>
       ]

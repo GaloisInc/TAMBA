@@ -2,6 +2,7 @@ open Sys
 open Gmp
 open Gmp_util
 open Globals
+open Cmd
 open Util
 open Printf
 open Unix
@@ -10,7 +11,7 @@ open Ppl_util
 open Maths
 open Geo
 
-let latte_bin = "count"
+let latte_bin = !opt_count_bin
 let barvinok_bin = "barvinok_count"
 let latte_bin_max = "latte-maximize"
 let latte_bin_max_b = "latte-maximize bbs"
@@ -96,13 +97,13 @@ let _count_models =
 
             ifdebug (printf "done "; flush Pervasives.stdout);
             ifbench (Globals.stop_timer Globals.timer_count;
-                     Globals.bench_latte_end "count" ds ns);
+                     Globals.bench_latte_end !opt_count_bin ds ns);
 
             Globals.bench_bakeoff_start ();
-            ifbench (Globals.start_timer Globals.timer_barvinok);
+            ifbakeoff (Globals.start_timer Globals.timer_barvinok);
             let (din, derr) = exec_and_read_all ("latte2polylib " ^ filename ^ " | barvinok_count") latte_env in
-            ifbench(Globals.stop_timer Globals.timer_barvinok;
-                    Globals.bench_bakeoff_end "barvinok count");
+            ifbakeoff(Globals.stop_timer Globals.timer_barvinok;
+                      Globals.bench_bakeoff_end "barvinok count" ds ns);
 
             let lines_in = string_split data_in "\n" in
 

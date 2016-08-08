@@ -195,6 +195,8 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
         pmock_queries (count + 1) t querydefs ps_out
 
   let run asetup =
+    ifverbose1 (printf "Binary for counting: %s\n" !Cmd.opt_count_bin;
+                flush stdout);
     Printexc.record_backtrace true;
 (*      let vars = pmock_all_vars asetup in*)
       let secretstmt = Preeval.preeval asetup.secret in
@@ -280,6 +282,9 @@ let main () =
     ("--domain",
      Arg.String Cmd.set_domain,
      "set the PPL domain for evaluation (\"list\", \"box\", \"octa\", \"octalatte\", or \"poly\"), default = \"poly\"");
+    ("--barv",
+     Arg.Unit (fun () -> Cmd.opt_count_bin := "barvinok_count"),
+     "Use `barvinok_count` to count number of points in a polyhedron");
     ("--bench",
      Arg.String (fun s ->
                    if s <> "--" then Globals.set_bench s;
