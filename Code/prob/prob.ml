@@ -321,6 +321,9 @@ let main () =
     ("--inline",
      Arg.Set Cmd.opt_inline,
      "Perform an inlining transformation on the queries before execution");
+    ("--improve-lower-bounds",
+     Arg.Set Cmd.opt_improve_lower_bounds,
+     "Use sampling w/ path conditions + LattE to improve s_min");
     ("--simplify",
      Arg.String Cmd.set_simplify,
      "precision simplifier (\"halfs\", \"simple\", \"slack\", \"random\"), default = \"halfs\"");

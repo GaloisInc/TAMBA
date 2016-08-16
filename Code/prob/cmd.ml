@@ -15,6 +15,7 @@ let opt_count_latte = ref false
 let opt_verbose = ref 0
 let opt_debug = ref false
 let opt_inline = ref false
+let opt_improve_lower_bounds = ref false
 let opt_simplify = ref 0
 let opt_seed = ref 0
 let opt_bakeoff = ref false
