@@ -488,7 +488,9 @@ module MakePStateset(* create pstateset from a stateset *)
       else if _hit_max pss then qone
       else (
         let (massin, massout) = _opt_estimate_max_in_min_out pss.est in
-          massin // massout)
+        massin // massout)
+
+    let set_dim ss state pt = Array.iteri (fun idx v -> let var = SS.lookup_dim ss idx in state#set var v) pt
 
     let sample_pstateset pset n es =
         let evals = List.map (fun (state, eval_q, expected) ->
@@ -532,7 +534,18 @@ module MakePStateset(* create pstateset from a stateset *)
                        } in
         pset_new
 
-    let improve_lower_bounds ps = ps
+    let improve_lower_bounds underapprox ps =
+      if ps.est.smin <> ps.est.smax then
+        let sample_pt = SS.get_sample ps.ss in
+        let sample = new state_empty in
+        set_dim ps.ss sample sample_pt;
+        let smin_new = underapprox sample in
+        if smin_new > ps.est.smin then
+          { ps with est = { ps.est with smin = smin_new } }
+        else
+          ps
+      else
+        ps
 
     let get_alpha_beta pss = (pss.est.numy, pss.est.numn)
 

@@ -56,7 +56,7 @@ module type EVAL_SYSTEM = sig
 
   val psrep_sample: psrep -> int -> (state * (state -> (int * state)) * (varid * int) list) list -> psrep
 
-  val psrep_improve_lower_bounds: psrep -> psrep
+  val psrep_improve_lower_bounds: (state -> Z.t) -> psrep -> psrep
 
   val get_alpha_beta: psrep -> (int * int)
 

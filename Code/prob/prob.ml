@@ -194,6 +194,8 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
 
         pmock_queries (count + 1) t querydefs ps_out
 
+  let underapproximate st = Z.from_int 0 (* TODO: takes state which is sampled, counts *)
+
   let run asetup =
     ifverbose1 (printf "Binary for counting: %s\n" !Cmd.opt_count_bin;
                 flush stdout);
@@ -245,7 +247,7 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
           if !Cmd.opt_count_latte
           then printf "Number of calls to LattE: %d\n" !Globals.latte_count;
           let improved_final_dist = if !Cmd.opt_improve_lower_bounds then
-            { base_final_dist with belief = ESYS.psrep_improve_lower_bounds base_final_dist.PSYS.belief }
+                                      { base_final_dist with belief = ESYS.psrep_improve_lower_bounds underapproximate base_final_dist.PSYS.belief }
           else
             base_final_dist in
           sample_final queries querydefs improved_final_dist

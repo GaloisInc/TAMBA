@@ -69,6 +69,8 @@ struct
   let stateset_is_empty aset1 = Z.is_zero (stateset_size aset1)
   let stateset_is_nonempty aset1 = not (Z.is_zero (stateset_size aset1))
 
+  let get_sample ss = P.get_sample ss.bound
+
   let sample_region aset = P.sample_region aset.bound
 
   let _stateset_of_region p vmap =

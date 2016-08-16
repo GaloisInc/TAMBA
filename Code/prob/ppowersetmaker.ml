@@ -323,7 +323,7 @@ struct
     let sampleRegion p n = PSS.sample_pstateset p n fs in
     List.map2 sampleRegion ps ns
 
-  let improve_lower_bounds ps = List.map PSS.improve_lower_bounds ps
+  let improve_lower_bounds underapprox ps = List.map (PSS.improve_lower_bounds underapprox) ps
 
   let get_alpha_beta ps = List.fold_left (fun (ay,an) (y,n) -> (ay + y, an + n)) (0,0) (List.map PSS.get_alpha_beta ps)
 
