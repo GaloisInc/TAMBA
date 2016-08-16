@@ -532,6 +532,8 @@ module MakePStateset(* create pstateset from a stateset *)
                        } in
         pset_new
 
+    let improve_lower_bounds ps = ps
+
     let get_alpha_beta pss = (pss.est.numy, pss.est.numn)
 
     let stateset_hull pss = pss.ss

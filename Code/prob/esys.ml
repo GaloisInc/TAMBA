@@ -56,6 +56,8 @@ module type EVAL_SYSTEM = sig
 
   val psrep_sample: psrep -> int -> (state * (state -> (int * state)) * (varid * int) list) list -> psrep
 
+  val psrep_improve_lower_bounds: psrep -> psrep
+
   val get_alpha_beta: psrep -> (int * int)
 
   val psrep_size: psrep -> Z.t
@@ -109,7 +111,8 @@ module Make_esys_pss
   let psrep_vars d = M.vars d
 
   let get_alpha_beta = M.get_alpha_beta
-  let psrep_sample = M.sample_pstateset 
+  let psrep_sample = M.sample_pstateset
+  let psrep_improve_lower_bounds = M.improve_lower_bounds
   let psrep_size = M.size
   let psrep_smin_smax = M.prob_smin_smax
   let psrep_pmin_pmax = M.prob_pmin_pmax

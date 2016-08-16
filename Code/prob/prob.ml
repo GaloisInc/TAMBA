@@ -241,10 +241,14 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
                   PSYS.valcache = secretstate} in
 
           ifdebug (printf "\n\nBefore pmock_queries\n\n");
-          let final_dist = pmock_queries 1 queries querydefs ps in
+          let base_final_dist = pmock_queries 1 queries querydefs ps in
           if !Cmd.opt_count_latte
           then printf "Number of calls to LattE: %d\n" !Globals.latte_count;
-          sample_final queries querydefs final_dist
+          let improved_final_dist = if !Cmd.opt_improve_lower_bounds then
+            { base_final_dist with belief = ESYS.psrep_improve_lower_bounds base_final_dist.PSYS.belief }
+          else
+            base_final_dist in
+          sample_final queries querydefs improved_final_dist
   (*with
       | e ->
           printf "%s\n" (Printexc.to_string e);
