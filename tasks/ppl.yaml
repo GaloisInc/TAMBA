@@ -9,7 +9,7 @@
 - name: run configure for PPL lib
   become: yes
   become_user: vagrant
-  shell: ./configure --enable-interfaces=ocaml --with-mlgmp=/home/vagrant/.opam/4.02.0/lib/gmp/
+  shell: ./configure --enable-interfaces=ocaml --with-mlgmp=/home/vagrant/.opam/4.02.0/lib/gmp/ CFLAGS=-g
   args:
     chdir: /usr/share/ppl-1.1
     creates: /usr/share/ppl-1.1/Makefile
