@@ -47,6 +47,7 @@ SOURCES_COMMON :=\
 	ppldomainoctalatte.ml \
 	pplstatesetmaker.ml \
 	pstatesetmaker.ml \
+	symbol.ml \
 	evalstate.ml  \
 	ppowersetmaker.ml \
 	evalpstateset.ml \

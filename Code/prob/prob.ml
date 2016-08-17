@@ -194,7 +194,27 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
 
         pmock_queries (count + 1) t querydefs ps_out
 
-  let underapproximate st = Z.from_int 0 (* TODO: takes state which is sampled, counts *)
+
+  let run_queries queries querydefs init runner =
+    let run_query query =
+      (* initial state *)
+      let (qname, qstmt) = query in
+      let (_, instate) = runner qstmt (new state_empty) in
+      instate#merge init;
+
+      (* run query *)
+      let (ins, outs, pstmt) = List.assoc qname querydefs in
+      let (_, outstate) = runner pstmt instate in
+      make_expected_pairs outs outstate in
+    List.map (fun q -> let (name, _) = q in (name, run_query q)) queries
+
+  let check_sample queries querydefs expected st =
+    let actual = run_queries queries querydefs st Evalstate.eval in
+    expected = actual
+
+  let underapproximate queries querydefs st =
+    let pc : Symbol.t = Symbol.SymTrue in (* TODO: actually get path condition, do symbolic eval *)
+    Latte.count_models (Latte.latte_of_poly (Symbol.poly_of_symbol pc))
 
   let run asetup =
     ifverbose1 (printf "Binary for counting: %s\n" !Cmd.opt_count_bin;
@@ -246,10 +266,15 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
           let base_final_dist = pmock_queries 1 queries querydefs ps in
           if !Cmd.opt_count_latte
           then printf "Number of calls to LattE: %d\n" !Globals.latte_count;
-          let improved_final_dist = if !Cmd.opt_improve_lower_bounds then
-                                      { base_final_dist with belief = ESYS.psrep_improve_lower_bounds underapproximate base_final_dist.PSYS.belief }
-          else
-            base_final_dist in
+          let improved_final_dist =
+            if !Cmd.opt_improve_lower_bounds then
+              let expected = run_queries queries querydefs base_final_dist.PSYS.valcache Evalstate.eval in
+              let checker = check_sample queries querydefs expected in
+              let runner = underapproximate queries querydefs in
+              let belief_new = ESYS.psrep_improve_lower_bounds checker runner base_final_dist.PSYS.belief in
+              { base_final_dist with belief = belief_new }
+            else
+              base_final_dist in
           sample_final queries querydefs improved_final_dist
   (*with
       | e ->
