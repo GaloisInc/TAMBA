@@ -11,6 +11,10 @@ Piotr Mardziel, Michael Hicks, Jonathan Katz, Mudhakar Srivatsa
 **PLAS 2012 Implementation and experiments**
 
 ### Requirements
+
+  Note: If you have acquired this repo via the TAMBA project, all of these requirements
+        should already be installed on your VM.
+
   * opam      (available with homebrew)
 
   * ocaml >= 3.12 (available with opam)
@@ -24,7 +28,12 @@ Piotr Mardziel, Michael Hicks, Jonathan Katz, Mudhakar Srivatsa
 
   * latte [https://www.math.ucdavis.edu/~latte/software.php]
 
+  * libbarvinok (for --bakeoff and --barv) [http://barvinok.gforge.inria.fr]
+
 ### Installation
+
+  Note: If you have acquired this repo via the TAMBA project, you should run
+        `vagrant provision` from the top directory of this repo.
 
 Given instructions are for OSX using homebrew but should be adaptable
 to other package managers or source installations.
@@ -99,6 +108,19 @@ mostly working examples. To run you can start with:
   ```
 
 Run `./prob --help` to see options.
+
+#### Notable options
+
+The `prob` tool can run optimizations on the query with the `--inline` flag.
+This can help speed up the analysis significantly on queries that use lots of
+temporary variables or have arguments that index into a set of variables.
+
+If you would like to use uniform sampling of the resulting posterior belief,
+you can pass the `--samples N` where N is the number of samples you would like
+to use. This can improve the bounds of the resulting posterior at the cost
+of losing certainty. i.e. Instead of "it is _definitely_ between X and Y" you
+would get "There is a 99% chance it is between W and Z" where W and Z are tighter
+bounds.
 
 ### Contact
 Piotr Mardziel: [piotrm@gmail.com](mailto:piotrm@gmail.com),
