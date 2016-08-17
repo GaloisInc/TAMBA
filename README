@@ -25,6 +25,11 @@ Debian image and install the necessary software (including OCaml, PPL, LattE,
 etc.). Some things require building from source and therefore this initial
 provisioning can take quite a while (around 30 minutes on my machine).
 
+Part of running `vagrant up` is a provisioning step where vagrant uses ansible
+to install all of the necessary software on the VM. If anything fails during
+this step please email jmct@galois.com with as much log information as you have
+available.
+
 After the VM has been provisioned you'll be able to ssh into the VM using
 `vagrant ssh`. Once logged in you'll be in a standard Linux install with all of
 the necessary software for TAMBA. The VM will be sharing the root of this repo
