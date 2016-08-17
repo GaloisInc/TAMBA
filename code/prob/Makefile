@@ -94,6 +94,9 @@ BUILD_FLAGS = $(DEBUG_FLAGS) $(INC_FLAGS) -pp "camlp5o ./pa_if.cmo" -I +camlp5
 prob: $(OBJS_PROB) latte_tmp
 	$(OCAMLC) $(PPL_LINK) $(LINK_FLAGS) -o prob $(OBJS_PROB)
 
+install: prob
+	cp ./prob /usr/local/bin/prob
+
 exp: experiment.ml
 	$(OCAMLC) $(PPL_LINK) $(LINK_FLAGS) -o exp experiment.ml
 
