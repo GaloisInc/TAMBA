@@ -47,6 +47,22 @@ Lastly, if we do change any part of the provisioning (for example, we switch to
 a newer version of OCaml) you just need to run `vagrant provision` and it will
 make the necessary changes without reinstalling anything it doesn't need to.
 
+What is where
+-------------
+
+The tool of interest to most people is the `prob` tool which is installed by
+default on the VM. The source for the tool can be found in this directory under
+`code/prob`, and from within the VM at `/vagrant/code/prob`.
+
+Proof of concept implementations of other metrics can be found in `code/MILGF`
+and `code/R`.
+
+`code/coalition-examples` has input queries for use with the `prob` tool based
+on the coalition CRT scenarios from the Brandeis project.
+
+The `computation` directory holds some `mathematica` notebooks that illustrate
+how one would analyze information leakage for simple SQL queries by hand.
+
 Repo Conventions
 ----------------
 
