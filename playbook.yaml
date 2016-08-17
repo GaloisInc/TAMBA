@@ -12,3 +12,4 @@
     - include: tasks/ntl.yaml
     - include: tasks/barvinok.yaml
     - include: tasks/latte.yaml
+    - include: tasks/prob.yaml
