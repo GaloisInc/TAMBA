@@ -39,6 +39,7 @@ SOURCES_COMMON :=\
 	maths.ml \
 	err.ml \
 	state.ml \
+	symstate.ml \
 	value_status.ml \
 	latte.ml \
 	ppldomainpoly.ml \
@@ -49,6 +50,7 @@ SOURCES_COMMON :=\
 	pstatesetmaker.ml \
 	symbol.ml \
 	evalstate.ml  \
+	evalsymstate.ml \
 	ppowersetmaker.ml \
 	evalpstateset.ml \
 	esys.ml \
