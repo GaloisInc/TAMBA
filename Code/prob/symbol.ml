@@ -18,7 +18,7 @@ type t =
 let rec to_string (s : t) : string =
   match s with
   | SymTrue -> "T"
-  | SymAtom (name) -> let (x, _) = name in x
+  | SymAtom (name) -> let (_, x) = name in x
   | SymInt (n) -> string_of_int n
   | SymAdd (c1, c2) -> "(" ^ to_string c1 ^ ") + (" ^ to_string c2 ^ ")"
   | SymSub (c1, c2) -> "(" ^ to_string c1 ^ ") - (" ^ to_string c2 ^ ")"
