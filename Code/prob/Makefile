@@ -29,6 +29,7 @@ SOURCES_COMMON :=\
 	cmd.ml \
 	globals.ml \
 	lang.ml \
+	symbol.ml \
 	logical.ml \
 	pdefs.ml smcdefs.ml \
 	bimap.ml \
@@ -48,7 +49,6 @@ SOURCES_COMMON :=\
 	ppldomainoctalatte.ml \
 	pplstatesetmaker.ml \
 	pstatesetmaker.ml \
-	symbol.ml \
 	evalstate.ml  \
 	evalsymstate.ml \
 	ppowersetmaker.ml \

@@ -12,17 +12,27 @@ module OrderedVarID =
 module VarIDMap = Map.Make(OrderedVarID)
     
 type symstate =
-  { cstore : int VarIDMap.t      ;
+  { cstore : int      VarIDMap.t ;
     sstore : Symbol.t VarIDMap.t ;
     pc     : Symbol.t
   }
 
+let empty : symstate =
+  { cstore = VarIDMap.empty ;
+    sstore = VarIDMap.empty ;
+    pc     = Symbol.SymTrue
+  }
+
 let state_to_symstate (st : state) : symstate =
-  let to_map (l : (Lang.varid * 'a) list) : 'a VarIDMap.t =
+  let cstore_f (l : (Lang.varid * int) list) : int VarIDMap.t =
     List.fold_left (fun map (k, v) -> VarIDMap.add k v map) VarIDMap.empty l
   in
-  { cstore = to_map st#canon ;
-    sstore = VarIDMap.empty  ;
+  let sstore_f (l : (Lang.varid * int) list ) : Symbol.t VarIDMap.t =
+    List.fold_left (fun map (k, _) -> VarIDMap.add k (Symbol.SymAtom k) map) VarIDMap.empty l
+  in
+  let st_canon = st#canon in
+  { cstore = cstore_f st_canon ;
+    sstore = sstore_f st_canon ; 
     pc     = Symbol.SymTrue
   }
 

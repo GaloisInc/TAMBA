@@ -195,25 +195,45 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
         pmock_queries (count + 1) t querydefs ps_out
 
 
-  let run_queries queries querydefs init runner =
-    let run_query query =
-      (* initial state *)
-      let (qname, qstmt) = query in
-      let (_, instate) = runner qstmt (new state_empty) in
-      instate#merge init;
+  let run_query query querydefs init =
+    (* initial public state *)
+    let (qname, qstmt) = query in
+    let (_, instate) = Evalstate.eval qstmt (new state_empty) in
+    instate#merge init;
 
-      (* run query *)
-      let (ins, outs, pstmt) = List.assoc qname querydefs in
-      let (_, outstate) = runner pstmt instate in
-      make_expected_pairs outs outstate in
-    List.map (fun q -> let (name, _) = q in (name, run_query q)) queries
+    (* run query *)
+    let (_, _, pstmt) = List.assoc qname querydefs in
+    let (_, outstate) = Evalstate.eval pstmt instate in
+    outstate#copy
 
+  let run_queries queries querydefs init =
+    let pair_up query =
+      let (qname, _) = query in
+      let (_, outs, _) = List.assoc qname querydefs in
+      make_expected_pairs outs (run_query query querydefs init) in
+    List.map pair_up queries
+
+  let sym_query query querydefs init =
+    (* initial public state *)
+    let (qname, qstmt) = query in
+    let (_, instate) = Evalsymstate.eval qstmt init in
+
+    (* sym query *)
+    let (ins, outs, pstmt) = List.assoc qname querydefs in
+    let (_, outstate) = Evalsymstate.eval pstmt instate in
+    outstate
+
+  let sym_queries queries querydefs init =
+    let final = List.fold_left (fun st q -> sym_query q querydefs { init with pc = st.Symstate.pc }) init queries in
+    final.pc
+    
   let check_sample queries querydefs expected st =
-    let actual = run_queries queries querydefs st Evalstate.eval in
+    let actual = run_queries queries querydefs st in
     expected = actual
 
   let underapproximate queries querydefs st =
-    let pc : Symbol.t = Symbol.SymTrue in (* TODO: actually get path condition, do symbolic eval *)
+    let init = Symstate.state_to_symstate st in
+    let pc : Symbol.t = sym_queries queries querydefs init in
     Latte.count_models (Latte.latte_of_poly (Symbol.poly_of_symbol pc))
 
   let run asetup =
@@ -268,7 +288,7 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
           then printf "Number of calls to LattE: %d\n" !Globals.latte_count;
           let improved_final_dist =
             if !Cmd.opt_improve_lower_bounds then
-              let expected = run_queries queries querydefs base_final_dist.PSYS.valcache Evalstate.eval in
+              let expected = run_queries queries querydefs base_final_dist.PSYS.valcache in
               let checker = check_sample queries querydefs expected in
               let runner = underapproximate queries querydefs in
               let belief_new = ESYS.psrep_improve_lower_bounds checker runner base_final_dist.PSYS.belief in
