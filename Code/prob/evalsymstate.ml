@@ -20,10 +20,48 @@ let rec eval_lexp (lexp : lexp) (state : symstate) : int =
      beval (eval_aexp aexp1 state) (eval_aexp aexp2 state)
   | LEBool (b) -> b
 
-let rec sym_aexp (aexp : aexp) (state : symstate) : Symbol.t = Symbol.SymTrue (* TODO (ins): implement *)
+let rec sym_aexp (aexp : aexp) (state : symstate) : Symbol.t =
+  match aexp with
+  | AEVar (name) -> getsym name state
+  | AEBinop (op, aexp1, aexp2) ->
+     let s1 = sym_aexp aexp1 state in
+     let s2 = sym_aexp aexp2 state in
+     let (op_name, _) = op in
+     (match op_name with
+     | "+" -> Symbol.SymAdd (s1, s2)
+     | "-" -> Symbol.SymSub (s1, s2)
+     | "*" -> Symbol.SymMul (s1, s2)
+     | "/" -> Symbol.SymDiv (s1, s2)
+     | _   -> raise (Evalstate.Eval_error ("sym_aexp (sym) unrecognized op: " ^ op_name)))
+  | AEInt (n) -> Symbol.SymInt n
+  | AERecord _ -> failwith "sym_aexp (sym) on record"
 
-let rec sym_lexp (lexp : lexp) (state : symstate) : Symbol.t = Symbol.SymTrue (* TODO (ins): implement *)
-       
+let rec sym_lexp (lexp : lexp) (state : symstate) : Symbol.t =
+  match lexp with
+  | LEBinop (op, lexp1, lexp2) ->
+     let s1 = sym_lexp lexp1 state in
+     let s2 = sym_lexp lexp2 state in
+     let (op_name, _) = op in
+     (match op_name with
+      | "and" -> Symbol.SymAnd (s1, s2)
+      | "or"  -> Symbol.SymOr (s1, s2)
+      | _     -> raise (Evalstate.Eval_error ("sym_lexp (sym) unrecognized lebinop: " ^ op_name)))
+  | LEReln (op, aexp1, aexp2) ->
+     let s1 = sym_aexp aexp1 state in
+     let s2 = sym_aexp aexp2 state in
+     let (op_name, _) = op in
+     (match op_name with
+      | "<"  -> Symbol.SymLt (s1, s2)
+      | "<=" -> Symbol.SymOr (Symbol.SymLt (s1, s2), Symbol.SymEq (s1, s2))
+      | ">"  -> Symbol.SymLt (s2, s1)
+      | ">=" -> Symbol.SymOr (Symbol.SymLt (s2, s1), Symbol.SymEq (s1, s2))
+      | _    -> raise (Evalstate.Eval_error ("sym_lexp (sym) unrecognized lereln: " ^ op_name)))
+  | LEBool (b) ->
+     match b with
+     | 0 -> Symbol.SymNot Symbol.SymTrue
+     | 1 -> Symbol.SymTrue
+     | _ -> raise (Evalstate.Eval_error ("sym_lexp (sym) LEBool not 0 or 1"))
+     
 let rec eval (stmt : stmt) (state : symstate) : (int * symstate) =
   match stmt with
   | SDefine (name, _) ->
