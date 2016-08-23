@@ -55,6 +55,7 @@ let rec sym_lexp (lexp : lexp) (state : symstate) : Symbol.t =
       | "<=" -> Symbol.SymOr (Symbol.SymLt (s1, s2), Symbol.SymEq (s1, s2))
       | ">"  -> Symbol.SymLt (s2, s1)
       | ">=" -> Symbol.SymOr (Symbol.SymLt (s2, s1), Symbol.SymEq (s1, s2))
+      | "==" -> Symbol.SymEq (s1, s2)
       | _    -> raise (Evalstate.Eval_error ("sym_lexp (sym) unrecognized lereln: " ^ op_name)))
   | LEBool (b) ->
      match b with

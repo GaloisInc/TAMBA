@@ -534,10 +534,10 @@ module MakePStateset(* create pstateset from a stateset *)
                        } in
         pset_new
 
-    let rec improve_lower_bounds checker runner ps =
+    let rec improve_lower_bounds checker runner init ps =
       if ps.est.smin <> ps.est.smax then (* if smin =/= smax, there is approximation *)
         let sample_pt = SS.get_sample ps.ss in (* get a sample point from stateset *)
-        let sample = new state_empty in
+        let sample = init#copy in
         set_dim ps.ss sample sample_pt; (* assign secret vars according to sample_pt *)
         if checker sample then (* run checker closure, makes sure actual = expected *)
           let smin_new = runner sample in (* get path condition, and call latte *)
@@ -546,7 +546,7 @@ module MakePStateset(* create pstateset from a stateset *)
           else
             ps
         else
-          improve_lower_bounds checker runner ps (* if our sample wasn't good, take another *)
+          improve_lower_bounds checker runner init ps (* if our sample wasn't good, take another *)
       else
         ps
 

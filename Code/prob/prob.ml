@@ -229,11 +229,14 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
     
   let check_sample queries querydefs expected st =
     let actual = run_queries queries querydefs st in
-    expected = actual
+    (print_endline (if expected = actual then "1" else "0");
+    expected = actual)
 
   let underapproximate queries querydefs st =
     let init = Symstate.state_to_symstate st in
     let pc : Symbol.t = sym_queries queries querydefs init in
+    print_endline "underapproximate PC...";
+    print_endline (Symbol.to_string pc);
     Latte.count_models (Latte.latte_of_poly (Symbol.poly_of_symbol pc))
 
   let run asetup =
@@ -291,7 +294,7 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
               let expected = run_queries queries querydefs base_final_dist.PSYS.valcache in
               let checker = check_sample queries querydefs expected in
               let runner = underapproximate queries querydefs in
-              let belief_new = ESYS.psrep_improve_lower_bounds checker runner base_final_dist.PSYS.belief in
+              let belief_new = ESYS.psrep_improve_lower_bounds checker runner base_final_dist.PSYS.valcache base_final_dist.PSYS.belief in
               { base_final_dist with belief = belief_new }
             else
               base_final_dist in
