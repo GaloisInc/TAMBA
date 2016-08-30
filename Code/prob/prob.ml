@@ -234,10 +234,10 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
 
   let underapproximate queries querydefs st =
     let init = Symstate.state_to_symstate st in
-    let pc : Symbol.t = sym_queries queries querydefs init in
+    let pc : Symbol.lsym = sym_queries queries querydefs init in
     print_endline "underapproximate PC...";
-    print_endline (Symbol.to_string pc);
-    Latte.count_models (Latte.latte_of_poly (Symbol.poly_of_symbol pc))
+    print_endline (Symbol.lsym_to_string pc);
+    Latte.count_models (Latte.latte_of_poly (Symbol.poly_of_lsym pc))
 
   let run asetup =
     ifverbose1 (printf "Binary for counting: %s\n" !Cmd.opt_count_bin;

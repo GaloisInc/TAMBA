@@ -3,11 +3,11 @@ open Symstate
 
 let rec eval_aexp (aexp : aexp) (state : symstate) : int =
   match aexp with
+  | AEInt (n) -> n
   | AEVar (name) -> getvar name state
   | AEBinop (op, aexp1, aexp2) ->
      let (_, beval) = op in
      beval (eval_aexp aexp1 state) (eval_aexp aexp2 state)
-  | AEInt (n) -> n
   | AERecord _ -> failwith "eval_aexp (sym) on record"
 
 let rec eval_lexp (lexp : lexp) (state : symstate) : int =
@@ -20,8 +20,9 @@ let rec eval_lexp (lexp : lexp) (state : symstate) : int =
      beval (eval_aexp aexp1 state) (eval_aexp aexp2 state)
   | LEBool (b) -> b
 
-let rec sym_aexp (aexp : aexp) (state : symstate) : Symbol.t =
+let rec sym_aexp (aexp : aexp) (state : symstate) : Symbol.asym =
   match aexp with
+  | AEInt (n) -> Symbol.SymInt n
   | AEVar (name) -> getsym name state
   | AEBinop (op, aexp1, aexp2) ->
      let s1 = sym_aexp aexp1 state in
@@ -33,10 +34,9 @@ let rec sym_aexp (aexp : aexp) (state : symstate) : Symbol.t =
      | "*" -> Symbol.SymMul (s1, s2)
      | "/" -> Symbol.SymDiv (s1, s2)
      | _   -> raise (Evalstate.Eval_error ("sym_aexp (sym) unrecognized op: " ^ op_name)))
-  | AEInt (n) -> Symbol.SymInt n
   | AERecord _ -> failwith "sym_aexp (sym) on record"
 
-let rec sym_lexp (lexp : lexp) (state : symstate) : Symbol.t =
+let rec sym_lexp (lexp : lexp) (state : symstate) : Symbol.lsym =
   match lexp with
   | LEBinop (op, lexp1, lexp2) ->
      let s1 = sym_lexp lexp1 state in
@@ -51,15 +51,15 @@ let rec sym_lexp (lexp : lexp) (state : symstate) : Symbol.t =
      let s2 = sym_aexp aexp2 state in
      let (op_name, _) = op in
      (match op_name with
-      | "<"  -> Symbol.SymLt (s1, s2)
-      | "<=" -> Symbol.SymOr (Symbol.SymLt (s1, s2), Symbol.SymEq (s1, s2))
-      | ">"  -> Symbol.SymLt (s2, s1)
-      | ">=" -> Symbol.SymOr (Symbol.SymLt (s2, s1), Symbol.SymEq (s1, s2))
-      | "==" -> Symbol.SymEq (s1, s2)
+      | "<"  -> Symbol.SymLt  (s1, s2)
+      | "<=" -> Symbol.SymLeq (s1, s2)
+      | "==" -> Symbol.SymEq  (s1, s2)
+      | ">"  -> Symbol.SymGt  (s1, s2)
+      | ">=" -> Symbol.SymGeq (s1, s2)
       | _    -> raise (Evalstate.Eval_error ("sym_lexp (sym) unrecognized lereln: " ^ op_name)))
   | LEBool (b) ->
      match b with
-     | 0 -> Symbol.SymNot Symbol.SymTrue
+     | 0 -> Symbol.SymFalse
      | 1 -> Symbol.SymTrue
      | _ -> raise (Evalstate.Eval_error ("sym_lexp (sym) LEBool not 0 or 1"))
      

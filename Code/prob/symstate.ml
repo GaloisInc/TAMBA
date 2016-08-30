@@ -12,9 +12,9 @@ module OrderedVarID =
 module VarIDMap = Map.Make(OrderedVarID)
     
 type symstate =
-  { cstore : int      VarIDMap.t ;
-    sstore : Symbol.t VarIDMap.t ;
-    pc     : Symbol.t
+  { cstore : int         VarIDMap.t ;
+    sstore : Symbol.asym VarIDMap.t ;
+    pc     : Symbol.lsym
   }
 
 let empty : symstate =
@@ -27,7 +27,7 @@ let state_to_symstate (st : state) : symstate =
   let cstore_f (l : (Lang.varid * int) list) : int VarIDMap.t =
     List.fold_left (fun map (k, v) -> VarIDMap.add k v map) VarIDMap.empty l
   in
-  let sstore_f (l : (Lang.varid * int) list ) : Symbol.t VarIDMap.t =
+  let sstore_f (l : (Lang.varid * int) list ) : Symbol.asym VarIDMap.t =
     List.fold_left (fun map (k, _) -> VarIDMap.add k (Symbol.SymAtom k) map) VarIDMap.empty l
   in
   let st_canon = st#canon in
@@ -45,14 +45,11 @@ let getvar (x : Lang.varid) (st : symstate) : int =
 let setvar (x : Lang.varid) (v : int) (st : symstate) : symstate =
   { st with cstore = VarIDMap.add x v st.cstore }
 
-let addsym (x : Lang.varid) (st : symstate) : symstate =
-  { st with sstore = VarIDMap.add x Symbol.SymTrue st.sstore }
-
-let getsym (x : Lang.varid) (st : symstate) : Symbol.t =
+let getsym (x : Lang.varid) (st : symstate) : Symbol.asym =
   VarIDMap.find x st.sstore
 
-let setsym (x : Lang.varid) (v : Symbol.t) (st : symstate) : symstate =
+let setsym (x : Lang.varid) (v : Symbol.asym) (st : symstate) : symstate =
   { st with sstore = VarIDMap.add x v st.sstore }
                                                 
-let appendpc (s : Symbol.t) (st : symstate) : symstate =
+let appendpc (s : Symbol.lsym) (st : symstate) : symstate =
   { st with pc = Symbol.SymAnd (s, st.pc) }
