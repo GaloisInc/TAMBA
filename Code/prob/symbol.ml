@@ -1,4 +1,5 @@
 open Ppl_ocaml
+open Gmp
 
 type asym =
   | SymInt  of int
@@ -55,5 +56,17 @@ let lsym_to_string (l : lsym) : string =
   in
   lsym_to_string_h l 0
 
+(* looks like disjunctive normal form with no negations.
+    - # of disjunctions = number of polyhedra
+    - # of conjunctions per disjunctions = # of constraints on that polyhedron *)
+let linearize (l : lsym) : lsym = l (* TODO *)
+
 (* TODO: this is a dummy function *)
-let poly_of_lsym (l : lsym) : polyhedron = ppl_new_C_Polyhedron_from_space_dimension 2 Universe
+let poly_of_lsym (l : lsym) : polyhedron =
+  let ret = ppl_new_C_Polyhedron_from_space_dimension 2 Universe in
+  ppl_Polyhedron_add_constraint ret (Greater_Or_Equal (Variable 0, Coefficient Z.zero));
+  ppl_Polyhedron_add_constraint ret (Less_Or_Equal (Variable 0, Coefficient (Z.from_int 9)));
+  ppl_Polyhedron_add_constraint ret (Greater_Or_Equal (Variable 1, Coefficient Z.zero));
+  ppl_Polyhedron_add_constraint ret (Less_Or_Equal (Variable 1, Coefficient (Z.from_int 9)));
+  ret
+
