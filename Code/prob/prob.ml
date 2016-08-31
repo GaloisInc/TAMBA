@@ -236,7 +236,7 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
     let init = Symstate.state_to_symstate st in
     let pc : Symbol.lsym = sym_queries queries querydefs init in
     print_endline "underapproximate PC...";
-    print_endline (Symbol.lsym_to_string pc);
+    print_endline (Symbol.lsym_to_string (Symbol.eliminate_negations pc));
     let sz = Latte.count_models (Latte.latte_of_poly (Symbol.poly_of_lsym pc)) in
     print_endline (Z.to_string sz);
     sz

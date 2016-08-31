@@ -56,6 +56,22 @@ let lsym_to_string (l : lsym) : string =
   in
   lsym_to_string_h l 0
 
+let rec eliminate_negations (l : lsym) : lsym =
+  match l with
+  | SymAnd (p, q) -> SymAnd (eliminate_negations p, eliminate_negations q)
+  | SymOr  (p, q) -> SymOr  (eliminate_negations p, eliminate_negations q)
+  | SymNot (SymTrue) -> SymFalse
+  | SymNot (SymFalse) -> SymTrue
+  | SymNot (SymLt (a1, a2)) -> SymGeq (a1, a2) 
+  | SymNot (SymLeq (a1, a2)) -> SymGt (a1, a2)
+  | SymNot (SymEq (a1, a2)) -> SymOr (SymLt (a1, a2), SymGt (a1, a2))
+  | SymNot (SymGt (a1, a2)) -> SymLeq (a1, a2)
+  | SymNot (SymGeq (a1, a2)) -> SymLt (a1, a2)
+  | SymNot (SymAnd (p, q)) -> SymOr (eliminate_negations (SymNot p), eliminate_negations (SymNot q))
+  | SymNot (SymOr (p, q)) -> SymAnd (eliminate_negations (SymNot p), eliminate_negations (SymNot q))
+  | SymNot (SymNot p) -> eliminate_negations p
+  | _ -> l
+
 (* looks like disjunctive normal form with no negations.
     - # of disjunctions = number of polyhedra
     - # of conjunctions per disjunctions = # of constraints on that polyhedron *)
