@@ -12,6 +12,8 @@ open Pareto.Distributions
 open Pareto.Distributions.Beta
 open Value_status
 open Optimize
+open Core_extended.Readline
+open Repl
 
 open Maths
 open Gmp
@@ -110,10 +112,7 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
         printf "sample_true = %d\nsample_false = %d\n" y n
       )
 
-
-  let rec pmock_queries count queries querydefs ps_in = match queries with
-    | [] -> ps_in
-    | (queryname, querystmt) :: t ->
+  let common_run (queryname, querystmt) querydefs ps_in =
         ifbench Globals.start_timer Globals.timer_query;
 
         let ps = ps_in in
@@ -163,7 +162,6 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
         ifverbose
           (printf "\nquery (single assignment):\n"; print_stmt progstmt; printf "\n");
 
-        printf "\n--- Query #%d ------------------\n" count;
 
         let ans = PSYS.policysystem_answer ps (queryname, querytuple) querystmt in
         let res = ans.PSYS.result in
@@ -188,11 +186,44 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
 
         flush stdout;
 
-        let ps_out = if !Cmd.opt_blackbox
-                     then ps_in
-                     else ps in
+        if !Cmd.opt_blackbox
+        then ps_in
+        else ps
 
+
+  let rec pmock_queries count queries querydefs ps_in = match queries with
+    | [] -> ps_in
+    | (queryname, querystmt) :: t ->
+        printf "\n--- Query #%d ------------------\n" count;
+        let ps_out = common_run (queryname, querystmt) querydefs ps_in in
         pmock_queries (count + 1) t querydefs ps_out
+
+let interpreter count querydefs ps_orig =
+      let query_names = List.map (fun (qname, _) -> qname) querydefs in
+      let rec interpreter_loop count user_in ps_in =
+          match user_in with
+            | None -> printf "We're done.\n"; ps_in
+            | Some str ->
+                if not (List.mem str query_names)
+                then (printf "%s is not a valid query.\n" str;
+                     printf "Queries Available: \n\n";
+                     List.iter (printf "\t%s\n") query_names;
+                     ps_in)
+                else (let (inlist, outlist, progstmt) = List.assoc str querydefs in
+                     let ins = get_query_params str querydefs in
+                     let ps_out = if not (all_safe ins)
+                                  (* TODO: Print out which inputs failed (snd of the tuple will be None) *)
+                                  then (printf "Input(s) are not valid\n"; ps_in)
+                                  else (let qstmt = make_int_assignments ins in
+                                        common_run (str, qstmt) querydefs) ps_in in
+                     interpreter_loop (count + 1)
+                                 (input_line ~prompt:"prob >> " ())
+                                 ps_out)
+      in
+      printf "Queries Available: \n\n";
+      List.iter (printf "\t%s\n") query_names;
+      let user_in = input_line ~prompt:"prob >> " () in
+      interpreter_loop 0 user_in ps_orig
 
   let run asetup =
     ifverbose1 (printf "Binary for counting: %s\n" !Cmd.opt_count_bin;
@@ -241,14 +272,12 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
                   PSYS.valcache = secretstate} in
 
           ifdebug (printf "\n\nBefore pmock_queries\n\n");
-          let final_dist = pmock_queries 1 queries querydefs ps in
+          let final_dist = if !Cmd.opt_interactive
+                           then interpreter 1 querydefs ps
+                           else pmock_queries 1 queries querydefs ps in
           if !Cmd.opt_count_latte
           then printf "Number of calls to LattE: %d\n" !Globals.latte_count;
           sample_final queries querydefs final_dist
-  (*with
-      | e ->
-          printf "%s\n" (Printexc.to_string e);
-          Printexc.print_backtrace stdout*)
 
 end
 ;;
@@ -264,6 +293,9 @@ let main () =
     ("--latte-minmax",
      Arg.Set Cmd.opt_latte_minmax,
      "use latte for maximization, constant 1 for minimization");
+    ("--interactive",
+     Arg.Set Cmd.opt_interactive,
+     "Use prop as a repl");
     ("--dsa",
      Arg.Set Cmd.opt_dsa,
      "convert to dynamic single assignment");

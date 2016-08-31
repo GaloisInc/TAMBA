@@ -2,6 +2,7 @@ open Util
 
 (* options *)
 let opt_latte_minmax = ref false
+let opt_interactive = ref false
 let opt_dsa = ref false
 let opt_precision = ref 0
 let opt_samples = ref 0
