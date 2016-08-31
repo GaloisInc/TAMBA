@@ -67,6 +67,21 @@
   become_user: vagrant
   command: opam install ocephes -y
 
+- name: Install core_extended
+  become: yes
+  become_user: vagrant
+  command: opam install core_extended -y
+
+- name: Install Async
+  become: yes
+  become_user: vagrant
+  command: opam install async -y
+
+- name: Install cohttp
+  become: yes
+  become_user: vagrant
+  command: opam install cohttp lwt -y
+
 - name: Install utop
   become: yes
   become_user: vagrant
