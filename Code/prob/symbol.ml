@@ -72,10 +72,20 @@ let rec eliminate_negations (l : lsym) : lsym =
   | SymNot (SymNot p) -> eliminate_negations p
   | _ -> l
 
-(* looks like disjunctive normal form with no negations.
-    - # of disjunctions = number of polyhedra
-    - # of conjunctions per disjunctions = # of constraints on that polyhedron *)
-let linearize (l : lsym) : lsym = l (* TODO *)
+let dnf (l : lsym) : lsym =
+  let rec dnf_h (ast : lsym) : lsym list list = 
+    match ast with
+    | SymAnd (p, q) ->
+        let p_new = dnf_h p in
+        let q_new = dnf_h q in
+        List.fold_left (fun acc1 pi -> (List.fold_left (fun acc2 qi -> (pi @ qi) :: acc2) [] q_new) @ acc1) [] p_new
+    | SymOr (p, q) ->
+        let p_new = dnf_h p in
+        let q_new = dnf_h q in
+        p_new @ q_new
+    | _ -> [[ast]]
+  in
+  List.fold_left (fun disj c -> SymOr (List.fold_left (fun conj a -> SymAnd (a, conj)) SymTrue c, disj)) SymFalse (dnf_h (eliminate_negations l))
 
 (* TODO: this is a dummy function *)
 let poly_of_lsym (l : lsym) : polyhedron =
