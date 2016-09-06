@@ -18,6 +18,11 @@ open Repl
 open Maths
 open Gmp
 
+(* for forking the process when used in daemon mode *)
+open Unix
+open Core.Std.Unix
+open Core_kernel
+
 let add_policy_records aexp =
   List.iter
     (fun p ->
@@ -97,6 +102,7 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
                   printf "mmin (sampling): %f\n" mminp;
                   printf "mmax (sampling): %f\n" mmaxp;
                   printf "post-sampling revised belief: %f\n" (pma /. mminp);
+                  printf "post-sampling revised belief: %f\n" (pma /. mminp);
               with e -> printf "GSL computation did not converge: ERR\n" in
        *)
 
@@ -146,7 +152,7 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
             (String.concat " " (List.map Lang.varid_to_string inlist))
             (String.concat " " (List.map Lang.varid_to_string outlist));
           print_stmt progstmt; printf "\n";
-          printf "-------------------------------------------------\n"
+          printf "-------------------------------------------------\n%!"
         );
 
         (* I think we can safely remove static_check 
@@ -183,8 +189,6 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
           Globals.print_epoch ();
           Globals.next_epoch ()
         );
-
-        flush stdout;
 
         if !Cmd.opt_blackbox
         then ps_in
@@ -226,8 +230,7 @@ let interpreter count querydefs ps_orig =
       interpreter_loop 0 user_in ps_orig
 
   let run asetup =
-    ifverbose1 (printf "Binary for counting: %s\n" !Cmd.opt_count_bin;
-                flush stdout);
+    ifverbose1 (printf "Binary for counting: %s\n%!" !Cmd.opt_count_bin;);
     Printexc.record_backtrace true;
 (*      let vars = pmock_all_vars asetup in*)
       let secretstmt = Preeval.preeval asetup.secret in
@@ -299,6 +302,9 @@ let main () =
     ("--dsa",
      Arg.Set Cmd.opt_dsa,
      "convert to dynamic single assignment");
+    ("--server",
+     Arg.Set_int Cmd.opt_server,
+     "run TAMBA web service (TM) on specified port");
     ("--precision",
      Arg.Set_int Cmd.opt_precision,
      "set the precision");
@@ -365,35 +371,47 @@ let main () =
   Random.init(!Cmd.opt_seed);
 
   try
-    let policy = parse !Cmd.input_file Parser.pmock in (* note to self: why is this called pmock? What is pmock? *)
 
-    ifbench (add_policy_records policy;
-             Globals.print_header ());
-    Globals.bench_latte_out_header ();
+    let (r,w) = pipe () in
+    match fork () with
+      | `In_the_parent pid -> let pid_int = Std.Pid.to_int pid in
+                              printf "In the parent. Waiting on child with pid %d\n%!" pid_int;
+                              let (_pid, sigl) = wait (`Pid pid) in
+                              let sig_str = Core.Std.Unix.Exit_or_signal.to_string_hum sigl in
+                              printf "Child has exited with exit status %s\n" sig_str;
+      | `In_the_child ->
 
-    let module Runner =
-      (val (match !Cmd.opt_domain with
-            | 0 -> raise (General_error "list-based evaluation not implemented")
-            | 1 -> (module EVALS_PPSS_BOX : EXP_SYSTEM)
-            | 2 -> (module EVALS_PPSS_OCTA : EXP_SYSTEM)
-            | 3 -> (module EVALS_PPSS_OCTALATTE : EXP_SYSTEM)
-            | 4 -> (module EVALS_PPSS_POLY : EXP_SYSTEM)
-            | _ -> raise Not_expected) : EXP_SYSTEM) in
+            (* note to self: why is this called pmock? What is pmock? *)
+            let policy = parse !Cmd.input_file Parser.pmock in
 
-    ifdebug(printf "\n\nBefore evaluation\n\n");
+            ifbench (add_policy_records policy;
+                     Globals.print_header ());
+            Globals.bench_latte_out_header ();
 
-    Runner.run policy;
+            let module Runner =
+              (val (match !Cmd.opt_domain with
+                    | 0 -> raise (General_error "list-based evaluation not implemented")
+                    | 1 -> (module EVALS_PPSS_BOX : EXP_SYSTEM)
+                    | 2 -> (module EVALS_PPSS_OCTA : EXP_SYSTEM)
+                    | 1 -> (module EVALS_PPSS_BOX : EXP_SYSTEM)
+                    | 2 -> (module EVALS_PPSS_OCTA : EXP_SYSTEM)
+                    | 3 -> (module EVALS_PPSS_OCTALATTE : EXP_SYSTEM)
+                    | 4 -> (module EVALS_PPSS_POLY : EXP_SYSTEM)
+                    | _ -> raise Not_expected) : EXP_SYSTEM) in
 
-    ifdebug(printf "\n\nAfter evaluation\n\n";
-            printf "maximum complexity encountered = %d\n" !Globals.max_complexity;
-            Globals.close_bench ());
-    Globals.bench_latte_close ();
+            ifdebug(printf "\n\nBefore evaluation\n\n");
+
+            Runner.run policy;
+
+            ifdebug(printf "\n\nAfter evaluation\n\n";
+                    printf "maximum complexity encountered = %d\n" !Globals.max_complexity;
+                    Globals.close_bench ());
+            Globals.bench_latte_close ();
 
   with
     | e ->
        Unix.chdir Globals.original_dir;
-       ifdebug(printf "%s\n" (Printexc.to_string e);
-               Printexc.print_backtrace stdout);
+       ifdebug(printf "%s\n" (Core.Backtrace.Exn.most_recent ()););
        raise e
 ;;
 
