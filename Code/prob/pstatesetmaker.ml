@@ -542,7 +542,8 @@ module MakePStateset(* create pstateset from a stateset *)
         if checker sample then (* run checker closure, makes sure actual = expected *)
           let smin_new = runner sample in (* get path condition, and call latte *)
           if smin_new > ps.est.smin then
-            { ps with est = { ps.est with smin = smin_new } }
+            (print_endline ("\nold smin = " ^ (Z.to_string ps.est.smin) ^ ", new smin = " ^ (Z.to_string smin_new) ^ "\n");
+            { ps with est = { ps.est with smin = smin_new } })
           else
             ps
         else
