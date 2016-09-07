@@ -543,7 +543,7 @@ module MakePStateset(* create pstateset from a stateset *)
           let smin_new = runner sample in (* get path condition, and call latte *)
           if smin_new > ps.est.smin then
             (print_endline ("\nold smin = " ^ (Z.to_string ps.est.smin) ^ ", new smin = " ^ (Z.to_string smin_new) ^ "\n");
-            { ps with est = { ps.est with smin = smin_new } })
+            { ps with est = { ps.est with smin = smin_new; mmin = ps.est.pmin */ (Q.from_z smin_new) } })
           else
             ps
         else
