@@ -19,8 +19,8 @@ open Maths
 open Gmp
 
 (* for forking the process when used in daemon mode *)
-open Unix
 open Core.Std.Unix
+open Core.Never_returns
 open Core_kernel
 
 let add_policy_records aexp =
@@ -30,7 +30,7 @@ let add_policy_records aexp =
     aexp.policies;;
 
 module type EXP_SYSTEM = sig
-  val run: Pdefs.tpmocksetup -> unit
+  val run: Core.Std.Unix.File_descr.t option -> Pdefs.tpmocksetup -> unit
 end;;
 
 module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
@@ -202,12 +202,23 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
         let ps_out = common_run (queryname, querystmt) querydefs ps_in in
         pmock_queries (count + 1) t querydefs ps_out
 
-let interpreter count querydefs ps_orig =
+  let prob_line = Core_extended.Readline.input_line ~prompt:"prob >> "
+
+  let test_pipe r_opt str =
+    match r_opt with
+      | None -> ()
+      | Some r ->
+        if str = "read_pipe"
+        then let buff = Core_string.create 100 in
+             Core.Std.Unix.read r buff;
+             printf "%s" (Core_string.to_string buff)
+
+  let interpreter reader_opt count querydefs ps_orig =
       let query_names = List.map (fun (qname, _) -> qname) querydefs in
       let rec interpreter_loop count user_in ps_in =
           match user_in with
             | None -> printf "We're done.\n"; ps_in
-            | Some str ->
+            | Some str -> test_pipe reader_opt str;
                 if not (List.mem str query_names)
                 then (printf "%s is not a valid query.\n" str;
                      printf "Queries Available: \n\n";
@@ -221,15 +232,15 @@ let interpreter count querydefs ps_orig =
                                   else (let qstmt = make_int_assignments ins in
                                         common_run (str, qstmt) querydefs) ps_in in
                      interpreter_loop (count + 1)
-                                 (input_line ~prompt:"prob >> " ())
+                                 (prob_line ())
                                  ps_out)
       in
       printf "Queries Available: \n\n";
       List.iter (printf "\t%s\n") query_names;
-      let user_in = input_line ~prompt:"prob >> " () in
+      let user_in = prob_line () in
       interpreter_loop 0 user_in ps_orig
 
-  let run asetup =
+  let run reader_opt asetup =
     ifverbose1 (printf "Binary for counting: %s\n%!" !Cmd.opt_count_bin;);
     Printexc.record_backtrace true;
 (*      let vars = pmock_all_vars asetup in*)
@@ -276,7 +287,7 @@ let interpreter count querydefs ps_orig =
 
           ifdebug (printf "\n\nBefore pmock_queries\n\n");
           let final_dist = if !Cmd.opt_interactive
-                           then interpreter 1 querydefs ps
+                           then interpreter reader_opt 1 querydefs ps
                            else pmock_queries 1 queries querydefs ps in
           if !Cmd.opt_count_latte
           then printf "Number of calls to LattE: %d\n" !Globals.latte_count;
@@ -303,7 +314,7 @@ let main () =
      Arg.Set Cmd.opt_dsa,
      "convert to dynamic single assignment");
     ("--server",
-     Arg.Set_int Cmd.opt_server,
+     Arg.Int (fun i -> Cmd.opt_server_port := i; Cmd.opt_server := true),
      "run TAMBA web service (TM) on specified port");
     ("--precision",
      Arg.Set_int Cmd.opt_precision,
@@ -372,41 +383,41 @@ let main () =
 
   try
 
-    let (r,w) = pipe () in
-    match fork () with
-      | `In_the_parent pid -> let pid_int = Std.Pid.to_int pid in
-                              printf "In the parent. Waiting on child with pid %d\n%!" pid_int;
-                              let (_pid, sigl) = wait (`Pid pid) in
-                              let sig_str = Core.Std.Unix.Exit_or_signal.to_string_hum sigl in
-                              printf "Child has exited with exit status %s\n" sig_str;
-      | `In_the_child ->
+    let prob reader_opt () =
+      (* note to self: why is this called pmock? What is pmock? *)
+      let policy = parse !Cmd.input_file Parser.pmock in
 
-            (* note to self: why is this called pmock? What is pmock? *)
-            let policy = parse !Cmd.input_file Parser.pmock in
+      ifbench (add_policy_records policy;
+               Globals.print_header ());
+      Globals.bench_latte_out_header ();
 
-            ifbench (add_policy_records policy;
-                     Globals.print_header ());
-            Globals.bench_latte_out_header ();
+      let module Runner =
+        (val (match !Cmd.opt_domain with
+              | 0 -> raise (General_error "list-based evaluation not implemented")
+              | 1 -> (module EVALS_PPSS_BOX : EXP_SYSTEM)
+              | 2 -> (module EVALS_PPSS_OCTA : EXP_SYSTEM)
+              | 1 -> (module EVALS_PPSS_BOX : EXP_SYSTEM)
+              | 2 -> (module EVALS_PPSS_OCTA : EXP_SYSTEM)
+              | 3 -> (module EVALS_PPSS_OCTALATTE : EXP_SYSTEM)
+              | 4 -> (module EVALS_PPSS_POLY : EXP_SYSTEM)
+              | _ -> raise Not_expected) : EXP_SYSTEM) in
 
-            let module Runner =
-              (val (match !Cmd.opt_domain with
-                    | 0 -> raise (General_error "list-based evaluation not implemented")
-                    | 1 -> (module EVALS_PPSS_BOX : EXP_SYSTEM)
-                    | 2 -> (module EVALS_PPSS_OCTA : EXP_SYSTEM)
-                    | 1 -> (module EVALS_PPSS_BOX : EXP_SYSTEM)
-                    | 2 -> (module EVALS_PPSS_OCTA : EXP_SYSTEM)
-                    | 3 -> (module EVALS_PPSS_OCTALATTE : EXP_SYSTEM)
-                    | 4 -> (module EVALS_PPSS_POLY : EXP_SYSTEM)
-                    | _ -> raise Not_expected) : EXP_SYSTEM) in
+      ifdebug(printf "\n\nBefore evaluation\n\n");
 
-            ifdebug(printf "\n\nBefore evaluation\n\n");
+      Runner.run reader_opt policy;
 
-            Runner.run policy;
+      ifdebug(printf "\n\nAfter evaluation\n\n";
+              printf "maximum complexity encountered = %d\n" !Globals.max_complexity;
+              Globals.close_bench ());
+      Globals.bench_latte_close () in
 
-            ifdebug(printf "\n\nAfter evaluation\n\n";
-                    printf "maximum complexity encountered = %d\n" !Globals.max_complexity;
-                    Globals.close_bench ());
-            Globals.bench_latte_close ();
+
+    if !Cmd.opt_server
+    then let (r,w) = pipe () in
+         match fork () with
+           | `In_the_parent pid -> Server.start_server pid !Cmd.opt_server_port w ();
+           | `In_the_child -> prob (Some r) ();
+    else prob None ();
 
   with
     | e ->

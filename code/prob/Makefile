@@ -55,6 +55,7 @@ SOURCES_COMMON :=\
 	optimize.ml \
 	lexer.ml parser_util.ml parser.ml \
 	preeval.ml \
+  server.ml \
 	policy.ml 
 
 SOURCES_LATEX := \
@@ -88,7 +89,7 @@ COPTS = $(CDEBUG_FLAGS) -w
 
 PPL_INC = -I /usr/local/lib/ppl 
 PPL_LINK = $(PPL_INC) -cc g++ -cclib -lppl $(COPTS:%=-ccopt %) ppl_ocaml.$(LOEXT)
-INC_FLAGS = -package str -package unix -package gmp -package pareto -package ocephes -package core -package core_extended -thread
+INC_FLAGS = -package str -package unix -package gmp -package pareto -package ocephes -package core -package core_extended -package async -package cohttp -package cohttp.async -thread
 LINK_FLAGS = $(DEBUG_FLAGS) $(INC_FLAGS) -linkpkg
 BUILD_FLAGS = $(DEBUG_FLAGS) $(INC_FLAGS) -pp "camlp5o ./pa_if.cmo" -I +camlp5
 
