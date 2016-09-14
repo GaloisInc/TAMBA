@@ -4,7 +4,17 @@ open Core.Std
 open Core.Std.Unix
 open Async.Std
 open Cohttp_async
-open Printf
+
+(* Define the parameter lists for each possible query *)
+(* TODO: This should be determined by the query itself, which will require
+ * some reorganisation of the code. Two possible strategies:
+ *
+ *  1) parse the query file before forking and pass the 'policy system' to the server
+ *  2) use another pipe to communicate the possible queries and params
+ *)
+let distance_params = ["model"; "ship"; "eta"; "result"]
+let resource_params = ["model"; "ship"; "resouce"; "amount"; "result"]
+let combined_params = ["model"; "ship"; "resouce"; "amount"; "eta"; "result"]
 
 (* A specialized 'either' type for looking up parameters in a URI
  *
@@ -58,9 +68,9 @@ let handler writer ~body:_ _sock req =
                 |> Option.value ~default:"You need to specify a ship, silly.\n"
                 |> Server.respond_with_string
   | "/InitModel" -> init_model uri
-  | "/Distance"  -> distance uri
-  (*| "/Resource"  -> resource uri
-  | "/Combined"  -> combined uri *)
+  | "/Distance"  -> process_query distance_params uri
+  | "/Resource"  -> process_query resource_params uri
+  | "/Combined"  -> process_query combined_params uri
   | _       -> Server.respond_with_string "What are you looking for?\n"
 
 let start_server_prime pid port w_pipe () =
