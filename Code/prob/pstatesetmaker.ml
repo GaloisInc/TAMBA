@@ -534,7 +534,7 @@ module MakePStateset(* create pstateset from a stateset *)
                        } in
         pset_new
 
-    let rec improve_lower_bounds checker runner init ps =
+    let rec improve_lower_bounds checker runner init lim ps =
       if ps.est.smin <> ps.est.smax then (* if smin =/= smax, there is approximation *)
         let sample_pt = SS.get_sample ps.ss in (* get a sample point from stateset *)
         let sample = init#copy in
@@ -547,7 +547,7 @@ module MakePStateset(* create pstateset from a stateset *)
           else
             ps
         else
-          improve_lower_bounds checker runner init ps (* if our sample wasn't good, take another *)
+          improve_lower_bounds checker runner init (lim - 1) ps (* if our sample wasn't good, take another *)
       else
         ps
 
