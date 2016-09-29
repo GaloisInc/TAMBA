@@ -49,13 +49,16 @@ let init_model uri =
                 Server.respond ~body:body code
   | Some str -> Server.respond_with_string (Core.Std.Float.to_string (Random.float 1.0))
 
-let distance uri =
-  let m_opt = Uri.get_query_param uri "model" in
-  match m_opt with
-  | None     -> let code = Cohttp.Code.status_of_code 400 in
-                let body = Body.of_string "Error: Missing 'model' parameter" in
+let process_query params uri =
+  printf "Prossesing Query\n";
+  let (abs, prs) = process_params params uri in
+  printf "Length of abs: %d\nlength of prs: %d" (List.length abs) (List.length prs);
+  match (abs, prs) with
+  | ([], []) -> raise (Failure "Something when wrong in process_params")
+  | ([], xs) -> Server.respond_with_string (Core.Std.Float.to_string (Random.float 1.0))
+  | (ys, _)  -> let code = Cohttp.Code.status_of_code 400 in
+                let body = Body.of_string ("Error: Missing " ^ String.concat ~sep:" " ys ^ " parameters\n") in
                 Server.respond ~body:body code
-  | Some str -> Server.respond_with_string (Core.Std.Float.to_string (Random.float 1.0))
 
 let handler writer ~body:_ _sock req =
   let uri = Cohttp.Request.uri req in
