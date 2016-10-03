@@ -236,6 +236,12 @@ let lists_append ll = List.fold_left List.append [] ll
 let list_subtract ll minus =
   List.filter (fun item -> not (List.mem item minus)) ll
 
+let rec list_replicate n ele =
+  if n = 0 then
+    []
+  else
+    ele :: (list_replicate (n - 1) ele)
+
 let address o = ((Obj.magic (Obj.repr o)): int)
 
 let array_permute a =
