@@ -392,6 +392,9 @@ let main () =
     ("--improve-lower-bounds",
      Arg.Set_int Cmd.opt_improve_lower_bounds,
      "Use sampling w/ path conditions + LattE to improve s_min");
+    ("--volume_computation",
+     Arg.String Cmd.set_volume_computation,
+     "Choose tool to perform volume computation during lower bound improvement (\"latte\", or \"volcomp\") default = \"latte\"");
     ("--simplify",
      Arg.String Cmd.set_simplify,
      "precision simplifier (\"halfs\", \"simple\", \"slack\", \"random\"), default = \"halfs\"");

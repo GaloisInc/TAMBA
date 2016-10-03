@@ -16,6 +16,7 @@ let opt_verbose = ref 0
 let opt_debug = ref false
 let opt_inline = ref false
 let opt_improve_lower_bounds = ref 0
+let opt_volume_computation = ref 0
 let opt_simplify = ref 0
 let opt_seed = ref 0
 let opt_bakeoff = ref false
@@ -31,6 +32,13 @@ let set_domain str =
       | "poly" -> 4
       | _ -> raise (General_error ("unknown domain: " ^ str)))
 
+let set_volume_computation str =
+  opt_volume_computation := (
+    match str with
+    | "latte" -> 0
+    | "volcomp" -> 1
+    | _ -> raise (General_error ("unknown volume computation tool: " ^ str)))
+                  
 let set_simplify str =
   opt_simplify := (
     match str with
