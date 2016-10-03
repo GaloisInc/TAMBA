@@ -325,7 +325,10 @@ struct
 
   let improve_lower_bounds checker runner init lim ps =
     ifdebug (print_endline ("Size of P(Prob. Poly): " ^ (string_of_int (List.length ps))));
-    List.map (PSS.improve_lower_bounds checker runner init lim) ps
+    ifdebug (print_endline "Mapping improve_lower_bounds over all Prob. Poly...");
+    let ret = List.map (PSS.improve_lower_bounds checker runner init lim) ps in
+    ifdebug (print_endline "Done.");
+    ret
 
   let get_alpha_beta ps = List.fold_left (fun (ay,an) (y,n) -> (ay + y, an + n)) (0,0) (List.map PSS.get_alpha_beta ps)
 

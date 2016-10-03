@@ -194,6 +194,7 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
 
         pmock_queries (count + 1) t querydefs ps_out
 
+  (* Lower Bound additions <begin> *)
 
   let run_query query querydefs init =
     (* initial public state *)
@@ -232,25 +233,11 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
     expected = actual
 
   let underapproximate belief queries querydefs st =
-    let rec set_initial_belief (init : Symstate.symstate) (belief : stmt) : Symstate.symstate =
-      match belief with
-      | SSeq (s1, s2) ->
-         let st1 = set_initial_belief init s1 in
-         let st2 = set_initial_belief st1 s2 in
-         st2
-      | SUniform (name, lower, upper) ->
-         let lower_bound = Symbol.SymLeq ((Symbol.SymInt lower), (Symbol.SymAtom name)) in
-         let upper_bound = Symbol.SymLeq ((Symbol.SymAtom name), (Symbol.SymInt upper)) in
-         Symstate.appendpc (SymAnd (lower_bound, upper_bound)) init
-      | SDefine (_, _) -> init
-      | _ -> raise (Invalid_argument "set_initial_belief contains something other than uniform")
-    in
-    let init = set_initial_belief (Symstate.state_to_symstate st) belief in
+    let init = Symstate.initial_belief (Symstate.state_to_symstate st) belief in
     let pc : Symbol.lsym = sym_queries queries querydefs init in
-    print_string ("count(" ^ (Symbol.lsym_to_string (Symbol.simplify_lsym (Symbol.dnf_of_dnfi (Symbol.dnfi_of_nnf (Symbol.nnf_of_lsym pc))))) ^ ") = ");
-    let sz = Latte.count_models (Latte.latte_of_poly (Symbol.poly_of_lsym pc)) in
-    print_endline ((Z.to_string sz));
-    sz
+    Latte.count_models (Latte.latte_of_poly (Symbol.poly_of_lsym pc))
+    
+  (* Lower Bound additions <end> *)
 
   let run asetup =
     ifverbose1 (printf "Binary for counting: %s\n" !Cmd.opt_count_bin;
@@ -300,15 +287,15 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
 
           ifdebug (printf "\n\nBefore pmock_queries\n\n");
           let base_final_dist = pmock_queries 1 queries querydefs ps in
-          if !Cmd.opt_count_latte
-          then printf "Number of calls to LattE: %d\n" !Globals.latte_count;
+
+          (* Lower Bound work <begin> *)
           if !Cmd.opt_improve_lower_bounds > 0
           then printf "\n\n== Improve Lower Bounds == \n\n";
           let improved_final_dist =
             if !Cmd.opt_improve_lower_bounds > 0 then
-              let expected = run_queries queries querydefs base_final_dist.PSYS.valcache in
-              let checker = check_sample queries querydefs expected in
-              let runner = underapproximate beliefstmt queries querydefs in
+              let expected = run_queries queries querydefs base_final_dist.PSYS.valcache in (* run queries with our secret values *)
+              let checker = check_sample queries querydefs expected in (* takes sample, run queries with sample, compare against expected *)
+              let runner = underapproximate beliefstmt queries querydefs in (* takes sample, symbolically run sample, perform counting *)
               let belief_new = ESYS.psrep_improve_lower_bounds
                                  checker
                                  runner
@@ -321,7 +308,11 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
           if !Cmd.opt_improve_lower_bounds > 0 then
             let m_belief = ESYS.psrep_max_belief improved_final_dist.belief in
             printf "\nmax-belief (after improve lower bounds): %s\n" (Q.to_string m_belief);
-         sample_final queries querydefs improved_final_dist
+          (* Lower Bound work <end> *)
+
+          if !Cmd.opt_count_latte
+          then printf "Number of calls to LattE: %d\n" !Globals.latte_count;
+          sample_final queries querydefs improved_final_dist
   (*with
       | e ->
           printf "%s\n" (Printexc.to_string e);

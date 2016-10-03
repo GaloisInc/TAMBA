@@ -1,4 +1,5 @@
 open State
+open Lang
 
 module OrderedVarID =
   struct
@@ -35,7 +36,7 @@ let state_to_symstate (st : state) : symstate =
     sstore = sstore_f st_canon ; 
     pc     = Symbol.SymTrue
   }
-
+   
 let addvar (x : Lang.varid) (st : symstate) : symstate =
   { st with cstore = VarIDMap.add x 0 st.cstore }
 
@@ -53,3 +54,15 @@ let setsym (x : Lang.varid) (v : Symbol.asym) (st : symstate) : symstate =
                                                 
 let appendpc (s : Symbol.lsym) (st : symstate) : symstate =
   { st with pc = Symbol.SymAnd (s, st.pc) }
+
+(* It is expected that 'stmt' will be the part of the policy file that specifies the initial belief about secret values *)
+let rec initial_belief (st : symstate) (belief : stmt) : symstate =
+  match belief with
+  | SSeq (s1, s2) ->
+     let st1 = initial_belief st s1 in
+     let st2 = initial_belief st1 s2 in
+     st2
+  | SUniform (name, lower, upper) ->
+     let lower_bound = Symbol.SymLeq ((Symbol.SymInt lower), (Symbol.SymAtom name)) in
+     let upper_bound = Symbol.SymLeq ((Symbol.SymAtom name), (Symbol.SymInt upper)) in
+     appendpc (SymAnd (lower_bound, upper_bound)) st

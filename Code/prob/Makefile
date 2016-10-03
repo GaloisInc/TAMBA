@@ -43,6 +43,7 @@ SOURCES_COMMON :=\
 	symstate.ml \
 	value_status.ml \
 	latte.ml \
+	volcomp.ml \
 	ppldomainpoly.ml \
 	ppldomainbox.ml \
 	ppldomainocta.ml \
@@ -94,7 +95,7 @@ INC_FLAGS = -package str -package unix -package gmp -package pareto -package oce
 LINK_FLAGS = $(DEBUG_FLAGS) $(INC_FLAGS) -linkpkg
 BUILD_FLAGS = $(DEBUG_FLAGS) $(INC_FLAGS) -pp "camlp5o ./pa_if.cmo" -I +camlp5
 
-prob: $(OBJS_PROB) latte_tmp
+prob: $(OBJS_PROB) latte_tmp volcomp_tmp
 	$(OCAMLC) $(PPL_LINK) $(LINK_FLAGS) -o prob $(OBJS_PROB)
 
 exp: experiment.ml
@@ -117,17 +118,24 @@ util.ml: pa_if.cmo
 latte_tmp:
 	mkdir latte_tmp
 
+volcomp_tmp:
+	mkdir volcomp_tmp
+
 -include .dep
 
 clean_latte:
 	rm -Rf *.lp *.lps numOfLatticePoints totalTime numOfUnimodularCones latte_stats Check_emp.ddl.old latte_tmp/* tri.* *.ddl *.out *.cdd *.ead *.ext
 	rm -Rf latte_cdd.* Check_emp.* cdd.error
 
+clean_volcomp:
+	rm -Rf volcomp_tmp/*
+
 clean_build:
 	rm -rf *~ *.cm* *.o lexer.ml parser.ml parser.mli parser.output *.dSYM .dep .DS_Store 
 
 clean:
 	make clean_latte
+	make clean_volcomp
 	make clean_build
 	rm -Rf prob mprob latex
 
