@@ -8,7 +8,7 @@
 
 - name: run configure for NTL lib
   become: yes
-  become_user: vagrant
+  become_user: jmct
   shell: ./configure NTL_GMP_LIP=on
   args:
     chdir: /usr/share/ntl-9.10.0/src
