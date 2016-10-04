@@ -2,41 +2,41 @@
 
 - name: Get LattE source archive
   become: yes
-  become_user: vagrant
-  get_url: url=https://www.math.ucdavis.edu/~mkoeppe/latte/download/experimental/latte-integrale-1.7.3b.tar.gz dest=/home/vagrant/latte-integrale-1.7.3b.tar.gz
+  become_user: jmct
+  get_url: url=https://www.math.ucdavis.edu/~mkoeppe/latte/download/experimental/latte-integrale-1.7.3b.tar.gz dest=/home/jmct/latte-integrale-1.7.3b.tar.gz
 
 - name: Unarchive LattE source
   become: yes
-  become_user: vagrant
-  unarchive: src=/home/vagrant/latte-integrale-1.7.3b.tar.gz dest=/home/vagrant/ copy=no
+  become_user: jmct
+  unarchive: src=/home/jmct/latte-integrale-1.7.3b.tar.gz dest=/home/jmct/ copy=no
   args:
-    creates: /home/vagrant/latte-integrale-1.7.3b/
+    creates: /home/jmct/latte-integrale-1.7.3b/
 
 - name: run configure for LattE
   become: yes
-  become_user: vagrant
+  become_user: jmct
   shell: ./configure
   args:
-    chdir: /home/vagrant/latte-integrale-1.7.3b
-    creates: /home/vagrant/latte-integrale-1.7.3b/Makefile
+    chdir: /home/jmct/latte-integrale-1.7.3b
+    creates: /home/jmct/latte-integrale-1.7.3b/Makefile
 
 - name: make LattE
   become: yes
-  become_user: vagrant
+  become_user: jmct
   shell: make
   args:
-    chdir: /home/vagrant/latte-integrale-1.7.3b
-    creates: /home/vagrant/latte-integrale-1.7.3b/dest/bin/count
+    chdir: /home/jmct/latte-integrale-1.7.3b
+    creates: /home/jmct/latte-integrale-1.7.3b/dest/bin/count
 
 - name: Put LattE count in PATH
   become: yes
-  shell: cp /home/vagrant/latte-integrale-1.7.3b/dest/bin/count /usr/bin/
+  shell: cp /home/jmct/latte-integrale-1.7.3b/dest/bin/count /usr/bin/
   args:
     creates: /usr/bin/count
 
 - name: Put latte-maximize in PATH
   become: yes
-  shell: cp /home/vagrant/latte-integrale-1.7.3b/dest/bin/latte-maximize /usr/bin/
+  shell: cp /home/jmct/latte-integrale-1.7.3b/dest/bin/latte-maximize /usr/bin/
   args:
     creates: /usr/bin/latte-maximize
 
