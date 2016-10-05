@@ -3,7 +3,15 @@
 open Core.Std
 open Core.Std.Unix
 open Async.Std
+open Async_extra
 open Cohttp_async
+
+(* Logging infrastructure *)
+(* why is the current dir in latte_tmp?! that took me a while to figure out
+ * for now we'll just hack it.
+ * TODO: make less hacky *)
+let logger = let output_file = Log.Output.file `Text ("../../qif-server.log") in
+             Log.create `Info [output_file]
 
 (* Define the parameter lists for each possible query *)
 (* TODO: This should be determined by the query itself, which will require
@@ -47,7 +55,15 @@ let init_model uri =
   | None     -> let code = Cohttp.Code.status_of_code 400 in
                 let body = Body.of_string "Error: Missing 'model' parameter" in
                 Server.respond ~body:body code
-  | Some str -> Server.respond_with_string (Core.Std.Float.to_string (Random.float 1.0))
+  | Some str -> Server.respond_with_string "success\n"
+
+let delete_model uri =
+  let m_opt = Uri.get_query_param uri "model" in
+  match m_opt with
+  | None     -> let code = Cohttp.Code.status_of_code 400 in
+                let body = Body.of_string "Error: Missing 'model' parameter" in
+                Server.respond ~body:body code
+  | Some str -> Server.respond_with_string "success\n"
 
 let process_query params uri =
   printf "Prossesing Query\n";
@@ -62,6 +78,7 @@ let process_query params uri =
 
 let handler writer ~body:_ _sock req =
   let uri = Cohttp.Request.uri req in
+  Log.string logger (Uri.to_string uri);
   match Uri.path uri with
   | "/home" -> Async_unix.Writer.write writer "We got something!\n";
                Async_unix.Writer.write writer "We got something else!\n";
@@ -74,6 +91,7 @@ let handler writer ~body:_ _sock req =
   | "/Distance"  -> process_query distance_params uri
   | "/Resource"  -> process_query resource_params uri
   | "/Combined"  -> process_query combined_params uri
+  | "/DeleteModel" -> delete_model uri
   | _       -> Server.respond_with_string "What are you looking for?\n"
 
 let start_server_prime pid port w_pipe () =
