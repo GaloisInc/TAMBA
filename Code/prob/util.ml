@@ -242,6 +242,15 @@ let rec list_replicate n ele =
   else
     ele :: (list_replicate (n - 1) ele)
 
+let list_idx f l =
+  let rec list_idx' l' n =
+    match l' with
+    | [] -> -1
+    | h :: t -> if f h then n else list_idx' t (n + 1)
+  in
+
+  list_idx' l 0
+             
 let address o = ((Obj.magic (Obj.repr o)): int)
 
 let array_permute a =

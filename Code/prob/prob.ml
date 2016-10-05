@@ -12,6 +12,7 @@ open Pareto.Distributions
 open Pareto.Distributions.Beta
 open Value_status
 open Optimize
+open Volume_comp_ir
 
 open Maths
 open Gmp
@@ -233,10 +234,39 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
     expected = actual
 
   let underapproximate belief queries querydefs st =
-    let init = Symstate.initial_belief (Symstate.state_to_symstate st) belief in
+    let init = Symstate.state_to_symstate st in (* don't have bounds *)
     let pc : Symbol.lsym = sym_queries queries querydefs init in
-    Latte.count_models (Latte.latte_of_poly (Symbol.poly_of_lsym pc))
-    
+
+    let fvs = st#vars in
+
+    let rec belief_bounds (belief : stmt) (acc : (int * int) VarIDMap.t) : (int * int) VarIDMap.t =
+      match belief with
+      | SSeq (s1, s2) ->
+         let s1_bounds = belief_bounds s1 acc in
+         let s2_bounds = belief_bounds s2 s1_bounds in
+         s2_bounds
+      | SUniform (name, lower, upper) ->
+         VarIDMap.add name (lower, upper) acc
+      | _ -> acc
+    in
+
+    let belief' = belief_bounds belief VarIDMap.empty in
+    let linear_system = Symbol.linear_system_of_lsym pc in
+
+    (* now that we have a Volume Computation IR, we can use it to solve on any backend that handles it *)
+    let ir : vc_ir = (fvs, belief', linear_system) in
+
+    let ret =
+      (match !Cmd.opt_volume_computation with
+       | 0 -> Latte.count_models (Latte.latte_of_poly (poly_of_vc_ir ir))
+       | 1 -> Volcomp.count_models (volcomp_of_vc_ir ir)
+       | _ -> raise (General_error ("opt_volume_computation not valid, shouldn't be possible... should be caught with arg parsing")))
+    in
+
+    print_endline ("count {\n" ^ (vc_ir_to_string ir) ^ "\n} = " ^ (Z.to_string ret) ^ "\n");
+
+    ret
+            
   (* Lower Bound additions <end> *)
 
   let run asetup =
@@ -308,6 +338,7 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
           if !Cmd.opt_improve_lower_bounds > 0 then
             let m_belief = ESYS.psrep_max_belief improved_final_dist.belief in
             printf "\nmax-belief (after improve lower bounds): %s\n" (Q.to_string m_belief);
+
           (* Lower Bound work <end> *)
 
           if !Cmd.opt_count_latte

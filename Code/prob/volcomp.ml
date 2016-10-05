@@ -9,12 +9,12 @@ let volcomp_bin : string = "volComp"
 let volcomp_env = Unix.environment ()
 let volcomp_tmp = Globals.file_abs "volcomp_tmp"
 let volcomp_workdir = (volcomp_tmp ^ "/" ^ (string_of_int (Unix.getpid ())));;
-
+(*
 if Sys.file_exists volcomp_workdir then
   ignore (Unix.system ("rm -Rf " ^ volcomp_workdir));;
 Unix.mkdir volcomp_workdir 0o700;;
 Unix.chdir volcomp_workdir;;
-
+ *)
 let rand_tmp_name () = "model_" ^ (string_of_int (Unix.getpid ()))
 
 (* all stmts should be SUniform, and all lsyms should be SymLeq *)
