@@ -23,11 +23,6 @@ secret:
   int ship6_eta    = 500;
   int ship6_berths = 200;
 
-  (* HMAS Choules *)
-  int ship7_eta    = 750;
-  int ship7_berths = 400;
-
-
 
 belief:
 (* ETA belief *)
@@ -37,7 +32,6 @@ belief:
   int ship4_eta = uniform 0 1000;
   int ship5_eta = uniform 0 1000;
   int ship6_eta = uniform 0 1000;
-  int ship7_eta = uniform 0 1000;
 
   int ship1_berths = uniform 0 1000;
   int ship2_berths = uniform 0 1000;
@@ -45,7 +39,6 @@ belief:
   int ship4_berths = uniform 0 1000;
   int ship5_berths = uniform 0 1000;
   int ship6_berths = uniform 0 1000;
-  int ship7_berths = uniform 0 1000;
 
 querydef close_enough ship time -> result :
   int ship_eta = 0;
@@ -66,9 +59,6 @@ querydef close_enough ship time -> result :
   endif;
   if ship == 6 then
     ship_eta = ship6_eta;
-  endif;
-  if ship == 7 then
-    ship_eta = ship7_eta;
   endif;
 
   int result = 0;
@@ -95,9 +85,6 @@ querydef enough_berths ship berths_needed -> result :
   endif;
   if ship == 6 then
     ship_berths = ship6_berths
-  endif;
-  if ship == 7 then
-    ship_berths = ship7_berths
   endif;
 
   int result = 0;
@@ -132,10 +119,6 @@ querydef combined ship time berths_needed -> result :
     ship_eta = ship6_eta;
     ship_berths = ship6_berths
   endif;
-  if ship == 7 then
-    ship_eta = ship7_eta;
-    ship_berths = ship7_berths
-  endif;
 
   int available = 0;
   if ship_eta <= time then
@@ -147,70 +130,72 @@ querydef combined ship time berths_needed -> result :
     result = 1
   endif;
 
-query close_enough:
+query combined:
   int ship = 1;
   int time = 200;
+  int berths_needed = 500;
 
-query close_enough:
+query combined:
   int ship = 2;
   int time = 200;
+  int berths_needed = 500;
 
-query close_enough:
+query combined:
   int ship = 3;
   int time = 200;
+  int berths_needed = 500;
 
-query close_enough:
+query combined:
   int ship = 4;
   int time = 200;
+  int berths_needed = 500;
 
-query close_enough:
+query combined:
   int ship = 5;
   int time = 200;
-
-query enough_berths:
-  int ship = 1;
   int berths_needed = 500;
 
-query enough_berths:
+query combined:
+  int ship = 1;
+  int time = 200;
+  int berths_needed = 250;
+
+query combined:
   int ship = 2;
-  int berths_needed = 500;
+  int time = 200;
+  int berths_needed = 250;
 
-query enough_berths:
+query combined:
   int ship = 3;
-  int berths_needed = 500;
+  int time = 200;
+  int berths_needed = 250;
 
-query enough_berths:
+query combined:
   int ship = 4;
-  int berths_needed = 500;
+  int time = 200;
+  int berths_needed = 250;
 
-query enough_berths:
+query combined:
+  int ship = 5;
+  int time = 200;
+  int berths_needed = 250;
+
+query combined:
   int ship = 1;
-  int berths_needed = 250;
-
-query enough_berths:
-  int ship = 2;
-  int berths_needed = 250;
-
-query enough_berths:
-  int ship = 3;
-  int berths_needed = 250;
-
-query enough_berths:
-  int ship = 4;
-  int berths_needed = 250;
-
-query enough_berths:
-  int ship = 1;
+  int time = 200;
   int berths_needed = 125;
 
-query enough_berths:
+query combined:
   int ship = 2;
+  int time = 200;
   int berths_needed = 125;
 
-query enough_berths:
+query combined:
   int ship = 3;
+  int time = 200;
   int berths_needed = 375;
 
-query enough_berths:
+query combined:
   int ship = 4;
+  int time = 200;
   int berths_needed = 125;
