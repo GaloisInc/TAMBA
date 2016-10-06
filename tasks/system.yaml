@@ -36,3 +36,12 @@
   shell: ln -s /usr/lib/cdd-test/scdd_gmp /usr/bin/scdd_gmp
   args:
     creates: /usr/bin/scdd_gmp
+
+- name: install boost
+  apt: name=libboost-dev state=present
+
+- name: install boost program options
+  apt: name=libboost-program-options-dev state=present
+
+- name: install glpk
+  apt: name=libglpk-dev state=present
