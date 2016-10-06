@@ -73,8 +73,11 @@ let rec eval (stmt : stmt) (state : symstate) : (int * symstate) =
      let st1 = setvar name res state in
      let st2 = setsym name sym st1 in
      (res, st2)
-  | SPSeq (s1, s2, p, n1, n2) ->
-     failwith "eval (sym) on prob. if stmt"
+  | SPSeq (s1, s2, p, n1, n2) -> (* ignored for now, only sound for single sample *)
+     if (Random.float 1.0) < (Q.from_float p) then
+       eval s1 state
+     else
+       eval s2 state
   | SSeq (stmt1, stmt2) ->
      let (_, st1) = eval stmt1 state in
      let (res, st2) = eval stmt2 st1 in
