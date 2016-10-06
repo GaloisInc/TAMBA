@@ -23,10 +23,6 @@ secret:
   int ship6_eta    = 500;
   int ship6_berths = 200;
 
-  (* HMAS Choules *)
-  int ship7_eta    = 750;
-  int ship7_berths = 400;
-
 
 
 belief:
@@ -37,7 +33,6 @@ belief:
   int ship4_eta = uniform 0 1000;
   int ship5_eta = uniform 0 1000;
   int ship6_eta = uniform 0 1000;
-  int ship7_eta = uniform 0 1000;
 
   int ship1_berths = uniform 0 1000;
   int ship2_berths = uniform 0 1000;
@@ -45,7 +40,6 @@ belief:
   int ship4_berths = uniform 0 1000;
   int ship5_berths = uniform 0 1000;
   int ship6_berths = uniform 0 1000;
-  int ship7_berths = uniform 0 1000;
 
 querydef close_enough ship time -> result :
   int ship_eta = 0;
@@ -66,9 +60,6 @@ querydef close_enough ship time -> result :
   endif;
   if ship == 6 then
     ship_eta = ship6_eta;
-  endif;
-  if ship == 7 then
-    ship_eta = ship7_eta;
   endif;
 
   int result = 0;
@@ -95,9 +86,6 @@ querydef enough_berths ship berths_needed -> result :
   endif;
   if ship == 6 then
     ship_berths = ship6_berths
-  endif;
-  if ship == 7 then
-    ship_berths = ship7_berths
   endif;
 
   int result = 0;
@@ -131,10 +119,6 @@ querydef combined ship time berths_needed -> result :
   if ship == 6 then
     ship_eta = ship6_eta;
     ship_berths = ship6_berths
-  endif;
-  if ship == 7 then
-    ship_eta = ship7_eta;
-    ship_berths = ship7_berths
   endif;
 
   int available = 0;
