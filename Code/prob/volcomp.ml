@@ -20,7 +20,7 @@ type volcomp =
   { decls : (varid * (int * int)) list;
     leqs  : (int list * int) list list
   }
-
+    
 let string_of_volcomp (v : volcomp) : string =
   let decls_str = (String.concat "\n" (List.map (fun ((_, name), (l, u)) -> Printf.sprintf "V %s I %d %d" name l u) v.decls)) ^ "\n" in
 
@@ -47,8 +47,12 @@ let count_models (v : volcomp) : Z.t =
   match (List.rev out_lines) with
   | _ :: lower_bound_str :: _ ->
      if (string_search rexp stdin) then
-       let res = Q.from_float (float_of_string (Str.matched_group 1 stdin)) in
+       let pr_str = Str.matched_group 1 stdin in
+       print_endline pr_str;
+       let res = from_string_Q pr_str in
+       print_endline (Q.to_string res);
        let count_exact = Q.from_z (total_volume v) */ res in
+       print_endline (Z.to_string (total_volume v));
        Z.fdiv_q (Q.get_num count_exact) (Q.get_den count_exact)
      else
        raise (Failure "count_models: volcomp output malformed (regexp failed to retrieve prob)")

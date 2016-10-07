@@ -26,6 +26,26 @@ let lg n =
 let min_q a b = if Q.compare a b < 0 then a else b
 let max_q a b = if Q.compare a b > 0 then a else b
 
+let from_string_Q s =
+  let w :: ds :: [] = Str.split (Str.regexp "\\.") s in
+
+  let w' : Q.t = Q.from_z (Z.from_string w) in (* portion to left of decimal *)
+
+  let rec pow_Z base exp =
+    if Z.cmp exp (Z.from_int 0) = 0 then
+      Z.from_int 1
+    else
+      Z.mul base (pow_Z base (Z.sub exp (Z.from_int 1)))
+  in
+
+  let num : Z.t = Z.from_string ds in
+  let den : Z.t = pow_Z (Z.from_int 10) (Z.from_int (String.length ds)) in
+
+  let ds' = Q.from_zs num den in
+
+  Q.add w' ds'
+
+                                                   
 let pair_first (a, b) = a
 let pair_second (a, b) = b
 
