@@ -13,6 +13,9 @@ open Cohttp_async
 let logger = let output_file = Log.Output.file `Text ("../../qif-server.log") in
              Log.create `Info [output_file]
 
+(* Maintain a list of models in use *)
+let models = ref []
+ 
 (* Define the parameter lists for each possible query *)
 (* TODO: This should be determined by the query itself, which will require
  * some reorganisation of the code. Two possible strategies:
@@ -55,7 +58,14 @@ let init_model uri =
   | None     -> let code = Cohttp.Code.status_of_code 400 in
                 let body = Body.of_string "Error: Missing 'model' parameter" in
                 Server.respond ~body:body code
-  | Some str -> Server.respond_with_string "success\n"
+  | Some str -> let exists = List.mem !models str in
+                if exists = false then
+                  models := str::(!models);
+ 
+                if exists then
+                  Server.respond_with_string "model reinitialized\n"
+                else 
+                  Server.respond_with_string "model initialized\n"
 
 let delete_model uri =
   let m_opt = Uri.get_query_param uri "model" in
@@ -63,14 +73,28 @@ let delete_model uri =
   | None     -> let code = Cohttp.Code.status_of_code 400 in
                 let body = Body.of_string "Error: Missing 'model' parameter" in
                 Server.respond ~body:body code
-  | Some str -> Server.respond_with_string "success\n"
+  | Some str -> let exists = List.mem !models str in
+                if exists then
+                  models := List.filter !models (fun x -> x <> str) ;
+
+                if exists then
+                  Server.respond_with_string "success\n"
+                else 
+                  let code = Cohttp.Code.status_of_code 400 in
+                  let body = Body.of_string "Error: Invalid 'model' parameter" in
+                  Server.respond ~body:body code
+ 
+
+let list_models ()  =
+  let str = "[" ^ (String.concat ~sep:", " !models) ^ "]\n" in
+  Server.respond_with_string str
 
 let process_query params uri =
   printf "Prossesing Query\n";
   let (abs, prs) = process_params params uri in
   printf "Length of abs: %d\nlength of prs: %d" (List.length abs) (List.length prs);
   match (abs, prs) with
-  | ([], []) -> raise (Failure "Something when wrong in process_params")
+  | ([], []) -> raise (Failure "Something went wrong in process_params")
   | ([], xs) -> Server.respond_with_string (Core.Std.Float.to_string (Random.float 1.0))
   | (ys, _)  -> let code = Cohttp.Code.status_of_code 400 in
                 let body = Body.of_string ("Error: Missing " ^ String.concat ~sep:" " ys ^ " parameters\n") in
@@ -87,11 +111,12 @@ let handler writer ~body:_ _sock req =
                 |> Option.map ~f:(sprintf "So you wanna know about ship %s, eh?\n")
                 |> Option.value ~default:"You need to specify a ship, silly.\n"
                 |> Server.respond_with_string
-  | "/InitModel" -> init_model uri
+  | "/InitModel" -> init_model uri 
   | "/Distance"  -> process_query distance_params uri
   | "/Resource"  -> process_query resource_params uri
   | "/Combined"  -> process_query combined_params uri
   | "/DeleteModel" -> delete_model uri
+  | "/ListModels" -> list_models ()
   | _       -> Server.respond_with_string "What are you looking for?\n"
 
 let start_server_prime pid port w_pipe () =
