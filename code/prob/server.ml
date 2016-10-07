@@ -5,6 +5,22 @@ open Core.Std.Unix
 open Async.Std
 open Async_extra
 open Cohttp_async
+open Json
+
+(* The Async.Pipes that are used as follows:
+ *
+ *  Writer: The web-request handlers write (string, ivar) pairs to the pipe
+ *      They wait for the ivar to be filled and then respond to the request
+ *      with it
+ *
+ *  Reader: The dispatcher thread reads a pair off of the Pipe and sends the
+ *      String to the prob process (the dispatcher thread has a separate
+ *      _unix_ pipe that it uses to communicate with the prob process).
+ *
+ *      When the prob process responds the dispatcher thread fills the ivar
+ *      the response value
+ *)
+let (q_reader, q_writer) = Pipe.create ()
 
 (* Logging infrastructure *)
 (* why is the current dir in latte_tmp?! that took me a while to figure out
@@ -89,37 +105,40 @@ let list_models ()  =
   let str = "[" ^ (String.concat ~sep:", " !models) ^ "]\n" in
   Server.respond_with_string str
 
-let process_query params uri =
+let process_query query_name params uri =
   printf "Prossesing Query\n";
   let (abs, prs) = process_params params uri in
-  printf "Length of abs: %d\nlength of prs: %d" (List.length abs) (List.length prs);
+  printf "Length of abs: %d\nlength of prs: %d\n%!" (List.length abs) (List.length prs);
   match (abs, prs) with
-  | ([], []) -> raise (Failure "Something went wrong in process_params")
-  | ([], xs) -> Server.respond_with_string (Core.Std.Float.to_string (Random.float 1.0))
+  | ([], []) -> raise (Failure "Something when wrong in process_params")
+  | ([], xs) -> let serialised = query_to_string query_name prs in
+                printf "serialised: %s\n%!" serialised;
+                let response_ivar = Async.Std.Ivar.create () in
+                Async.Std.Pipe.write q_writer (serialised, response_ivar)
+                >>= fun _ -> Async.Std.Ivar.read response_ivar
+                >>= fun rsp -> Server.respond_with_string rsp
   | (ys, _)  -> let code = Cohttp.Code.status_of_code 400 in
                 let body = Body.of_string ("Error: Missing " ^ String.concat ~sep:" " ys ^ " parameters\n") in
                 Server.respond ~body:body code
 
-let handler writer ~body:_ _sock req =
+let handler ~body:_ _sock req =
   let uri = Cohttp.Request.uri req in
   Log.string logger (Uri.to_string uri);
   match Uri.path uri with
-  | "/home" -> Async_unix.Writer.write writer "We got something!\n";
-               Async_unix.Writer.write writer "We got something else!\n";
-               Server.respond_with_string "This is a home, get out.\n"
+  | "/home" -> Server.respond_with_string "This is a home, get out.\n"
   | "/query" ->    Uri.get_query_param uri "ship"
                 |> Option.map ~f:(sprintf "So you wanna know about ship %s, eh?\n")
                 |> Option.value ~default:"You need to specify a ship, silly.\n"
                 |> Server.respond_with_string
-  | "/InitModel" -> init_model uri 
-  | "/Distance"  -> process_query distance_params uri
-  | "/Resource"  -> process_query resource_params uri
-  | "/Combined"  -> process_query combined_params uri
+  | "/InitModel" -> init_model uri
+  | "/Distance"  -> process_query "close_enough" distance_params uri
+  | "/Resource"  -> process_query "enough_berths" resource_params uri
+  | "/Combined"  -> process_query "combined" combined_params uri
   | "/DeleteModel" -> delete_model uri
   | "/ListModels" -> list_models ()
   | _       -> Server.respond_with_string "What are you looking for?\n"
 
-let start_server_prime pid port w_pipe () =
+let start_server_prime pid port () =
   (* Preamble for logging *)
   let pid_int = Core.Std.Pid.to_int pid in
   printf "In the parent. Waiting on child with pid %d\n%!" pid_int;
@@ -128,14 +147,33 @@ let start_server_prime pid port w_pipe () =
   printf "Listening for HTTP on port %d\n" port;
   printf "You can try wget or curl with http://localhost:%d/<something>\n%!" port;
 
-  (* Create the Asyn_unix Writer *)
-  let fd = Async_unix.Fd.create Async_unix.Fd.Kind.Fifo w_pipe (Info.of_string "server's write pipe") in
-  let writer = Async_unix.Writer.create fd in
-  
   Cohttp_async.Server.create ~on_handler_error:`Raise
-    (Tcp.on_port port) (handler writer)
+    (Tcp.on_port port) handler
   >>= fun _ -> Deferred.never ()
 
-let start_server pid port w_pipe () =
-  start_server_prime pid port w_pipe ();
+let dispatcher_loop (prob_r, prob_w) =
+  (* Create the Async_unix Writer *)
+  let fd_w = Async_unix.Fd.create Async_unix.Fd.Kind.Fifo prob_w (Info.of_string "server's write pipe") in
+  let prob_w = Async_unix.Writer.create fd_w in
+
+  (* Create the Async_unix Reader *)
+  let fd_r = Async_unix.Fd.create Async_unix.Fd.Kind.Fifo prob_r (Info.of_string "server's read pipe") in
+  let prob_r = Async_unix.Reader.create fd_r in
+
+  printf "Before dispatcher loop\n%!";
+  let rec go () = 
+          Pipe.read q_reader >>=
+          function
+          | `Eof            -> return ()
+          | `Ok (msg, ivar) -> Async_unix.Writer.write_line prob_w msg;
+                               (Async_unix.Reader.read_line prob_r >>=
+                                function
+                                | `Eof    -> return ()
+                                | `Ok rsp -> return (Async.Std.Ivar.fill ivar rsp));
+                               go ()
+  in go ()
+
+let start_server pid port (r_pipe, w_pipe) () =
+  dispatcher_loop (r_pipe, w_pipe);
+  start_server_prime pid port ();
   never_returns (Scheduler.go ());

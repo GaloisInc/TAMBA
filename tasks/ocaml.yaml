@@ -87,6 +87,12 @@
   become_user: jmct
   command: opam install utop -y
 
+
+- name: Install yojson
+  become: yes
+  become_user: vagrant
+  command: opam install yojson -y
+
 - name: Ensure OPAM env is set in bash profile
   shell: sh -c 'echo "eval \`opam config env\`" >> /home/jmct/.profile' && touch /home/jmct/.opam-config-profile
   args:
