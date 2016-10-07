@@ -12,7 +12,7 @@ open Pareto.Distributions
 open Pareto.Distributions.Beta
 open Value_status
 open Optimize
-open Volume_comp_ir
+open Gen_poly
 
 open Maths
 open Gmp
@@ -254,16 +254,16 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
     let linear_system = Symbol.linear_system_of_lsym pc in
 
     (* now that we have a Volume Computation IR, we can use it to solve on any backend that handles it *)
-    let ir : vc_ir = (fvs, belief', linear_system) in
+    let p : gen_poly = { bounds = belief'; constraints = linear_system } in
 
     let ret =
       (match !Cmd.opt_volume_computation with
-       | 0 -> Latte.count_models (Latte.latte_of_poly (poly_of_vc_ir ir))
-       | 1 -> Volcomp.count_models (volcomp_of_vc_ir ir)
+       | 0 -> Latte.count_models (latte_of_gen_poly p)
+       | 1 -> Volcomp.count_models (volcomp_of_gen_poly p)
        | _ -> raise (General_error ("opt_volume_computation not valid, shouldn't be possible... should be caught with arg parsing")))
     in
 
-    print_endline ("count {\n" ^ (vc_ir_to_string ir) ^ "\n} = " ^ (Z.to_string ret) ^ "\n");
+    print_endline ("count {\n" ^ (string_of_gen_poly p) ^ "\n} = " ^ (Z.to_string ret) ^ "\n");
 
     ret
             

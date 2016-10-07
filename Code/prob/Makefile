@@ -44,7 +44,7 @@ SOURCES_COMMON :=\
 	value_status.ml \
 	latte.ml \
 	volcomp.ml \
-	volume_comp_ir.ml \
+	gen_poly.ml \
 	ppldomainpoly.ml \
 	ppldomainbox.ml \
 	ppldomainocta.ml \

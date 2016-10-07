@@ -1,5 +1,6 @@
 open Lang
 open Symstate
+open Gmp
 
 let rec eval_aexp (aexp : aexp) (state : symstate) : int =
   match aexp with
@@ -74,7 +75,7 @@ let rec eval (stmt : stmt) (state : symstate) : (int * symstate) =
      let st2 = setsym name sym st1 in
      (res, st2)
   | SPSeq (s1, s2, p, n1, n2) -> (* ignored for now, only sound for single sample *)
-     if (Random.float 1.0) < (Q.from_float p) then
+     if (Random.float 1.0) < (Q.to_float p) then
        eval s1 state
      else
        eval s2 state
