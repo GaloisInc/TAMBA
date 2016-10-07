@@ -30,7 +30,7 @@ let add_policy_records aexp =
     aexp.policies;;
 
 module type EXP_SYSTEM = sig
-  val run: Core.Std.Unix.File_descr.t option -> Pdefs.tpmocksetup -> unit
+  val run: (Core.Std.Unix.File_descr.t * Core.Std.Unix.File_descr.t) option -> Pdefs.tpmocksetup -> unit
 end;;
 
 module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
@@ -204,21 +204,37 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
 
   let prob_line = Core_extended.Readline.input_line ~prompt:"prob >> "
 
-  let test_pipe r_opt str =
-    match r_opt with
-      | None -> ()
-      | Some r ->
-        if str = "read_pipe"
-        then let buff = Core_string.create 100 in
-             Core.Std.Unix.read r buff;
-             printf "%s" (Core_string.to_string buff)
+  let server (p_read, p_write) querydefs ps_orig =
+      let query_names = List.map (fun (qname, _) -> printf "qname: %s\n%!" qname; qname) querydefs in
+      let rec server_loop ps_in =
+          let cmd = Pervasives.input_line p_read in
+          printf "The command: %s\n" cmd;
+          let (qn, ins) = Json.parse_query_json cmd in
+          printf "qn: %s\n%!" qn;
+          flush Pervasives.stdout;
+          let (inlist, outlist, progstmt) = try List.assoc qn querydefs
+                                            with e -> raise (General_error qn) in
+          printf "inlist: %s\n%!" (varid_list_to_string inlist);
+          let ins2 = List.map (fun (n,x) -> (n, Some x)) ins in
+          let ps_out = (let qstmt = make_int_assignments ins2 in
+                             common_run (qn, qstmt) querydefs) ps_in in
+          printf "Query has been run\n%!";
+          let rev_belief = ESYS.psrep_max_belief ps_out.belief in
+          (* lg (U/V) == lg U - lg V *)
+          let cuma_leakage = lg (Gmp.Q.to_float rev_belief) -. lg (!Globals.init_max_belief) in
+          let msg = string_of_float cuma_leakage ^ "\n" in
+          output_string p_write msg;
+          printf "p_write has been written to\n%!";
+          server_loop ps_out
+      in
+      server_loop ps_orig
 
-  let interpreter reader_opt count querydefs ps_orig =
+  let interpreter count querydefs ps_orig =
       let query_names = List.map (fun (qname, _) -> qname) querydefs in
       let rec interpreter_loop count user_in ps_in =
           match user_in with
             | None -> printf "We're done.\n"; ps_in
-            | Some str -> test_pipe reader_opt str;
+            | Some str ->
                 if not (List.mem str query_names)
                 then (printf "%s is not a valid query.\n" str;
                      printf "Queries Available: \n\n";
@@ -240,7 +256,7 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
       let user_in = prob_line () in
       interpreter_loop 0 user_in ps_orig
 
-  let run reader_opt asetup =
+  let run pipe_opt asetup =
     ifverbose1 (printf "Binary for counting: %s\n%!" !Cmd.opt_count_bin;);
     Printexc.record_backtrace true;
 (*      let vars = pmock_all_vars asetup in*)
@@ -286,9 +302,16 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
                   PSYS.valcache = secretstate} in
 
           ifdebug (printf "\n\nBefore pmock_queries\n\n");
-          let final_dist = if !Cmd.opt_interactive
-                           then interpreter reader_opt 1 querydefs ps
-                           else pmock_queries 1 queries querydefs ps in
+          let final_dist =
+                if !Cmd.opt_interactive
+                then interpreter 1 querydefs ps
+                else if !Cmd.opt_server
+                then (match pipe_opt with
+                      | None       -> raise (General_error "server failed to allocate pipes")
+                      | Some (r,w) -> let r_chan = in_channel_of_descr r in
+                                      let w_chan = out_channel_of_descr w in
+                                      server (r_chan, w_chan) querydefs ps)
+                else pmock_queries 1 queries querydefs ps in
           if !Cmd.opt_count_latte
           then printf "Number of calls to LattE: %d\n" !Globals.latte_count;
           sample_final queries querydefs final_dist
@@ -314,7 +337,8 @@ let main () =
      Arg.Set Cmd.opt_dsa,
      "convert to dynamic single assignment");
     ("--server",
-     Arg.Int (fun i -> Cmd.opt_server_port := i; Cmd.opt_server := true),
+     Arg.Int (fun i -> Cmd.opt_server_port := i;
+                       Cmd.opt_server := true),
      "run TAMBA web service (TM) on specified port");
     ("--precision",
      Arg.Set_int Cmd.opt_precision,
@@ -383,7 +407,7 @@ let main () =
 
   try
 
-    let prob reader_opt () =
+    let prob pipe_opt () =
       (* note to self: why is this called pmock? What is pmock? *)
       let policy = parse !Cmd.input_file Parser.pmock in
 
@@ -404,7 +428,7 @@ let main () =
 
       ifdebug(printf "\n\nBefore evaluation\n\n");
 
-      Runner.run reader_opt policy;
+      Runner.run pipe_opt policy;
 
       ifdebug(printf "\n\nAfter evaluation\n\n";
               printf "maximum complexity encountered = %d\n" !Globals.max_complexity;
@@ -413,10 +437,13 @@ let main () =
 
 
     if !Cmd.opt_server
-    then let (r,w) = pipe () in
+    then let (prob_r, server_w) = pipe () in
+         let (server_r, prob_w) = pipe () in
          match fork () with
-           | `In_the_parent pid -> Server.start_server pid !Cmd.opt_server_port w ();
-           | `In_the_child -> prob (Some r) ();
+           | `In_the_parent pid -> Server.start_server pid
+                                                       !Cmd.opt_server_port
+                                                       (server_r, server_w) ();
+           | `In_the_child -> prob (Some (prob_r, prob_w)) ();
     else prob None ();
 
   with

@@ -41,7 +41,7 @@ belief:
   int ship5_berths = uniform 0 1000;
   int ship6_berths = uniform 0 1000;
 
-querydef close_enough ship time -> result :
+querydef close_enough ship eta -> result :
   int ship_eta = 0;
   if ship == 1 then
     ship_eta    = ship1_eta;
@@ -63,7 +63,7 @@ querydef close_enough ship time -> result :
   endif;
 
   int result = 0;
-  if ship_eta <= time then
+  if ship_eta <= eta then
     result = 1
   endif;
 
