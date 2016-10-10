@@ -319,8 +319,10 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
           let base_final_dist = pmock_queries 1 queries querydefs ps in
 
           (* Lower Bound work <begin> *)
-          if !Cmd.opt_improve_lower_bounds > 0
-          then printf "\n\n== Improve Lower Bounds == \n\n";
+          (if !Cmd.opt_improve_lower_bounds > 0 then
+             printf "\n\n== Improve Lower Bounds == \n\n"
+           else
+             ());
           let improved_final_dist =
             if !Cmd.opt_improve_lower_bounds > 0 then
               let expected = run_queries queries querydefs base_final_dist.PSYS.valcache in (* run queries with our secret values *)
@@ -335,9 +337,11 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
               { base_final_dist with belief = belief_new }
             else
               base_final_dist in
-          if !Cmd.opt_improve_lower_bounds > 0 then
+          (if !Cmd.opt_improve_lower_bounds > 0 then
             let m_belief = ESYS.psrep_max_belief improved_final_dist.belief in
-            printf "\nmax-belief (after improve lower bounds): %s\n" (Q.to_string m_belief);
+            printf "\nmax-belief (after improve lower bounds): %s\n" (Q.to_string m_belief)
+          else
+            ());
 
           (* Lower Bound work <end> *)
 
