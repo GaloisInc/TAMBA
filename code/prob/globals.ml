@@ -11,7 +11,7 @@ let currently_parsing = ref "";;
 
 let latte_count = ref 0;;
 
-let inc_latte_count =
+let inc_latte_count () =
   latte_count := !latte_count + 1;;
 
 let renderlatex = ref false;;

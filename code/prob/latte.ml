@@ -93,7 +93,7 @@ let _count_models =
              flush Pervasives.stdout);
           ifbench (Globals.start_timer Globals.timer_count);
 
-          let (data_in, data_err) = Globals.inc_latte_count; exec_and_read_all (latte_bin ^ " " ^ filename) latte_env in
+          let (data_in, data_err) = Globals.inc_latte_count (); exec_and_read_all (latte_bin ^ " " ^ filename) latte_env in
 
             ifdebug (printf "done "; flush Pervasives.stdout);
             ifbench (Globals.stop_timer Globals.timer_count;
