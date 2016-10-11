@@ -25,10 +25,10 @@ endif
 
 SOURCES_COMMON :=\
 	util.ml \
-	json.ml \
 	benchmark.ml \
 	cmd.ml \
 	globals.ml \
+	json.ml \
 	lang.ml \
 	repl.ml \
 	logical.ml \

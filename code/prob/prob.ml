@@ -207,27 +207,27 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
   let server (p_read, p_write) querydefs ps_orig =
       let query_names = List.map (fun (qname, _) -> printf "qname: %s\n%!" qname; qname) querydefs in
       let rec server_loop ps_in =
-          printf "Top of server_loop\n%!";
+          ifdebug (printf "Top of server_loop\n%!");
           let cmd = Pervasives.input_line p_read in
-          printf "The command: %s\n" cmd;
+          ifdebug (printf "The command: %s\n" cmd);
           let (qn, ins) = Json.parse_query_json cmd in
-          printf "qn: %s\n%!" qn;
-          flush Pervasives.stdout;
+          ifdebug (printf "qn: %s\n%!" qn;
+                   flush Pervasives.stdout);
           let (inlist, outlist, progstmt) = try List.assoc qn querydefs
                                             with e -> raise (General_error qn) in
-          printf "inlist: %s\n%!" (varid_list_to_string inlist);
+          ifdebug (printf "inlist: %s\n%!" (varid_list_to_string inlist));
           let ins2 = List.map (fun (n,x) -> (n, Some x)) ins in
           let ps_out = (let qstmt = make_int_assignments ins2 in
                              common_run (qn, qstmt) querydefs) ps_in in
-          printf "Query has been run\n%!";
+          ifdebug (printf "Query has been run\n%!");
           let rev_belief = ESYS.psrep_max_belief ps_out.belief in
           (* lg (U/V) == lg U - lg V *)
           let cuma_leakage = lg (Gmp.Q.to_float rev_belief) -. lg (!Globals.init_max_belief) in
           let msg = string_of_float cuma_leakage ^ "\n" in
           output_string p_write msg;
-          printf "%s has been written to p_write\n%!" msg;
+          ifdebug (printf "%s has been written to p_write\n%!" msg);
           flush p_write;
-          printf "p_write has been flushed\n%!";
+          ifdebug (printf "p_write has been flushed\n%!");
           server_loop ps_out
       in
       server_loop ps_orig
