@@ -165,7 +165,7 @@ let dispatcher_loop (prob_r, prob_w) =
   let prob_r = Async_unix.Reader.create fd_r in
 
   printf "Before dispatcher loop\n%!";
-  let rec go () = 
+  let rec go () =
           Pipe.read q_reader >>=
           function
           | `Eof            -> printf "Reached Eof of q_reader\n%!"; return ()

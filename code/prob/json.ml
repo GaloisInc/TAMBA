@@ -33,7 +33,7 @@ let query_to_string query_name params =
 let parse_query_json str =
   let json_of_query = Yojson.Basic.from_string str in
   let query_name = json_of_query |> Basic.Util.member "query" |> Basic.Util.to_string in
-  
+
   (* A function that gets a single parameter from the json and
    * makes it an Int
    *)
