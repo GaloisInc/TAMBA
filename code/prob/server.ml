@@ -40,8 +40,8 @@ let models = ref []
  *  2) use another pipe to communicate the possible queries and params
  *)
 let distance_params = ["model"; "ship"; "eta"; "result"]
-let resource_params = ["model"; "ship"; "resouce"; "amount"; "result"]
-let combined_params = ["model"; "ship"; "resouce"; "amount"; "eta"; "result"]
+let resource_params = ["model"; "ship"; "resource"; "amount"; "result"]
+let combined_params = ["model"; "ship"; "resource"; "amount"; "eta"; "result"]
 
 (* A specialized 'either' type for looking up parameters in a URI
  *
@@ -122,11 +122,12 @@ let process_query query_name params uri =
                 Server.respond ~body:body code
 
 let handler ~body:_ _sock req =
-  printf "\nRequest sexp:\n\t%s\n%!" (Core_kernel.Core_sexp.to_string (Cohttp_async.Request.sexp_of_t req));
+  ifdebug (printf "\nRequest sexp:\n\t%s\n%!"
+                  (Core_kernel.Core_sexp.to_string (Cohttp_async.Request.sexp_of_t req)));
   let uri = Cohttp.Request.uri req in
   let header = Cohttp.Request.headers req in
   Log.string logger (Uri.to_string uri);
-  printf "\nheader: %s\n%!" (Cohttp.Header.to_string header);
+  ifdebug (printf "\nheader: %s\n%!" (Cohttp.Header.to_string header));
   match Uri.path uri with
   | "/home" -> Server.respond_with_string "This is a home, get out.\n"
   | "/query" ->    Uri.get_query_param uri "ship"
@@ -169,12 +170,13 @@ let dispatcher_loop (prob_r, prob_w) =
           function
           | `Eof            -> printf "Reached Eof of q_reader\n%!"; return ()
           | `Ok (msg, ivar) -> Async_unix.Writer.write_line prob_w msg;
-                               printf "Successfully written to prob_w\n%!";
-                               (printf "about to read from prob_r\n%!";
+                               ifdebug (printf "Successfully written to prob_w\n%!");
                                 Async_unix.Reader.read_line prob_r >>=
                                 function
-                                | `Eof    -> printf "Reached Eof of prob_r\n%!"; return ()
-                                | `Ok rsp -> printf "rsp: %s\n%!" rsp; return (Async.Std.Ivar.fill ivar rsp));
+                                | `Eof    -> ifdebug (printf "Reached Eof of prob_r\n%!");
+                                             return ()
+                                | `Ok rsp -> ifdebug (printf "rsp: %s\n%!" rsp);
+                                             return (Async.Std.Ivar.fill ivar rsp);
                                go ()
   in go ()
 
