@@ -90,7 +90,7 @@
 
 - name: Install yojson
   become: yes
-  become_user: vagrant
+  become_user: jmct
   command: opam install yojson -y
 
 - name: Ensure OPAM env is set in bash profile
