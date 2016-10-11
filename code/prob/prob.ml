@@ -207,6 +207,7 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
   let server (p_read, p_write) querydefs ps_orig =
       let query_names = List.map (fun (qname, _) -> printf "qname: %s\n%!" qname; qname) querydefs in
       let rec server_loop ps_in =
+          printf "Top of server_loop\n%!";
           let cmd = Pervasives.input_line p_read in
           printf "The command: %s\n" cmd;
           let (qn, ins) = Json.parse_query_json cmd in
@@ -224,7 +225,9 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
           let cuma_leakage = lg (Gmp.Q.to_float rev_belief) -. lg (!Globals.init_max_belief) in
           let msg = string_of_float cuma_leakage ^ "\n" in
           output_string p_write msg;
-          printf "p_write has been written to\n%!";
+          printf "%s has been written to p_write\n%!" msg;
+          flush p_write;
+          printf "p_write has been flushed\n%!";
           server_loop ps_out
       in
       server_loop ps_orig
@@ -440,10 +443,14 @@ let main () =
     then let (prob_r, server_w) = pipe () in
          let (server_r, prob_w) = pipe () in
          match fork () with
-           | `In_the_parent pid -> Server.start_server pid
+           | `In_the_parent pid -> close prob_r;
+                                   close prob_w;
+                                   Server.start_server pid
                                                        !Cmd.opt_server_port
                                                        (server_r, server_w) ();
-           | `In_the_child -> prob (Some (prob_r, prob_w)) ();
+           | `In_the_child -> close server_w;
+                              close server_r;
+                              prob (Some (prob_r, prob_w)) ();
     else prob None ();
 
   with
