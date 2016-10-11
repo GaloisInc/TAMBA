@@ -67,7 +67,7 @@ querydef close_enough ship eta -> result :
     result = 1
   endif;
 
-querydef enough_berths ship berths_needed -> result :
+querydef enough_berths ship amount -> result :
   int ship_berths = 0;
   if ship == 1 then
     ship_berths = ship1_berths
@@ -89,7 +89,7 @@ querydef enough_berths ship berths_needed -> result :
   endif;
 
   int result = 0;
-  if (ship_berths >= berths_needed) then
+  if (ship_berths >= amount) then
     result = 1
   endif;
 
@@ -153,48 +153,48 @@ query close_enough:
 
 query enough_berths:
   int ship = 1;
-  int berths_needed = 500;
+  int amount = 500;
 
 query enough_berths:
   int ship = 2;
-  int berths_needed = 500;
+  int amount = 500;
 
 query enough_berths:
   int ship = 3;
-  int berths_needed = 500;
+  int amount = 500;
 
 query enough_berths:
   int ship = 4;
-  int berths_needed = 500;
+  int amount = 500;
 
 query enough_berths:
   int ship = 1;
-  int berths_needed = 250;
+  int amount = 250;
 
 query enough_berths:
   int ship = 2;
-  int berths_needed = 250;
+  int amount = 250;
 
 query enough_berths:
   int ship = 3;
-  int berths_needed = 250;
+  int amount = 250;
 
 query enough_berths:
   int ship = 4;
-  int berths_needed = 250;
+  int amount = 250;
 
 query enough_berths:
   int ship = 1;
-  int berths_needed = 125;
+  int amount = 125;
 
 query enough_berths:
   int ship = 2;
-  int berths_needed = 125;
+  int amount = 125;
 
 query enough_berths:
   int ship = 3;
-  int berths_needed = 375;
+  int amount = 375;
 
 query enough_berths:
   int ship = 4;
-  int berths_needed = 125;
+  int amount = 125;
