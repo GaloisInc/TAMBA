@@ -93,7 +93,7 @@ querydef enough_berths ship berths_needed -> result :
     result = 1
   endif;
 
-querydef combined ship time berths_needed -> result :
+querydef combined ship eta amount -> result :
   int ship_eta = 0;
   int ship_berths = 0;
   if ship == 1 then
@@ -122,34 +122,34 @@ querydef combined ship time berths_needed -> result :
   endif;
 
   int available = 0;
-  if ship_eta <= time then
+  if ship_eta <= eta then
     available = 1
   endif;
 
   int result = 0;
-  if (ship_berths >= berths_needed) and (available == 1) then
+  if (ship_berths >= amount) and (available == 1) then
     result = 1
   endif;
 
 query close_enough:
   int ship = 1;
-  int time = 200;
+  int eta = 200;
 
 query close_enough:
   int ship = 2;
-  int time = 200;
+  int eta = 200;
 
 query close_enough:
   int ship = 3;
-  int time = 200;
+  int eta = 200;
 
 query close_enough:
   int ship = 4;
-  int time = 200;
+  int eta = 200;
 
 query close_enough:
   int ship = 5;
-  int time = 200;
+  int eta = 200;
 
 query enough_berths:
   int ship = 1;
