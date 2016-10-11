@@ -122,8 +122,11 @@ let process_query query_name params uri =
                 Server.respond ~body:body code
 
 let handler ~body:_ _sock req =
+  printf "\nRequest sexp:\n\t%s\n%!" (Core_kernel.Core_sexp.to_string (Cohttp_async.Request.sexp_of_t req));
   let uri = Cohttp.Request.uri req in
+  let header = Cohttp.Request.headers req in
   Log.string logger (Uri.to_string uri);
+  printf "\nheader: %s\n%!" (Cohttp.Header.to_string header);
   match Uri.path uri with
   | "/home" -> Server.respond_with_string "This is a home, get out.\n"
   | "/query" ->    Uri.get_query_param uri "ship"
@@ -164,12 +167,14 @@ let dispatcher_loop (prob_r, prob_w) =
   let rec go () = 
           Pipe.read q_reader >>=
           function
-          | `Eof            -> return ()
+          | `Eof            -> printf "Reached Eof of q_reader\n%!"; return ()
           | `Ok (msg, ivar) -> Async_unix.Writer.write_line prob_w msg;
-                               (Async_unix.Reader.read_line prob_r >>=
+                               printf "Successfully written to prob_w\n%!";
+                               (printf "about to read from prob_r\n%!";
+                                Async_unix.Reader.read_line prob_r >>=
                                 function
-                                | `Eof    -> return ()
-                                | `Ok rsp -> return (Async.Std.Ivar.fill ivar rsp));
+                                | `Eof    -> printf "Reached Eof of prob_r\n%!"; return ()
+                                | `Ok rsp -> printf "rsp: %s\n%!" rsp; return (Async.Std.Ivar.fill ivar rsp));
                                go ()
   in go ()
 
