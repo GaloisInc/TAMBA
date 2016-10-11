@@ -246,7 +246,7 @@ module Ppldomainbox: (PPLDOMAIN_TYPE with type region = rational_box) =
               ((Z.of_int amax) -! (Z.of_int amin) +! zone) in
               (temp, temp))
           in
-            ifdebug (
+            (* ifdebug (
               let (latte_height_min, latte_height_max) =
                 (let vnum2 = get_dimensions r in
                  let r = copy_region r in
@@ -257,7 +257,7 @@ module Ppldomainbox: (PPLDOMAIN_TYPE with type region = rational_box) =
                 if (latte_height_min >! piotr_height_min) then
                   raise (General_error ("box height min was not correct, latte = " ^ (Z.to_string latte_height_min) ^ ", mine = " ^ (Z.to_string piotr_height_min)));
                 if (latte_height_max <! piotr_height_max) then
-                  raise (General_error ("box height max was not correct, latte = " ^ (Z.to_string latte_height_max) ^ ", mine = " ^ (Z.to_string piotr_height_max))));
+                  raise (General_error ("box height max was not correct, latte = " ^ (Z.to_string latte_height_max) ^ ", mine = " ^ (Z.to_string piotr_height_max)))); *)
             (piotr_height_min, piotr_height_max)
 
 end;;
