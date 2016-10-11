@@ -3,7 +3,7 @@ DEBUG_FLAGS = -g
 CDEBUG_FLAGS = -g
 #CDEBUG_FLAGS =
 
-#USE_OPT = 0
+USE_OPT = 1
 
 OCAMLYACC := ocamlyacc
 OCAMLLEX := ocamllex
