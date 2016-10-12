@@ -68,20 +68,22 @@ let process_params xs uri =
                   | Present (s,v) -> split (a   , (s,v)::p) ys) in
   split ([], []) (List.map xs proc_param)
 
-let init_model uri =
+let pass_to_prob json uri host =
+    ifdebug (printf "serialised: %s\n%!" json);
+    let response_ivar = Async.Std.Ivar.create () in
+    Async.Std.Pipe.write q_writer (json, response_ivar)
+    >>= fun _ -> Async.Std.Ivar.read response_ivar
+    >>= fun rsp -> Log.string logger (host ^ " " ^ Uri.to_string uri ^ " " ^ "200" ^ " " ^ rsp);
+                   Server.respond_with_string rsp
+
+let init_model uri host =
   let m_opt = Uri.get_query_param uri "model" in
   match m_opt with
   | None     -> let code = Cohttp.Code.status_of_code 400 in
                 let body = Body.of_string "Error: Missing 'model' parameter" in
                 Server.respond ~body:body code
-  | Some str -> let exists = List.mem !models str in
-                if exists = false then
-                  models := str::(!models);
- 
-                if exists then
-                  Server.respond_with_string "model reinitialized\n"
-                else 
-                  Server.respond_with_string "model initialized\n"
+  | Some str -> let serialised = query_to_string "init_model" [("model", str)] in
+                pass_to_prob serialised uri host
 
 let delete_model uri =
   let m_opt = Uri.get_query_param uri "model" in
@@ -105,22 +107,14 @@ let list_models ()  =
   let str = "[" ^ (String.concat ~sep:", " !models) ^ "]\n" in
   Server.respond_with_string str
 
-let process_query query_name params uri =
-  let host = match Uri.host uri with
-             | None   -> "0.0.0.0"
-             | Some v -> v in
+let process_query query_name params uri host =
   ifdebug (printf "Prossesing Query\n");
   let (abs, prs) = process_params params uri in
   ifdebug (printf "Length of abs: %d\nlength of prs: %d\n%!" (List.length abs) (List.length prs));
   match (abs, prs) with
   | ([], []) -> raise (Failure "Something when wrong in process_params")
   | ([], xs) -> let serialised = query_to_string query_name prs in
-                ifdebug (printf "serialised: %s\n%!" serialised);
-                let response_ivar = Async.Std.Ivar.create () in
-                Async.Std.Pipe.write q_writer (serialised, response_ivar)
-                >>= fun _ -> Async.Std.Ivar.read response_ivar
-                >>= fun rsp -> Log.string logger (host ^ " " ^ Uri.to_string uri ^ " " ^ "200" ^ " " ^ rsp);
-                               Server.respond_with_string rsp
+                pass_to_prob serialised uri host
   | (ys, _)  -> let code = Cohttp.Code.status_of_code 400 in
                 let rsp = "Error: Missing " ^ String.concat ~sep:" " ys ^ " parameters" in
                 let body = Body.of_string (rsp ^ "\n") in
@@ -131,6 +125,9 @@ let handler ~body:_ _sock req =
   ifdebug (printf "\nRequest sexp:\n\t%s\n%!"
                   (Core_kernel.Core_sexp.to_string (Cohttp_async.Request.sexp_of_t req)));
   let uri = Cohttp.Request.uri req in
+  let host = match Uri.host uri with
+             | None   -> "0.0.0.0"
+             | Some v -> v in
   let header = Cohttp.Request.headers req in
   Log.string logger (Uri.to_string uri);
   ifdebug (printf "\nheader: %s\n%!" (Cohttp.Header.to_string header));
@@ -140,10 +137,10 @@ let handler ~body:_ _sock req =
                 |> Option.map ~f:(sprintf "So you wanna know about ship %s, eh?\n")
                 |> Option.value ~default:"You need to specify a ship, silly.\n"
                 |> Server.respond_with_string
-  | "/InitModel" -> init_model uri
-  | "/Distance"  -> process_query "close_enough" distance_params uri
-  | "/Resource"  -> process_query "enough_berths" resource_params uri
-  | "/Combined"  -> process_query "combined" combined_params uri
+  | "/InitModel" -> init_model uri host
+  | "/Distance"  -> process_query "close_enough" distance_params uri host
+  | "/Resource"  -> process_query "enough_berths" resource_params uri host
+  | "/Combined"  -> process_query "combined" combined_params uri host
   | "/DeleteModel" -> delete_model uri
   | "/ListModels" -> list_models ()
   | _       -> Server.respond_with_string "What are you looking for?\n"

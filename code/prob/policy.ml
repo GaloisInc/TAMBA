@@ -230,7 +230,7 @@ module MAKE_PSYSTEM (ESYS: EVAL_SYSTEM) = struct
                      else sa_querystmt in
 
     ifverbose1 (print_stmt sa_querystmt; printf "\n--------------\n");
-    ifverbose1 (print_stmt final_stmt; printf "\n--------------\n");
+    ifdebug (print_stmt final_stmt; printf "\n--------------\n");
 
     inputstate_full#merge ps.valcache;
 

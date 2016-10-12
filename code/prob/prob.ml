@@ -204,33 +204,74 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
 
   let prob_line = Core_extended.Readline.input_line ~prompt:"prob >> "
 
+  let manage_models qn model ps_ins ps_orig =
+      let ps_ins2 = List.remove_assoc model ps_ins in
+      let exists = List.mem_assoc model ps_ins in
+      match qn with
+      | "init_model"   -> let ps_outs = (model, ps_orig) :: ps_ins2 in
+                          let msg = if exists
+                                    then "model reinitialized\n"
+                                    else "model initialized\n" in
+                          (msg, ps_outs)
+      | "delete_model" -> let ps_outs = ps_ins2 in
+                          let msg = if exists
+                                    then "model deleted\n"
+                                    else "model not found\n" in
+                          (msg, ps_outs)
+
+  let manage_query querydefs ps_ins (qn, ins, model, res) =
+      let (inlist, outlist, progstmt) = try List.assoc qn querydefs
+                                        with e -> raise (General_error qn) in
+      ifdebug (printf "inlist: %s\n%!" (varid_list_to_string inlist));
+
+      (* We get the actual model under test from our assoc list (ps_in)
+       * and then create a list that does not have it as a member (ps_ins2)
+       *
+       * The reason we do that latter now is because we are a bit memory
+       * constrained and we want to be able to garbage collect the old one
+       * ASAP as we are a analysing the query.
+       *)
+      let ps_in  = try List.assoc model ps_ins
+                   with e -> raise (General_error ("model number " ^
+                                                   (string_of_int model) ^
+                                                   " not in ps_ins." ^
+                                                   " This should not happen\n")) in
+      let ps_ins2 = List.remove_assoc model ps_ins in
+
+      (* Here we create the preamble for the concrete execution and then run
+       * the analysis *)
+      let ins2 = List.map (fun (n,x) -> (n, Some x)) ins in
+      let ps_out = (let qstmt = make_int_assignments ins2 in
+                         common_run (qn, qstmt) querydefs) ps_in in
+      ifdebug (printf "Query has been run\n%!");
+
+      (* Once we've run the analysis we produce our response string and
+       * package up the new assoc list of models *)
+      let rev_belief = ESYS.psrep_max_belief ps_out.belief in
+      (* lg (U/V) == lg U - lg V *)
+      let cuma_leakage = lg (Gmp.Q.to_float rev_belief) -. lg (!Globals.init_max_belief) in
+      let msg = string_of_float cuma_leakage ^ "\n" in
+      let ps_outs = (model, ps_in) :: ps_ins2 in
+      (msg, ps_outs)
+
   let server (p_read, p_write) querydefs ps_orig =
       let query_names = List.map (fun (qname, _) -> printf "qname: %s\n%!" qname; qname) querydefs in
-      let rec server_loop ps_in =
+      let rec server_loop ps_ins =
           ifdebug (printf "Top of server_loop\n%!");
           let cmd = Pervasives.input_line p_read in
           ifdebug (printf "The command: %s\n" cmd);
-          let (qn, ins) = Json.parse_query_json cmd in
-          ifdebug (printf "qn: %s\n%!" qn;
-                   flush Pervasives.stdout);
-          let (inlist, outlist, progstmt) = try List.assoc qn querydefs
-                                            with e -> raise (General_error qn) in
-          ifdebug (printf "inlist: %s\n%!" (varid_list_to_string inlist));
-          let ins2 = List.map (fun (n,x) -> (n, Some x)) ins in
-          let ps_out = (let qstmt = make_int_assignments ins2 in
-                             common_run (qn, qstmt) querydefs) ps_in in
-          ifdebug (printf "Query has been run\n%!");
-          let rev_belief = ESYS.psrep_max_belief ps_out.belief in
-          (* lg (U/V) == lg U - lg V *)
-          let cuma_leakage = lg (Gmp.Q.to_float rev_belief) -. lg (!Globals.init_max_belief) in
-          let msg = string_of_float cuma_leakage ^ "\n" in
+          let cmd_info = Json.parse_query_json cmd in
+          let (qn, ins, model, res) = cmd_info in
+          let (msg, ps_outs) = if qn = "init_model" || qn = "delete_model"
+                               then manage_models qn model ps_ins ps_orig
+                               else manage_query querydefs ps_ins cmd_info in
           output_string p_write msg;
           ifdebug (printf "%s has been written to p_write\n%!" msg);
           flush p_write;
           ifdebug (printf "p_write has been flushed\n%!");
-          server_loop ps_out
+          server_loop ps_outs
       in
-      server_loop ps_orig
+      server_loop []
 
   let interpreter count querydefs ps_orig =
       let query_names = List.map (fun (qname, _) -> qname) querydefs in
