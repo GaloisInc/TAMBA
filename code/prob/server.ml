@@ -106,19 +106,25 @@ let list_models ()  =
   Server.respond_with_string str
 
 let process_query query_name params uri =
-  printf "Prossesing Query\n";
+  let host = match Uri.host uri with
+             | None   -> "0.0.0.0"
+             | Some v -> v in
+  ifdebug (printf "Prossesing Query\n");
   let (abs, prs) = process_params params uri in
-  printf "Length of abs: %d\nlength of prs: %d\n%!" (List.length abs) (List.length prs);
+  ifdebug (printf "Length of abs: %d\nlength of prs: %d\n%!" (List.length abs) (List.length prs));
   match (abs, prs) with
   | ([], []) -> raise (Failure "Something when wrong in process_params")
   | ([], xs) -> let serialised = query_to_string query_name prs in
-                printf "serialised: %s\n%!" serialised;
+                ifdebug (printf "serialised: %s\n%!" serialised);
                 let response_ivar = Async.Std.Ivar.create () in
                 Async.Std.Pipe.write q_writer (serialised, response_ivar)
                 >>= fun _ -> Async.Std.Ivar.read response_ivar
-                >>= fun rsp -> Server.respond_with_string rsp
+                >>= fun rsp -> Log.string logger (host ^ " " ^ Uri.to_string uri ^ " " ^ "200" ^ " " ^ rsp);
+                               Server.respond_with_string rsp
   | (ys, _)  -> let code = Cohttp.Code.status_of_code 400 in
-                let body = Body.of_string ("Error: Missing " ^ String.concat ~sep:" " ys ^ " parameters\n") in
+                let rsp = "Error: Missing " ^ String.concat ~sep:" " ys ^ " parameters" in
+                let body = Body.of_string (rsp ^ "\n") in
+                Log.string logger (host ^ " " ^ Uri.to_string uri ^ " " ^ "400" ^ " " ^ rsp);
                 Server.respond ~body:body code
 
 let handler ~body:_ _sock req =
@@ -164,11 +170,11 @@ let dispatcher_loop (prob_r, prob_w) =
   let fd_r = Async_unix.Fd.create Async_unix.Fd.Kind.Fifo prob_r (Info.of_string "server's read pipe") in
   let prob_r = Async_unix.Reader.create fd_r in
 
-  printf "Before dispatcher loop\n%!";
+  ifdebug (printf "Before dispatcher loop\n%!");
   let rec go () =
           Pipe.read q_reader >>=
           function
-          | `Eof            -> printf "Reached Eof of q_reader\n%!"; return ()
+          | `Eof            -> ifdebug (printf "Reached Eof of q_reader\n%!"); return ()
           | `Ok (msg, ivar) -> Async_unix.Writer.write_line prob_w msg;
                                ifdebug (printf "Successfully written to prob_w\n%!");
                                 Async_unix.Reader.read_line prob_r >>=
