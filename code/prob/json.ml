@@ -13,8 +13,7 @@ let query_to_string query_name params =
   let query_json = ("query", `String query_name) in
 
   (* if the query is 'Resource' or 'Combined' we need to encode the
-   * resource type as an int. This is done with the following map
-   *)
+   * resource type as an int. This is done with the following map *)
   let resource_map r = match r with
                        | "berths" -> 0
                        | "water"  -> 1
@@ -28,25 +27,37 @@ let query_to_string query_name params =
   Yojson.to_string (`Assoc (query_json :: List.map param_to_json params))
 
 (* Take the string-serialized version of the JSON representing a query
- * and give back a pair with the query name and the in-list
+ * and give back a 4-tuple with the following:
+ *
+ *  1. The name of the query to be run
+ *  2. The list of intput values for that query
+ *  3. The model under test
+ *  4. An option with the provided resulting value (if the query requires it)
  *)
 let parse_query_json str =
   let json_of_query = Yojson.Basic.from_string str in
   let query_name = json_of_query |> Basic.Util.member "query" |> Basic.Util.to_string in
 
   (* A function that gets a single parameter from the json and
-   * makes it an Int
-   *)
+   * makes it an Int *)
   let get_param str = ifdebug (printf "get_param %s\n%!" str);
                       (str, json_of_query |> Basic.Util.member str |> Basic.Util.to_int) in
 
-  (* get the list of parameters (i.e. everything except "query" *)
-  let param_list = List.filter (fun x -> x <> "query" && x <> "resource")
+  let model = json_of_query |> Basic.Util.member "model" |> Basic.Util.to_int in
+  let res   = match Basic.Util.member "result" json_of_query with
+              | `Null  -> None
+              | `Int r -> Some r in
+  (* get the list of parameters (i.e. everything except
+   * "query", "resource", "result", or "model" *)
+  let param_list = List.filter (fun x -> x <> "query" &&
+                                         x <> "resource" &&
+                                         x <> "model" &&
+                                         x <> "result")
                                (Basic.Util.keys json_of_query) in
   ifdebug (printf "param_list:";
            let _ = List.map (fun x -> printf " %s," x) param_list in
            printf "\n%!");
   let inlist = List.map get_param param_list in
   let mkvid (str, v) = (("", str), v) in
-  ifdebug (printf "here\n%!");
-  (query_name, List.map mkvid inlist)
+  ifdebug (printf "qn: %s\n%!" query_name);
+  (query_name, List.map mkvid inlist, model, res)
