@@ -163,7 +163,7 @@ let handler ~body:_ _sock req =
   | "/Combined"    -> process_query "combined" combined_params uri host
   | "/DeleteModel" -> handle_models "delete_model" uri host
   | "/ListModels"  -> list_models ()
-  | _       -> Server.respond_with_string "What are you looking for?\n"
+  | _       -> Server.respond_with_string "Error: Unsupported API Call.\n"
 
 let start_server_prime pid port () =
   (* Preamble for logging *)
