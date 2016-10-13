@@ -92,6 +92,16 @@ let unsafe_get_param uri param =
   | None     -> raise (Failure ("unsafe_get_param was used on param " ^ param))
   | Some str -> str
 
+let ensure_parse uri host cmd =
+  match cmd with
+  | None -> let code = Cohttp.Code.status_of_code 400 in
+            let rsp = "Error: Could not parse query" in
+            let body = Body.of_string (rsp ^ "\n") in
+            Log.string logger (host ^ " " ^ Uri.to_string uri ^ " " ^ "400" ^ " " ^ rsp);
+            Server.respond ~body:body code
+  | Some str -> pass_to_prob str uri host
+
+
 let handle_models cmd uri host =
   let m_opt = Uri.get_query_param uri "model" in
   match m_opt with
@@ -100,13 +110,7 @@ let handle_models cmd uri host =
                 Server.respond ~body:body code
   | Some str -> handle_local cmd str;
                 let serialised = query_to_string cmd [("model", str)] in
-                (match serialised with
-                      | None -> let code = Cohttp.Code.status_of_code 400 in
-                                let rsp = "Error: Could not parse provided result value" in
-                                let body = Body.of_string (rsp ^ "\n") in
-                                Log.string logger (host ^ " " ^ Uri.to_string uri ^ " " ^ "400" ^ " " ^ rsp);
-                                Server.respond ~body:body code
-                      | Some str -> pass_to_prob str uri host)
+                ensure_parse uri host serialised
 
 let list_models ()  =
   let str = "[" ^ (String.concat ~sep:", " !models) ^ "]\n" in
@@ -123,13 +127,7 @@ let process_query query_name params uri host =
                  * absent parameters (matching on (abs, prs)) *)
                 let exists = List.mem !models (unsafe_get_param uri "model") in
                 if exists
-                then (match serialised with
-                      | None -> let code = Cohttp.Code.status_of_code 400 in
-                                let rsp = "Error: Could not parse provided result value" in
-                                let body = Body.of_string (rsp ^ "\n") in
-                                Log.string logger (host ^ " " ^ Uri.to_string uri ^ " " ^ "400" ^ " " ^ rsp);
-                                Server.respond ~body:body code
-                      | Some str -> pass_to_prob str uri host)
+                then ensure_parse uri host serialised
                 else let code = Cohttp.Code.status_of_code 400 in
                      let rsp = "Error: Trying to work on non-existent model" in
                      let body = Body.of_string (rsp ^ "\n") in
