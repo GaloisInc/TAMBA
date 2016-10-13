@@ -3,6 +3,13 @@ open Globals
 open Cohttp_async
 open Printf
 
+let int_of_bool_string str =
+  match str with
+  | "true"  -> 1
+  | "false" -> 0
+  | s       -> try int_of_string s
+               with e -> raise (Failure "Could not parse result argument")
+
 (* Taking a query's name and the parameters for that query
  * create a JSON value and serialize to a string
  *
@@ -23,6 +30,7 @@ let query_to_string query_name params =
   let param_to_json (name, value) =
     match name with
     | "resource" -> (name, `Int (resource_map value))
+    | "result"   -> (name, `Int (int_of_bool_string value))
     | v          -> (name, `Int (int_of_string value)) in
   Yojson.to_string (`Assoc (query_json :: List.map param_to_json params))
 
