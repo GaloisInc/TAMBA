@@ -74,34 +74,33 @@ let pass_to_prob json uri host =
     Async.Std.Pipe.write q_writer (json, response_ivar)
     >>= fun _ -> Async.Std.Ivar.read response_ivar
     >>= fun rsp -> Log.string logger (host ^ " " ^ Uri.to_string uri ^ " " ^ "200" ^ " " ^ rsp);
-                   Server.respond_with_string rsp
+                   let rsp = if rsp = "-inf" then "0." else rsp in (* ugly hack, I'm so sorry *)
+                   Server.respond_with_string (rsp ^ "\n")
 
-let init_model uri host =
+let handle_local cmd str =
+  let exists = List.mem !models str in
+    match cmd with
+    | "init_model" ->
+        if exists = false then
+          models := str::(!models)
+    | "delete_model" ->
+        if exists then
+          models := List.filter !models (fun x -> x <> str)
+
+let unsafe_get_param uri param =
+  match Uri.get_query_param uri param with
+  | None     -> raise (Failure ("unsafe_get_param was used on param " ^ param))
+  | Some str -> str
+
+let handle_models cmd uri host =
   let m_opt = Uri.get_query_param uri "model" in
   match m_opt with
   | None     -> let code = Cohttp.Code.status_of_code 400 in
-                let body = Body.of_string "Error: Missing 'model' parameter" in
+                let body = Body.of_string "Error: Missing 'model' parameter\n" in
                 Server.respond ~body:body code
-  | Some str -> let serialised = query_to_string "init_model" [("model", str)] in
+  | Some str -> handle_local cmd str;
+                let serialised = query_to_string cmd [("model", str)] in
                 pass_to_prob serialised uri host
-
-let delete_model uri =
-  let m_opt = Uri.get_query_param uri "model" in
-  match m_opt with
-  | None     -> let code = Cohttp.Code.status_of_code 400 in
-                let body = Body.of_string "Error: Missing 'model' parameter" in
-                Server.respond ~body:body code
-  | Some str -> let exists = List.mem !models str in
-                if exists then
-                  models := List.filter !models (fun x -> x <> str) ;
-
-                if exists then
-                  Server.respond_with_string "success\n"
-                else 
-                  let code = Cohttp.Code.status_of_code 400 in
-                  let body = Body.of_string "Error: Invalid 'model' parameter" in
-                  Server.respond ~body:body code
- 
 
 let list_models ()  =
   let str = "[" ^ (String.concat ~sep:", " !models) ^ "]\n" in
@@ -114,7 +113,16 @@ let process_query query_name params uri host =
   match (abs, prs) with
   | ([], []) -> raise (Failure "Something when wrong in process_params")
   | ([], xs) -> let serialised = query_to_string query_name prs in
-                pass_to_prob serialised uri host
+                (* use of unsafe_get_param should be okay because we have no
+                 * absent parameters (matching on (abs, prs)) *)
+                let exists = List.mem !models (unsafe_get_param uri "model") in
+                if exists
+                then pass_to_prob serialised uri host
+                else let code = Cohttp.Code.status_of_code 400 in
+                     let rsp = "Error: Trying to work on non-existent model" in
+                     let body = Body.of_string (rsp ^ "\n") in
+                     Log.string logger (host ^ " " ^ Uri.to_string uri ^ " " ^ "400" ^ " " ^ rsp);
+                     Server.respond ~body:body code
   | (ys, _)  -> let code = Cohttp.Code.status_of_code 400 in
                 let rsp = "Error: Missing " ^ String.concat ~sep:" " ys ^ " parameters" in
                 let body = Body.of_string (rsp ^ "\n") in
@@ -137,12 +145,12 @@ let handler ~body:_ _sock req =
                 |> Option.map ~f:(sprintf "So you wanna know about ship %s, eh?\n")
                 |> Option.value ~default:"You need to specify a ship, silly.\n"
                 |> Server.respond_with_string
-  | "/InitModel" -> init_model uri host
-  | "/Distance"  -> process_query "close_enough" distance_params uri host
-  | "/Resource"  -> process_query "enough_berths" resource_params uri host
-  | "/Combined"  -> process_query "combined" combined_params uri host
-  | "/DeleteModel" -> delete_model uri
-  | "/ListModels" -> list_models ()
+  | "/InitModel"   -> handle_models "init_model" uri host
+  | "/Distance"    -> process_query "close_enough" distance_params uri host
+  | "/Resource"    -> process_query "enough_berths" resource_params uri host
+  | "/Combined"    -> process_query "combined" combined_params uri host
+  | "/DeleteModel" -> handle_models "delete_model" uri host
+  | "/ListModels"  -> list_models ()
   | _       -> Server.respond_with_string "What are you looking for?\n"
 
 let start_server_prime pid port () =
