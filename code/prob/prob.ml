@@ -215,8 +215,8 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
                           (msg, ps_outs)
       | "delete_model" -> let ps_outs = ps_ins2 in
                           let msg = if exists
-                                    then "model deleted\n"
-                                    else "model not found\n" in
+                                    then "Model deleted.\n"
+                                    else "Model does not exist.\n" in
                           (msg, ps_outs)
 
   let manage_query querydefs ps_ins (qn, ins, model, res) =
