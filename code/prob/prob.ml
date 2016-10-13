@@ -118,7 +118,7 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
         printf "sample_true = %d\nsample_false = %d\n" y n
       )
 
-  let common_run (queryname, querystmt) querydefs ps_in =
+  let common_run (queryname, querystmt) conc_res querydefs ps_in =
         ifbench Globals.start_timer Globals.timer_query;
 
         let ps = ps_in in
@@ -169,7 +169,7 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
           (printf "\nquery (single assignment):\n"; print_stmt progstmt; printf "\n");
 
 
-        let ans = PSYS.policysystem_answer ps (queryname, querytuple) querystmt in
+        let ans = PSYS.policysystem_answer ps (queryname, querytuple) conc_res querystmt in
         let res = ans.PSYS.result in
         let ps = PSYS.policysystem_answered ps ans.PSYS.update in
 
@@ -199,7 +199,7 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
     | [] -> ps_in
     | (queryname, querystmt) :: t ->
         printf "\n--- Query #%d ------------------\n" count;
-        let ps_out = common_run (queryname, querystmt) querydefs ps_in in
+        let ps_out = common_run (queryname, querystmt) None querydefs ps_in in
         pmock_queries (count + 1) t querydefs ps_out
 
   let prob_line = Core_extended.Readline.input_line ~prompt:"prob >> "
@@ -241,8 +241,8 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
       (* Here we create the preamble for the concrete execution and then run
        * the analysis *)
       let ins2 = List.map (fun (n,x) -> (n, Some x)) ins in
-      let ps_out = (let qstmt = make_int_assignments ins2 in
-                         common_run (qn, qstmt) querydefs) ps_in in
+      let ps_out = let qstmt = make_int_assignments ins2 in
+                   common_run (qn, qstmt) res querydefs ps_in in
       ifdebug (printf "Query has been run\n%!");
 
       (* Once we've run the analysis we produce our response string and
@@ -290,7 +290,7 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
                                   (* TODO: Print out which inputs failed (snd of the tuple will be None) *)
                                   then (printf "Input(s) are not valid\n"; ps_in)
                                   else (let qstmt = make_int_assignments ins in
-                                        common_run (str, qstmt) querydefs) ps_in in
+                                        common_run (str, qstmt) None querydefs) ps_in in
                      interpreter_loop (count + 1)
                                  (prob_line ())
                                  ps_out)
