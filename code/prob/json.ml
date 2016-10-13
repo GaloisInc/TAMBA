@@ -7,6 +7,8 @@ let int_of_bool_string str =
   match str with
   | "true"  -> 1
   | "false" -> 0
+  | "True"  -> 1
+  | "False" -> 0
   | s       -> try int_of_string s
                with e -> raise (Failure "Could not parse result argument")
 
@@ -32,7 +34,8 @@ let query_to_string query_name params =
     | "resource" -> (name, `Int (resource_map value))
     | "result"   -> (name, `Int (int_of_bool_string value))
     | v          -> (name, `Int (int_of_string value)) in
-  Yojson.to_string (`Assoc (query_json :: List.map param_to_json params))
+  try Some (Yojson.to_string (`Assoc (query_json :: List.map param_to_json params)))
+  with e -> None
 
 (* Take the string-serialized version of the JSON representing a query
  * and give back a 4-tuple with the following:
