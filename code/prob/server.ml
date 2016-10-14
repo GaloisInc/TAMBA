@@ -147,7 +147,6 @@ let handler ~body:_ _sock req =
              | None   -> "0.0.0.0"
              | Some v -> v in
   let header = Cohttp.Request.headers req in
-  Log.string logger (Uri.to_string uri);
   ifdebug (printf "\nheader: %s\n%!" (Cohttp.Header.to_string header));
   match Uri.path uri with
   | "/home" -> Server.respond_with_string "This is a home, get out.\n"
