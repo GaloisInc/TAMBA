@@ -251,14 +251,8 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
       (* lg (U/V) == lg U - lg V *)
       let cuma_leakage = lg (Gmp.Q.to_float rev_belief) -. lg (!Globals.init_max_belief) in
       let msg = string_of_float cuma_leakage ^ "\n" in
-      let ps_final_out = if cuma_leakage = neg_infinity then ps_orig else ps_out in
 
-
-      ifdebug (printf "model: %d\n\n" model;
-               ESYS.print_psrep ps_final_out.belief;
-               printf "%!");
-
-      let ps_outs = (model, ps_final_out) :: ps_ins2 in
+      let ps_outs = (model, ps_out) :: ps_ins2 in
       (msg, ps_outs)
 
   let server (p_read, p_write) querydefs ps_orig =
