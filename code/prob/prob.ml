@@ -219,7 +219,7 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
                                     else "Model does not exist.\n" in
                           (msg, ps_outs)
 
-  let manage_query querydefs ps_ins (qn, ins, model, res) =
+  let manage_query querydefs ps_ins ps_orig (qn, ins, model, res) =
       let (inlist, outlist, progstmt) = try List.assoc qn querydefs
                                         with e -> raise (General_error qn) in
       ifdebug (printf "inlist: %s\n%!" (varid_list_to_string inlist));
@@ -251,7 +251,14 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
       (* lg (U/V) == lg U - lg V *)
       let cuma_leakage = lg (Gmp.Q.to_float rev_belief) -. lg (!Globals.init_max_belief) in
       let msg = string_of_float cuma_leakage ^ "\n" in
-      let ps_outs = (model, ps_in) :: ps_ins2 in
+      let ps_final_out = if cuma_leakage = neg_infinity then ps_orig else ps_out in
+
+
+      ifdebug (printf "model: %d\n\n" model;
+               ESYS.print_psrep ps_final_out.belief;
+               printf "%!");
+
+      let ps_outs = (model, ps_final_out) :: ps_ins2 in
       (msg, ps_outs)
 
   let server (p_read, p_write) querydefs ps_orig =
@@ -264,7 +271,7 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
           let (qn, ins, model, res) = cmd_info in
           let (msg, ps_outs) = if qn = "init_model" || qn = "delete_model"
                                then manage_models qn model ps_ins ps_orig
-                               else manage_query querydefs ps_ins cmd_info in
+                               else manage_query querydefs ps_ins ps_orig cmd_info in
           output_string p_write msg;
           ifdebug (printf "%s has been written to p_write\n%!" msg);
           flush p_write;
