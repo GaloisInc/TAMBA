@@ -68,14 +68,20 @@ let process_params xs uri =
                   | Present (s,v) -> split (a   , (s,v)::p) ys) in
   split ([], []) (List.map xs proc_param)
 
+let handle_impossible () =
+  let code = Cohttp.Code.status_of_code 500 in
+  let body = Body.of_string "Error: The query resulted in an impossible state.\n" in
+  Server.respond ~body:body code
+
 let pass_to_prob json uri host =
     ifdebug (printf "serialised: %s\n%!" json);
     let response_ivar = Async.Std.Ivar.create () in
     Async.Std.Pipe.write q_writer (json, response_ivar)
     >>= fun _ -> Async.Std.Ivar.read response_ivar
-    >>= fun rsp -> Log.string logger (host ^ " " ^ Uri.to_string uri ^ " " ^ "200" ^ " " ^ rsp);
-                   let rsp = if rsp = "-inf" then "0." else rsp in (* ugly hack, I'm so sorry *)
-                   Server.respond_with_string (rsp ^ "\n")
+    >>= fun rsp -> if rsp = "-inf"
+                   then handle_impossible ()
+                   else (Log.string logger (host ^ " " ^ Uri.to_string uri ^ " " ^ "200" ^ " " ^ rsp);
+                         Server.respond_with_string (rsp ^ "\n"))
 
 let handle_local cmd str =
   let exists = List.mem !models str in
