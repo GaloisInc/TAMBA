@@ -26,8 +26,10 @@ let (q_reader, q_writer) = Pipe.create ()
 (* why is the current dir in latte_tmp?! that took me a while to figure out
  * for now we'll just hack it.
  * TODO: make less hacky *)
-let logger = let output_file = Log.Output.file `Text ("../../qif-server.log") in
-             Log.create `Info [output_file]
+let (log_in, logger) =
+  let mk_log x = let output_file = Log.Output.rotating_file `Text x (Log.Rotation.default ()) in
+                 Log.create `Info [output_file] in
+  (mk_log "../../logs/qif-requests", mk_log "../../logs/qif-responses")
 
 (* Maintain a list of models in use *)
 let models = ref []
@@ -68,9 +70,11 @@ let process_params xs uri =
                   | Present (s,v) -> split (a   , (s,v)::p) ys) in
   split ([], []) (List.map xs proc_param)
 
-let handle_impossible () =
+let handle_impossible uri host =
   let code = Cohttp.Code.status_of_code 500 in
-  let body = Body.of_string "Error: The query resulted in an impossible state.\n" in
+  let rsp = "Error: The query resulted in an impossible state.\n" in
+  let body = Body.of_string rsp in
+  Log.string logger (host ^ " " ^ Uri.to_string uri ^ " " ^ "500" ^ " " ^ rsp);
   Server.respond ~body:body code
 
 let pass_to_prob json uri host =
@@ -79,7 +83,7 @@ let pass_to_prob json uri host =
     Async.Std.Pipe.write q_writer (json, response_ivar)
     >>= fun _ -> Async.Std.Ivar.read response_ivar
     >>= fun rsp -> if rsp = "-inf"
-                   then handle_impossible ()
+                   then handle_impossible uri host
                    else (Log.string logger (host ^ " " ^ Uri.to_string uri ^ " " ^ "200" ^ " " ^ rsp);
                          Server.respond_with_string (rsp ^ "\n"))
 
@@ -152,6 +156,7 @@ let handler ~body:_ _sock req =
   let host = match Uri.host uri with
              | None   -> "0.0.0.0"
              | Some v -> v in
+  Log.string log_in (host ^ " " ^ Uri.to_string uri);
   let header = Cohttp.Request.headers req in
   ifdebug (printf "\nheader: %s\n%!" (Cohttp.Header.to_string header));
   match Uri.path uri with
