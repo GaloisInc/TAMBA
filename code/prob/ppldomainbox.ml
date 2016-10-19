@@ -96,16 +96,17 @@ module Ppldomainbox: (PPLDOMAIN_TYPE with type region = rational_box) =
     let intersect_region_poly r p =
       let r1 = ppl_new_Rational_Box_from_Rational_Box r in
       let r2 = ppl_new_Rational_Box_from_NNC_Polyhedron p in
-      print_endline ("r1 = " ^ (ppl_Rational_Box_ascii_dump r1));
+      (* print_endline ("r1 = " ^ (ppl_Rational_Box_ascii_dump r1));
       print_endline ("p = " ^ (ppl_Polyhedron_ascii_dump p));
-      print_endline ("r2 = " ^ (ppl_Rational_Box_ascii_dump r2));
+      print_endline ("r2 = " ^ (ppl_Rational_Box_ascii_dump r2));*)
       ppl_Rational_Box_intersection_assign r1 r2;
-      print_endline ("r1 /\ r2 = " ^ (ppl_Rational_Box_ascii_dump r1));
+      (*print_endline ("r1 /\ r2 = " ^ (ppl_Rational_Box_ascii_dump r1)); *)
       r1
       (*
       let p1 = ppl_new_NNC_Polyhedron_from_Rational_Box r in
         ppl_Polyhedron_intersection_assign p1 p2;
-        ppl_new_Rational_Box_from_NNC_Polyhedron p1 *)
+        ppl_new_Rational_Box_from_NNC_Polyhedron p1 
+       *)
 
     let intersect_regions_assign r1 r2    =
 (*      printf "\n---\nintersecting:\n\t";
