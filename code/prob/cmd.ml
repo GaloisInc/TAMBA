@@ -21,6 +21,7 @@ let opt_inline = ref false
 let opt_simplify = ref 0
 let opt_seed = ref 0
 let opt_bakeoff = ref false
+let opt_precise_conditioning = ref false
 
 (* setters for options *)
 let set_domain str =

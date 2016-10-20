@@ -94,19 +94,16 @@ module Ppldomainbox: (PPLDOMAIN_TYPE with type region = rational_box) =
     let duplicate_dimension r dim      = ppl_Rational_Box_expand_space_dimension r dim 1
 
     let intersect_region_poly r p =
-      let r1 = ppl_new_Rational_Box_from_Rational_Box r in
-      let r2 = ppl_new_Rational_Box_from_NNC_Polyhedron p in
-      (* print_endline ("r1 = " ^ (ppl_Rational_Box_ascii_dump r1));
-      print_endline ("p = " ^ (ppl_Polyhedron_ascii_dump p));
-      print_endline ("r2 = " ^ (ppl_Rational_Box_ascii_dump r2));*)
-      ppl_Rational_Box_intersection_assign r1 r2;
-      (*print_endline ("r1 /\ r2 = " ^ (ppl_Rational_Box_ascii_dump r1)); *)
-      r1
-      (*
-      let p1 = ppl_new_NNC_Polyhedron_from_Rational_Box r in
+      if !Cmd.opt_precise_conditioning then
+        let p1 = ppl_new_NNC_Polyhedron_from_Rational_Box r in
+        let p2 = p in
         ppl_Polyhedron_intersection_assign p1 p2;
         ppl_new_Rational_Box_from_NNC_Polyhedron p1 
-       *)
+      else
+        let r1 = ppl_new_Rational_Box_from_Rational_Box r in
+        let r2 = ppl_new_Rational_Box_from_NNC_Polyhedron p in
+        ppl_Rational_Box_intersection_assign r1 r2;
+        r1
 
     let intersect_regions_assign r1 r2    =
 (*      printf "\n---\nintersecting:\n\t";

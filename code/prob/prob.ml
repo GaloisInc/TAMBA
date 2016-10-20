@@ -319,6 +319,9 @@ let main () =
     ("--precision",
      Arg.Set_int Cmd.opt_precision,
      "set the precision");
+    ("--precise-conditioning",
+     Arg.Set Cmd.opt_precise_conditioning,
+     "use polyhedral intersection for conditional statements, otherwise use default domain, default = false");
     ("--samples",
      Arg.Set_int Cmd.opt_samples,
      "set the number of samples to use");
