@@ -2,8 +2,11 @@ open Util
 
 (* options *)
 let opt_latte_minmax = ref false
+let opt_interactive = ref false
 let opt_dsa = ref false
 let opt_precision = ref 0
+let opt_server = ref false
+let opt_server_port = ref 8080
 let opt_samples = ref 0
 let opt_blackbox = ref false
 let opt_split_factor = ref 1
@@ -20,6 +23,7 @@ let opt_volume_computation = ref 0
 let opt_simplify = ref 0
 let opt_seed = ref 0
 let opt_bakeoff = ref false
+let opt_precise_conditioning = ref false
 
 (* setters for options *)
 let set_domain str =

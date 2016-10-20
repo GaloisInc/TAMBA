@@ -30,6 +30,7 @@ SOURCES_COMMON :=\
 	globals.ml \
 	lang.ml \
 	symbol.ml \
+	repl.ml \
 	logical.ml \
 	pdefs.ml smcdefs.ml \
 	bimap.ml \
@@ -59,6 +60,7 @@ SOURCES_COMMON :=\
 	optimize.ml \
 	lexer.ml parser_util.ml parser.ml \
 	preeval.ml \
+  server.ml \
 	policy.ml 
 
 SOURCES_LATEX := \
@@ -92,12 +94,15 @@ COPTS = $(CDEBUG_FLAGS) -w
 
 PPL_INC = -I /usr/local/lib/ppl 
 PPL_LINK = $(PPL_INC) -cc g++ -cclib -lppl $(COPTS:%=-ccopt %) ppl_ocaml.$(LOEXT)
-INC_FLAGS = -package str -package unix -package gmp -package pareto -package ocephes
+INC_FLAGS = -package str -package unix -package gmp -package pareto -package ocephes -package core -package core_extended -package async -package cohttp -package cohttp.async -thread
 LINK_FLAGS = $(DEBUG_FLAGS) $(INC_FLAGS) -linkpkg
 BUILD_FLAGS = $(DEBUG_FLAGS) $(INC_FLAGS) -pp "camlp5o ./pa_if.cmo" -I +camlp5
 
 prob: $(OBJS_PROB) latte_tmp volcomp_tmp
 	$(OCAMLC) $(PPL_LINK) $(LINK_FLAGS) -o prob $(OBJS_PROB)
+
+install: prob
+	cp ./prob /usr/local/bin/prob
 
 exp: experiment.ml
 	$(OCAMLC) $(PPL_LINK) $(LINK_FLAGS) -o exp experiment.ml

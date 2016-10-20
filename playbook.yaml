@@ -13,3 +13,4 @@
     - include: tasks/barvinok.yaml
     - include: tasks/latte.yaml
     - include: tasks/volcomp.yaml
+    - include: tasks/prob.yaml

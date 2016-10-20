@@ -1,0 +1,67 @@
+(*
+
+Converting a polyhedron to a box is slow if there are even a modest amount of
+non-relational constraints in the poly.
+
+The implementation of if statements creates a poly with the guard as a constraint (and ~guard),
+then intersects the current region with that poly.
+*)
+
+secret:
+  int ship1_loc    = 290;
+  int ship2_loc    = 300;
+  int ship3_loc    = 380;
+  int ship4_loc    = 100;
+  int ship5_loc    = 500;
+  int ship6_loc    = 290;
+  int ship7_loc    = 300;
+  int ship8_loc    = 380;
+  int ship9_loc    = 100;
+  int ship10_loc    = 500;
+  int ship11_loc    = 290;
+  int ship12_loc    = 300;
+  int ship13_loc    = 380;
+  int ship14_loc    = 100;
+  int ship15_loc    = 500;
+
+belief:
+  int ship1_loc = uniform 0 1000;
+  int ship2_loc = uniform 0 1000;
+  int ship3_loc = uniform 0 1000;
+  int ship4_loc = uniform 0 1000;
+  int ship5_loc = uniform 0 1000;
+  int ship6_loc = uniform 0 1000;
+  int ship7_loc = uniform 0 1000;
+  int ship8_loc = uniform 0 1000;
+  int ship9_loc = uniform 0 1000;
+  int ship10_loc = uniform 0 1000;
+  int ship11_loc = uniform 0 1000;
+  int ship12_loc = uniform 0 1000;
+  int ship13_loc = uniform 0 1000;
+  int ship14_loc = uniform 0 1000;
+  int ship15_loc = uniform 0 1000;
+
+querydef close_enough ship dest -> result :
+  int result = 0;
+
+  if (0 <= ship1_loc and ship1_loc <= dest and
+      0 <= ship2_loc and ship2_loc <= dest and
+      0 <= ship3_loc and ship3_loc <= dest and
+      0 <= ship4_loc and ship4_loc <= dest and
+      0 <= ship5_loc and ship5_loc <= dest and
+      0 <= ship6_loc and ship6_loc <= dest and
+      0 <= ship7_loc and ship7_loc <= dest and
+      0 <= ship8_loc and ship8_loc <= dest and
+      0 <= ship9_loc and ship9_loc <= dest and
+      0 <= ship10_loc and ship10_loc <= dest and
+      0 <= ship11_loc and ship11_loc <= dest and
+      0 <= ship12_loc and ship12_loc <= dest and
+      0 <= ship13_loc and ship13_loc <= dest and
+      0 <= ship14_loc and ship14_loc <= dest and
+      0 <= ship15_loc and ship15_loc <= dest) then
+      result = 1
+  endif;
+ 
+query close_enough:
+  int ship = 1;
+  int dest = 300;

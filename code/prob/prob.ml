@@ -13,9 +13,16 @@ open Pareto.Distributions.Beta
 open Value_status
 open Optimize
 open Gen_poly
+open Core_extended.Readline
+open Repl
 
 open Maths
 open Gmp
+
+(* for forking the process when used in daemon mode *)
+open Core.Std.Unix
+open Core.Never_returns
+open Core_kernel
 
 let add_policy_records aexp =
   List.iter
@@ -24,7 +31,7 @@ let add_policy_records aexp =
     aexp.policies;;
 
 module type EXP_SYSTEM = sig
-  val run: Pdefs.tpmocksetup -> unit
+  val run: Core.Std.Unix.File_descr.t option -> Pdefs.tpmocksetup -> unit
 end;;
 
 module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
@@ -96,6 +103,7 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
                   printf "mmin (sampling): %f\n" mminp;
                   printf "mmax (sampling): %f\n" mmaxp;
                   printf "post-sampling revised belief: %f\n" (pma /. mminp);
+                  printf "post-sampling revised belief: %f\n" (pma /. mminp);
               with e -> printf "GSL computation did not converge: ERR\n" in
        *)
 
@@ -111,10 +119,7 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
         printf "sample_true = %d\nsample_false = %d\n" y n
       )
 
-
-  let rec pmock_queries count queries querydefs ps_in = match queries with
-    | [] -> ps_in
-    | (queryname, querystmt) :: t ->
+  let common_run (queryname, querystmt) querydefs ps_in =
         ifbench Globals.start_timer Globals.timer_query;
 
         let ps = ps_in in
@@ -148,7 +153,7 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
             (String.concat " " (List.map Lang.varid_to_string inlist))
             (String.concat " " (List.map Lang.varid_to_string outlist));
           print_stmt progstmt; printf "\n";
-          printf "-------------------------------------------------\n"
+          printf "-------------------------------------------------\n%!"
         );
 
         (* I think we can safely remove static_check 
@@ -164,7 +169,6 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
         ifverbose
           (printf "\nquery (single assignment):\n"; print_stmt progstmt; printf "\n");
 
-        printf "\n--- Query #%d ------------------\n" count;
 
         let ans = PSYS.policysystem_answer ps (queryname, querytuple) querystmt in
         let res = ans.PSYS.result in
@@ -187,12 +191,16 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
           Globals.next_epoch ()
         );
 
-        flush stdout;
+        if !Cmd.opt_blackbox
+        then ps_in
+        else ps
 
-        let ps_out = if !Cmd.opt_blackbox
-                     then ps_in
-                     else ps in
 
+  let rec pmock_queries count queries querydefs ps_in = match queries with
+    | [] -> ps_in
+    | (queryname, querystmt) :: t ->
+        printf "\n--- Query #%d ------------------\n" count;
+        let ps_out = common_run (queryname, querystmt) querydefs ps_in in
         pmock_queries (count + 1) t querydefs ps_out
 
   (* Lower Bound additions <begin> *)
@@ -269,9 +277,47 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
             
   (* Lower Bound additions <end> *)
 
-  let run asetup =
-    ifverbose1 (printf "Binary for counting: %s\n" !Cmd.opt_count_bin;
-                flush stdout);
+  let prob_line = Core_extended.Readline.input_line ~prompt:"prob >> "
+
+  let test_pipe r_opt str =
+    match r_opt with
+      | None -> ()
+      | Some r ->
+        if str = "read_pipe"
+        then let buff = Core_string.create 100 in
+             Core.Std.Unix.read r buff;
+             printf "%s" (Core_string.to_string buff)
+
+  let interpreter reader_opt count querydefs ps_orig =
+      let query_names = List.map (fun (qname, _) -> qname) querydefs in
+      let rec interpreter_loop count user_in ps_in =
+          match user_in with
+            | None -> printf "We're done.\n"; ps_in
+            | Some str -> test_pipe reader_opt str;
+                if not (List.mem str query_names)
+                then (printf "%s is not a valid query.\n" str;
+                     printf "Queries Available: \n\n";
+                     List.iter (printf "\t%s\n") query_names;
+                     ps_in)
+                else (let (inlist, outlist, progstmt) = List.assoc str querydefs in
+                     let ins = get_query_params str querydefs in
+                     let ps_out = if not (all_safe ins)
+                                  (* TODO: Print out which inputs failed (snd of the tuple will be None) *)
+                                  then (printf "Input(s) are not valid\n"; ps_in)
+                                  else (let qstmt = make_int_assignments ins in
+                                        common_run (str, qstmt) querydefs) ps_in in
+                     interpreter_loop (count + 1)
+                                 (prob_line ())
+                                 ps_out)
+      in
+      printf "Queries Available: \n\n";
+      List.iter (printf "\t%s\n") query_names;
+      let user_in = prob_line () in
+      interpreter_loop 0 user_in ps_orig
+
+  let run reader_opt asetup =
+    ifverbose1 (printf "Binary for counting: %s\n%!" !Cmd.opt_count_bin;);
+
     Printexc.record_backtrace true;
 (*      let vars = pmock_all_vars asetup in*)
       let secretstmt = Preeval.preeval asetup.secret in
@@ -316,7 +362,10 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
                   PSYS.valcache = secretstate} in
 
           ifdebug (printf "\n\nBefore pmock_queries\n\n");
-          let base_final_dist = pmock_queries 1 queries querydefs ps in
+
+          let base_final_dist = if !Cmd.opt_interactive
+                                then interpreter reader_opt 1 querydefs ps
+                                else pmock_queries 1 queries querydefs ps in
 
           (* Lower Bound work <begin> *)
           (if !Cmd.opt_improve_lower_bounds > 0 then
@@ -367,12 +416,21 @@ let main () =
     ("--latte-minmax",
      Arg.Set Cmd.opt_latte_minmax,
      "use latte for maximization, constant 1 for minimization");
+    ("--interactive",
+     Arg.Set Cmd.opt_interactive,
+     "Use prop as a repl");
     ("--dsa",
      Arg.Set Cmd.opt_dsa,
      "convert to dynamic single assignment");
+    ("--server",
+     Arg.Int (fun i -> Cmd.opt_server_port := i; Cmd.opt_server := true),
+     "run TAMBA web service (TM) on specified port");
     ("--precision",
      Arg.Set_int Cmd.opt_precision,
      "set the precision");
+    ("--precise-conditioning",
+     Arg.Set Cmd.opt_precise_conditioning,
+     "use polyhedral intersection for conditional statements, otherwise use default domain, default = false");
     ("--samples",
      Arg.Set_int Cmd.opt_samples,
      "set the number of samples to use");
@@ -442,35 +500,47 @@ let main () =
   Random.init(!Cmd.opt_seed);
 
   try
-    let policy = parse !Cmd.input_file Parser.pmock in (* note to self: why is this called pmock? What is pmock? *)
 
-    ifbench (add_policy_records policy;
-             Globals.print_header ());
-    Globals.bench_latte_out_header ();
+    let prob reader_opt () =
+      (* note to self: why is this called pmock? What is pmock? *)
+      let policy = parse !Cmd.input_file Parser.pmock in
 
-    let module Runner =
-      (val (match !Cmd.opt_domain with
-            | 0 -> raise (General_error "list-based evaluation not implemented")
-            | 1 -> (module EVALS_PPSS_BOX : EXP_SYSTEM)
-            | 2 -> (module EVALS_PPSS_OCTA : EXP_SYSTEM)
-            | 3 -> (module EVALS_PPSS_OCTALATTE : EXP_SYSTEM)
-            | 4 -> (module EVALS_PPSS_POLY : EXP_SYSTEM)
-            | _ -> raise Not_expected) : EXP_SYSTEM) in
+      ifbench (add_policy_records policy;
+               Globals.print_header ());
+      Globals.bench_latte_out_header ();
 
-    ifdebug(printf "\n\nBefore evaluation\n\n");
+      let module Runner =
+        (val (match !Cmd.opt_domain with
+              | 0 -> raise (General_error "list-based evaluation not implemented")
+              | 1 -> (module EVALS_PPSS_BOX : EXP_SYSTEM)
+              | 2 -> (module EVALS_PPSS_OCTA : EXP_SYSTEM)
+              | 1 -> (module EVALS_PPSS_BOX : EXP_SYSTEM)
+              | 2 -> (module EVALS_PPSS_OCTA : EXP_SYSTEM)
+              | 3 -> (module EVALS_PPSS_OCTALATTE : EXP_SYSTEM)
+              | 4 -> (module EVALS_PPSS_POLY : EXP_SYSTEM)
+              | _ -> raise Not_expected) : EXP_SYSTEM) in
 
-    Runner.run policy;
+      ifdebug(printf "\n\nBefore evaluation\n\n");
 
-    ifdebug(printf "\n\nAfter evaluation\n\n";
-            printf "maximum complexity encountered = %d\n" !Globals.max_complexity;
-            Globals.close_bench ());
-    Globals.bench_latte_close ();
+      Runner.run reader_opt policy;
+
+      ifdebug(printf "\n\nAfter evaluation\n\n";
+              printf "maximum complexity encountered = %d\n" !Globals.max_complexity;
+              Globals.close_bench ());
+      Globals.bench_latte_close () in
+
+
+    if !Cmd.opt_server
+    then let (r,w) = pipe () in
+         match fork () with
+           | `In_the_parent pid -> Server.start_server pid !Cmd.opt_server_port w ();
+           | `In_the_child -> prob (Some r) ();
+    else prob None ();
 
   with
     | e ->
        Unix.chdir Globals.original_dir;
-       ifdebug(printf "%s\n" (Printexc.to_string e);
-               Printexc.print_backtrace stdout);
+       ifdebug(printf "%s\n" (Core.Backtrace.Exn.most_recent ()););
        raise e
 ;;
 

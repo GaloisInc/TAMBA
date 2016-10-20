@@ -153,6 +153,18 @@ let rec stmt_vars stm =
     | SLivenessAnnot (vs, s1) -> stmt_vars s1
     | s                       -> failwith "Output not support in analysis"
 
+(*
+ * The following 2 functions are only used in the --interactive version of prob, let's
+ * keep it that way.
+ *)
+let make_int_assignment (varid, Some i) =
+    SSeq (SDefine (varid, TInt 32), SAssign (varid, AEInt i))
+
+let make_int_assignments tups =
+  let f tup stmt = SSeq (make_int_assignment tup, stmt) in
+  fold_right f tups SSkip
+
+
 let print_stmt_type s =
   match s with
     | SSkip ->
