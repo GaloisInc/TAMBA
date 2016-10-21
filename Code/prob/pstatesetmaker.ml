@@ -505,8 +505,8 @@ module MakePStateset(* create pstateset from a stateset *)
 
     let sample_pstateset pset n es =
       let state_to_poly (s : state) : polyhedron =
-        (* TODO(ins): should be easy *)
-        ppl_new_NNC_Polyhedron_from_space_dimension 0 Empty
+        let varlist = List.map Util.pair_first (s#canon) in
+        Ppldomainpoly.Ppldomainpoly.make_point (list_zip (list_range 0 ((List.length varlist) - 1)) (List.map (fun v -> s#get v) varlist))
       in
         let evals = List.map (fun (state, eval_q, expected) ->
                                 let aset = pset.ss in
