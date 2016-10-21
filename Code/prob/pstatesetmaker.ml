@@ -7,6 +7,7 @@ open Printf
 open Util
 open Ocephes
 open Pstateset
+open Ppl_ocaml
 
 open Gmp.Q.Infixes
 open Gmp.Z.Infixes
@@ -30,7 +31,8 @@ module MakePStateset(* create pstateset from a stateset *)
       mmin: Q.t;
       mmax: Q.t;
       numy: int; (* The last two are only *)
-      numn: int  (* used in sampling *)
+      numn: int; (* used in sampling *)
+      underapprox: polyhedron
     }
 
     let estimator_empty = {
@@ -41,7 +43,8 @@ module MakePStateset(* create pstateset from a stateset *)
       mmin = qzero;
       mmax = qzero;
       numy = 0;
-      numn = 0
+      numn = 0;
+      underapprox = ppl_new_NNC_Polyhedron_from_space_dimension 0 Empty
     }
 
     let estimator_one = {
@@ -52,7 +55,8 @@ module MakePStateset(* create pstateset from a stateset *)
       mmin = qone;
       mmax = qone;
       numy = 0;
-      numn = 0
+      numn = 0;
+      underapprox = ppl_new_NNC_Polyhedron_from_space_dimension 0 Empty
     }
 
     type pstateset = {
@@ -68,7 +72,8 @@ module MakePStateset(* create pstateset from a stateset *)
       mmin = est.mmin */ scalar;
       mmax = est.mmax */ scalar;
       numy = est.numy; (* TODO: This is probably wrong *)
-      numn = est.numn
+      numn = est.numn;
+      underapprox = ppl_new_NNC_Polyhedron_from_space_dimension 0 Empty
     }
 
     let make_empty () =
@@ -100,7 +105,8 @@ module MakePStateset(* create pstateset from a stateset *)
                 mmin = qone;
                 mmax = qone;
                 numy = 0;
-                numn = 0
+                numn = 0;
+                underapprox = ppl_new_NNC_Polyhedron_from_space_dimension 0 Empty
                }}
 
     let print pss =
@@ -133,7 +139,8 @@ module MakePStateset(* create pstateset from a stateset *)
            mmin = pss1.est.mmin */ pss2.est.mmin;
            mmax = pss1.est.mmax */ pss2.est.mmax;
            numy = pss1.est.numy * pss2.est.numy;
-           numn = pss1.est.numn * pss2.est.numn
+           numn = pss1.est.numn * pss2.est.numn;
+           underapprox = ppl_new_NNC_Polyhedron_from_space_dimension 0 Empty
          }}
 
     let addvar pss varid =
@@ -216,7 +223,8 @@ module MakePStateset(* create pstateset from a stateset *)
                (newpmax */ (Q.from_z newsmax))
                (est.mmax -/ (est.pmin */ (Q.from_z (Z.max zzero (est.smin -! sizeinter)))));
              numy = 0;
-             numn = 0
+             numn = 0;
+             underapprox = ppl_new_NNC_Polyhedron_from_space_dimension 0 Empty
                }} in
         (_assert_check temp;
          temp))
@@ -276,7 +284,8 @@ module MakePStateset(* create pstateset from a stateset *)
            mmax = pss1.est.mmax +/ pss2.est.mmax;
            (* TODO: Figure out the appropriate things for this *)
            numy = 0;
-           numn = 0
+           numn = 0;
+           underapprox = ppl_new_NNC_Polyhedron_from_space_dimension 0 Empty
          }
         } in
         (*printf "\nresult (intersection = %s):\n" (Z.to_string (SS.stateset_size ssinter));
@@ -313,7 +322,8 @@ module MakePStateset(* create pstateset from a stateset *)
                (newpmax */ (Q.from_z newsmax))
                (est.mmax -/ (est.pmin */ (Q.from_z (Z.max zzero (est.smin -! sizeinter)))));
              numy = 0;
-             numn = 0
+             numn = 0;
+             underapprox = ppl_new_NNC_Polyhedron_from_space_dimension 0 Empty
                }} in
         (_assert_check temp;
          temp)
@@ -389,7 +399,8 @@ module MakePStateset(* create pstateset from a stateset *)
         mmin = est.mmin;
         mmax = est.mmax;
         numy = 0;
-        numn = 0
+        numn = 0;
+        underapprox = ppl_new_NNC_Polyhedron_from_space_dimension 0 Empty
       } in
       let temp =
         {ss = new_ss;
@@ -493,21 +504,29 @@ module MakePStateset(* create pstateset from a stateset *)
     let set_dim ss state pt = Array.iteri (fun idx v -> let var = SS.lookup_dim ss idx in state#set var v) pt
 
     let sample_pstateset pset n es =
+      let state_to_poly (s : state) : polyhedron =
+        (* TODO(ins): should be easy *)
+        ppl_new_NNC_Polyhedron_from_space_dimension 0 Empty
+      in
         let evals = List.map (fun (state, eval_q, expected) ->
                                 let aset = pset.ss in
                                 let setstate i v =
                                   let vid1 = SS.lookup_dim aset i in
                                   (* printf "vid_dim: %s\n" (varid_to_string vid1); *)
                                   state#set vid1 v in
+                                let not_in_underapprox = not (ppl_Polyhedron_contains_Polyhedron pset.est.underapprox (state_to_poly state)) in
                                 let eval = fun pt -> Array.iteri setstate pt;
                                              let (ig, state2) = eval_q state in
                                              ifdebug (printf "vid_eval: %s\nstate2: %s\n\n"
                                                              (varid_list_to_string (List.map pair_first expected))
                                                              state2#to_string);
-                                             List.for_all (fun (vid, d_res) ->
+                                             let ret = List.for_all (fun (vid, d_res) ->
                                                                state2#get vid = d_res)
-                                                          expected
-
+                                                                    expected in
+                                             if not_in_underapprox then
+                                               Some (ret)
+                                             else
+                                               None
                                 in eval
                              ) es in
         let (yes,no) = SS.sample_region pset.ss n evals in
@@ -542,10 +561,16 @@ module MakePStateset(* create pstateset from a stateset *)
           let sample = init#copy in
           set_dim ps.ss sample sample_pt; (* assign secret vars according to sample_pt *)
           if checker sample then (* run checker closure, makes sure actual = expected *)
-            let smin_new = runner sample in (* get path condition, and call underapproximation tool *)
+            let (smin_new, pc_poly) = runner sample in (* get path condition, and call underapproximation tool *)
             if smin_new > ps.est.smin then
               (ifdebug (print_endline ("old s_min = " ^ (Z.to_string ps.est.smin) ^ ", new s_min = " ^ (Z.to_string smin_new)));
-              { ps with est = { ps.est with smin = smin_new; mmin = ps.est.pmin */ (Q.from_z smin_new) } })
+               { ps with est = {
+                   ps.est with
+                   smin = smin_new;
+                   mmin = ps.est.pmin */ (Q.from_z smin_new);
+                   underapprox = pc_poly
+                 }
+              })
             else
               ps
           else

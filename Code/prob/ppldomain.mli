@@ -62,7 +62,7 @@ sig
    *
    * [1]: TODO eventually we also want to pass the desired confidence
    *)
-  val sample_region: region -> int ->  (int array -> bool) list -> (int * int)
+  val sample_region: region -> int ->  (int array -> bool option) list -> (int * int)
   val get_sample: region -> int array
   val update_bounds: region -> (int * int) -> unit
 

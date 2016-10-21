@@ -2,6 +2,7 @@ open State
 open Lang
 open Util
 open Gmp
+open Ppl_ocaml
 
 (*module SS  = Statesetsimple.Stateset(ES) *)
 (*module SSP = Statesetpoly.Stateset*)
@@ -56,7 +57,7 @@ module type EVAL_SYSTEM = sig
 
   val psrep_sample: psrep -> int -> (state * (state -> (int * state)) * (varid * int) list) list -> psrep
 
-  val psrep_improve_lower_bounds: (state -> bool) -> (state -> Z.t) -> state -> int -> psrep -> psrep
+  val psrep_improve_lower_bounds: (state -> bool) -> (state -> Z.t * polyhedron) -> state -> int -> psrep -> psrep
 
   val get_alpha_beta: psrep -> (int * int)
 

@@ -168,14 +168,17 @@ module Ppldomainbox: (PPLDOMAIN_TYPE with type region = rational_box) =
 
       let sample_region p n evals =
           let bounds = _bounds_of_box p in
-          let rec f (yes,no) = if yes + no >= n
+          let rec f m (yes,no) = if m >= n
                                then (yes,no)
                                else let sample = _sample_bounds bounds in
                                     let ret_val = Util.list_func_and evals sample in
-                                        match ret_val with
-                                           | true -> f (yes + 1, no)
-                                           | false -> f (yes, no + 1) in
-          f (0,0)
+                                    let yes_no =
+                                        (match ret_val with
+                                           | Some (true) -> (yes + 1, no)
+                                           | Some (false) -> (yes, no + 1)
+                                           | _ -> (yes, no)) in
+                                    f (m + 1) yes_no in
+          f 0 (0,0)
 
       let update_bounds p t = raise (General_error "update_bounds not yet implemented for Box domain")
 
