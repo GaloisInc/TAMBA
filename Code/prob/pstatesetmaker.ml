@@ -502,11 +502,31 @@ module MakePStateset(* create pstateset from a stateset *)
         massin // massout)
 
     let set_dim ss state pt = Array.iteri (fun idx v -> let var = SS.lookup_dim ss idx in state#set var v) pt
+(*
 
+-      let state_to_poly (s : state) : polyhedron =
+-        let varlist = List.map Util.pair_first (s#canon) in
+-        Ppldomainpoly.Ppldomainpoly.make_point (list_zip (list_range 0 ((List.length varlist) - 1)) (List.map (fun v -> s#get v) varlist))
++      let pt_to_poly (pt : int array) : polyhedron =
++        Ppldomainpoly.Ppldomainpoly.make_point (list_zip (list_range 0 ((Array.length pt) - 1)) (Array.to_list pt))
+       in
+         let evals = List.map (fun (state, eval_q, expected) ->
+                                 let aset = pset.ss in
+@@ -514,8 +513,11 @@ module MakePStateset(* create pstateset from a stateset *)
+                                   let vid1 = SS.lookup_dim aset i in
+                                   (* printf "vid_dim: %s\n" (varid_to_string vid1); *)
+                                   state#set vid1 v in
+-                                let not_in_underapprox = not (ppl_Polyhedron_contains_Polyhedron pset.est.underapprox (state_to_poly state)) in
+                                 let eval = fun pt -> Array.iteri setstate pt;
++                                                     let pt_poly = pt_to_poly pt in
++                                                     let not_in_underapprox =
++                                                       ppl_Polyhedron_is_empty pset.est.underapprox ||
++                                                       not (ppl_Polyhedron_contains_Polyhedron pset.est.underapprox pt_poly) in
+                                              let (ig, state2) = eval_q state in
+ *)
     let sample_pstateset pset n es =
-      let state_to_poly (s : state) : polyhedron =
-        let varlist = List.map Util.pair_first (s#canon) in
-        Ppldomainpoly.Ppldomainpoly.make_point (list_zip (list_range 0 ((List.length varlist) - 1)) (List.map (fun v -> s#get v) varlist))
+      let pt_to_poly (pt : int array) : polyhedron =
+        Ppldomainpoly.Ppldomainpoly.make_point (list_zip (list_range 0 ((Array.length pt) - 1)) (Array.to_list pt))
       in
         let evals = List.map (fun (state, eval_q, expected) ->
                                 let aset = pset.ss in
@@ -514,8 +534,11 @@ module MakePStateset(* create pstateset from a stateset *)
                                   let vid1 = SS.lookup_dim aset i in
                                   (* printf "vid_dim: %s\n" (varid_to_string vid1); *)
                                   state#set vid1 v in
-                                let not_in_underapprox = not (ppl_Polyhedron_contains_Polyhedron pset.est.underapprox (state_to_poly state)) in
                                 let eval = fun pt -> Array.iteri setstate pt;
+                                                     let pt_poly = pt_to_poly pt in
+                                                     let not_in_underapprox =
+                                                       ppl_Polyhedron_is_empty pset.est.underapprox ||
+                                                         not (ppl_Polyhedron_contains_Polyhedron pset.est.underapprox pt_poly) in
                                              let (ig, state2) = eval_q state in
                                              ifdebug (printf "vid_eval: %s\nstate2: %s\n\n"
                                                              (varid_list_to_string (List.map pair_first expected))
