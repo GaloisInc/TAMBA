@@ -273,7 +273,7 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
 
     print_endline ("count {\n" ^ (string_of_gen_poly p) ^ "\n} = " ^ (Z.to_string ret) ^ "\n");
 
-    ret
+    (ret, poly_of_gen_poly p)
             
   (* Lower Bound additions <end> *)
 

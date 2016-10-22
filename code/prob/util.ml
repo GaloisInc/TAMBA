@@ -68,8 +68,12 @@ let fold_left1 f (x::xs) = List.fold_left f x xs
 
 let rec list_func_and fs x =
   match fs with
-    | []     -> true
-    | g::gs  -> g x && list_func_and gs x
+    | []     -> Some (true)
+    | g::gs  ->
+       (match (g x, list_func_and gs x) with
+       | None, _ -> None
+       | _, None -> None
+       | Some t1, Some t2 -> Some (t1 && t2))
 
 let list_of_queue q =
   Queue.fold (fun accum i -> i :: accum) [] q

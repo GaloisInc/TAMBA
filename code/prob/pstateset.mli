@@ -88,5 +88,5 @@ module type PSTATESET_TYPE =
 
     val sample_pstateset: pstateset -> int -> (state * (state -> (int * state)) * (varid * int) list) list -> pstateset
 
-    val improve_lower_bounds: (state -> bool) -> (state -> Z.t) -> state -> int -> pstateset -> pstateset
+    val improve_lower_bounds: (state -> bool) -> (state -> Z.t * polyhedron) -> state -> int -> pstateset -> pstateset
   end;;
