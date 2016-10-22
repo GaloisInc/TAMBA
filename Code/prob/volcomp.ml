@@ -18,17 +18,13 @@ let rand_tmp_name () = "model_" ^ (string_of_int (Unix.getpid ()))
 
 type volcomp =
   { decls : (varid * (int * int)) list;
-    leqs  : (int list * int) list list
+    leqs  : (int list * int) list 
   }
     
 let string_of_volcomp (v : volcomp) : string =
   let decls_str = (String.concat "\n" (List.map (fun ((_, name), (l, u)) -> Printf.sprintf "V %s I %d %d" name l u) v.decls)) ^ "\n" in
 
-  let leqs_str =
-    (match v.leqs with
-     | [] -> ""
-     | h :: _ -> (String.concat "\n" (List.map (fun (coeffs, lim) -> Printf.sprintf "C %s %d" (String.concat " " (List.map string_of_int coeffs)) lim) h)) ^ "\n")
-  in
+  let leqs_str = (String.concat "\n" (List.map (fun (coeffs, lim) -> Printf.sprintf "C %s %d" (String.concat " " (List.map string_of_int coeffs)) lim) v.leqs)) ^ "\n" in
   
   let ret = decls_str ^ leqs_str ^ "E" in
   print_endline ret;

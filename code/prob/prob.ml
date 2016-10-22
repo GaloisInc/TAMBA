@@ -242,10 +242,8 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
     expected = actual
 
   let underapproximate belief queries querydefs st =
-    let init = Symstate.state_to_symstate st in (* don't have bounds *)
+    let init = Symstate.state_to_symstate st in
     let pc : Symbol.lsym = sym_queries queries querydefs init in
-
-    let fvs = st#vars in
 
     let rec belief_bounds (belief : stmt) (acc : (int * int) VarIDMap.t) : (int * int) VarIDMap.t =
       match belief with
@@ -266,14 +264,18 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
 
     let ret =
       (match !Cmd.opt_volume_computation with
-       | 0 -> Latte.count_models (latte_of_gen_poly p)
-       | 1 -> Volcomp.count_models (volcomp_of_gen_poly p)
-       | _ -> raise (General_error ("opt_volume_computation not valid, shouldn't be possible... should be caught with arg parsing")))
-    in
+       | 0 -> List.map Latte.count_models (latte_of_gen_poly p)
+       | 1 -> List.map Volcomp.count_models (volcomp_of_gen_poly p)
+       | _ -> raise (General_error ("opt_volume_computation not valid, shouldn't be possible... should be caught with arg parsing"))) in
+
+    let (ret, max_idx, _) = List.fold_left (fun (max, max_idx, idx) curr ->
+                                if Z.compare curr max >= 0 then
+                                  (curr, idx, idx + 1)
+                                else
+                                  (max, max_idx, idx + 1)) (Z.zero, 0, 0) ret in
 
     print_endline ("count {\n" ^ (string_of_gen_poly p) ^ "\n} = " ^ (Z.to_string ret) ^ "\n");
-
-    (ret, poly_of_gen_poly p)
+    (ret, List.nth (poly_of_gen_poly p) max_idx)
             
   (* Lower Bound additions <end> *)
 
