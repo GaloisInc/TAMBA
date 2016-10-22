@@ -1,0 +1,106 @@
+secret: (* Ship in 2-dimensional space *)
+int ship1_loc_x = 501;
+int ship1_loc_y = 501;
+
+int ship2_loc_x = 250;
+int ship2_loc_y = 750;
+
+int ship3_loc_x = 250;
+int ship3_loc_y = 250;
+
+int ship4_loc_x = 750;
+int ship4_loc_y = 250;
+
+int ship5_loc_x = 750;
+int ship5_loc_y = 750;
+
+belief:
+  int ship1_loc_x = uniform 0 1000;
+  int ship1_loc_y = uniform 0 1000;
+
+  int ship2_loc_x = uniform 0 1000;
+  int ship2_loc_y = uniform 0 1000;
+
+  int ship3_loc_x = uniform 0 1000;
+  int ship3_loc_y = uniform 0 1000;
+
+  int ship4_loc_x = uniform 0 1000;
+  int ship4_loc_y = uniform 0 1000;
+
+  int ship5_loc_x = uniform 0 1000;
+  int ship5_loc_y = uniform 0 1000;
+
+querydef close_enough ship_1 ship_2 dist -> result :
+  int ship_1_loc_x = 0;
+  int ship_1_loc_y = 0;
+  if ship_1 == 1 then
+    ship_1_loc_x = ship1_loc_x;
+    ship_1_loc_y = ship1_loc_y;
+  endif;
+  if ship_1 == 2 then
+    ship_1_loc_x = ship2_loc_x;
+    ship_1_loc_y = ship2_loc_y;
+  endif;
+  if ship_1 == 3 then
+    ship_1_loc_x = ship3_loc_x;
+    ship_1_loc_y = ship3_loc_y;
+  endif;
+  if ship_1 == 4 then
+    ship_1_loc_x = ship4_loc_x;
+    ship_1_loc_y = ship4_loc_y;
+  endif;
+  if ship_1 == 5 then
+    ship_1_loc_x = ship5_loc_x;
+    ship_1_loc_y = ship5_loc_y;
+  endif;
+
+  int ship_2_loc_x = 0;
+  int ship_2_loc_y = 0;
+  if ship_2 == 1 then
+    ship_2_loc_x = ship1_loc_x;
+    ship_2_loc_y = ship1_loc_y;
+  endif;
+  if ship_2 == 2 then
+    ship_2_loc_x = ship2_loc_x;
+    ship_2_loc_y = ship2_loc_y;
+  endif;
+  if ship_2 == 3 then
+    ship_2_loc_x = ship3_loc_x;
+    ship_2_loc_y = ship3_loc_y;
+  endif;
+  if ship_2 == 4 then
+    ship_2_loc_x = ship4_loc_x;
+    ship_2_loc_y = ship4_loc_y;
+  endif;
+  if ship_2 == 5 then
+    ship_2_loc_x = ship5_loc_x;
+    ship_2_loc_y = ship5_loc_y;
+  endif;
+
+  int diff_x1 = ship_1_loc_x - ship_2_loc_x;
+  int diff_x = 0;
+  if diff_x1 < 0 then
+    diff_x = diff_x1 * -1;
+  endif;
+  if diff_x1 >= 0 then
+    diff_x = diff_x1;
+  endif;
+  
+  int diff_y1 = ship_1_loc_y - ship_2_loc_y;
+  int diff_y = 0;
+  if diff_y1 < 0 then
+    diff_y = diff_y1 * -1;
+  endif;
+  if diff_y1 >= 0 then
+    diff_y = diff_y1;
+  endif;
+  
+  int result = 0;
+  if ((diff_x + diff_y) <= dist) then
+    result = 1;
+  endif;
+
+query close_enough:
+  int dist = 500;
+  int ship_1 = 1;
+  int ship_2 = 2;
