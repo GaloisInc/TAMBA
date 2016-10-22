@@ -27,7 +27,6 @@ let string_of_volcomp (v : volcomp) : string =
   let leqs_str = (String.concat "\n" (List.map (fun (coeffs, lim) -> Printf.sprintf "C %s %d" (String.concat " " (List.map string_of_int coeffs)) lim) v.leqs)) ^ "\n" in
   
   let ret = decls_str ^ leqs_str ^ "E" in
-  print_endline ret;
   ret
                                                 
 let total_volume (v : volcomp) : Z.t =
@@ -35,20 +34,17 @@ let total_volume (v : volcomp) : Z.t =
   List.fold_left Z.mul Z.one sizes
 
 let count_models (v : volcomp) : Z.t =
-  let rexp = Str.regexp "^ Probability Lower Bound : \\([0-9]+\\.?[0-9]+\\)$" in
+  let rexp = Str.regexp "^ Probability Lower Bound : \\([0-9]+\\.?[0-9]*\\)$" in
   let filename = volcomp_workdir ^ "/" ^ (rand_tmp_name ()) in
   write_file filename (string_of_volcomp v);
   let (stdin, stderr) = exec_and_read_all (volcomp_bin ^ " " ^ filename) volcomp_env in
   let out_lines = string_split stdin "\n" in
   match (List.rev out_lines) with
-  | _ :: lower_bound_str :: _ ->
+  | _ :: _ :: _ ->
      if (string_search rexp stdin) then
        let pr_str = Str.matched_group 1 stdin in
-       print_endline pr_str;
        let res = from_string_Q pr_str in
-       print_endline (Q.to_string res);
        let count_exact = Q.from_z (total_volume v) */ res in
-       print_endline (Z.to_string (total_volume v));
        Z.fdiv_q (Q.get_num count_exact) (Q.get_den count_exact)
      else
        raise (Failure "count_models: volcomp output malformed (regexp failed to retrieve prob)")

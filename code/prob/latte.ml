@@ -112,7 +112,9 @@ let _count_models =
                   (
                     if (string_search rexp_count data_err) then
                       let matched = Str.matched_group 1 data_err in
-                        raise (Count_return (Z.from_string matched))
+                      raise (Count_return (Z.from_string matched))
+                    else
+                      raise (Count_return Z.zero)
                   );
 
                 let temp = (List.hd (List.rev lines_in)) in

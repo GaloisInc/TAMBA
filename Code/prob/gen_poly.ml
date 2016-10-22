@@ -16,7 +16,7 @@ let poly_of_gen_poly (p : gen_poly) : polyhedron list =
   let fvs = List.map fst (VarIDMap.bindings p.bounds) in
   let ret_sz = List.length p.constraints in
 
-  let ret = list_replicate ret_sz (ppl_new_C_Polyhedron_from_space_dimension (List.length fvs) Universe) in
+  let ret = list_replicate_f ret_sz (fun () -> ppl_new_C_Polyhedron_from_space_dimension (List.length fvs) Universe) in
 
   let append_bound (p : polyhedron) (var : varid) (b : int * int) : unit =
     let (l, u) = b in
@@ -41,7 +41,8 @@ let poly_of_gen_poly (p : gen_poly) : polyhedron list =
 
   List.iter (fun (ret_poly, disj) -> List.iter (fun (lhs, rhs) -> append_constraint ret_poly lhs rhs) disj) tmp;
 
-  List.map fst tmp
+  let ret = List.map fst tmp in
+  ret
 
 let latte_of_gen_poly (p : gen_poly) = List.map Latte.latte_of_poly (poly_of_gen_poly p)
 
@@ -72,4 +73,4 @@ let string_of_gen_poly (p : gen_poly) : string =
     String.concat "\n" (List.map ineq_to_string ineqs)
   in
 
-  String.concat "\n" (List.map ineqs_to_string constrs)
+  String.concat "\n\\/\n" (List.map ineqs_to_string constrs)
