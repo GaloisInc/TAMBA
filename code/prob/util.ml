@@ -101,7 +101,7 @@ let is_min a (b, c, d) =
   let ab = Z.compare a b in
   let ac = Z.compare a c in
   let ad = Z.compare a d in
-  (ab = -1 || ab = 0) && (ac = -1 || ac = 0) && (ad = -1 || ad = 0)
+  (ab <= 0) && (ac <= 0) && (ad <= 0)
 
 let best_bounds smin1 smax1 smin2 smax2 =
   let b1 = Z.abs (Z.sub smax1 smin1) in

@@ -68,7 +68,7 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
     let enddist = ps.PSYS.belief in
       let trips = List.map (make_trip querydefs ps) queries in
       let enddist2 = try (ESYS.psrep_sample enddist !Cmd.opt_samples trips)
-                     with e -> enddist in
+                     with e -> (print_endline "sampling exception! No update."); enddist in
       let (y,n) = ESYS.get_alpha_beta enddist2 in
       let b_dist = beta (float_of_int (y + 1)) (float_of_int (n + 1)) in
       let { beta_alpha; beta_beta } = b_dist in
