@@ -13,7 +13,7 @@ ifdef USE_OPT
   OEXT := cmx
   IEXT := cmxi
   LOEXT := cmxa
-  OCAMLC := $(OCAMLFIND) ocamlopt
+  OCAMLC := $(OCAMLFIND) ocamlopt -g
   OCAMLDEP := $(OCAMLFIND) ocamldep -native
 else
   OEXT := cmo
@@ -75,6 +75,10 @@ SOURCES_OPT := \
 	$(SOURCES_COMMON) \
 	optimization_workbench.ml
 
+SOURCES_ALLOC := \
+	$(SOURCES_COMMON) \
+	resource_allocation.ml
+
 SOURCES_MPROB := \
 	$(SOURCES_COMMON) \
 	smcdefs.ml \
@@ -87,6 +91,7 @@ OBJS_PROB  := $(SOURCES_PROB:.ml=.$(OEXT))
 OBJS_MPROB := $(SOURCES_MPROB:.ml=.$(OEXT))
 OBJS_LATEX := $(SOURCES_LATEX:.ml=.$(OEXT))
 OBJS_OPT  := $(SOURCES_OPT:.ml=.$(OEXT))
+OBJS_ALLOC  := $(SOURCES_ALLOC:.ml=.$(OEXT))
 
 OBJS_ALL   := $(OBJS_PROB) $(OBJS_CEVAL)
 
@@ -109,6 +114,9 @@ exp: experiment.ml
 
 opt: $(OBJS_OPT)
 	$(OCAMLC) $(PPL_LINK) $(LINK_FLAGS) -o opt $(OBJS_OPT)
+
+alloc: $(OBJS_ALLOC)
+	$(OCAMLC) $(PPL_LINK) $(LINK_FLAGS) -o alloc $(OBJS_ALLOC)
 
 mprob: $(OBJS_MPROB) 
 	$(OCAMLC) $(PPL_LINK) $(LINK_FLAGS) -o mprob $(OBJS_MPROB)

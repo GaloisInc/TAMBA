@@ -164,4 +164,6 @@ let memoize_named2 name f =
   curry2 (memoize_named1 name (uncurry2 f))
 ;;
 
+let alloc_out_pre = ref "";;
+
 Unix.chdir current_dir;;
