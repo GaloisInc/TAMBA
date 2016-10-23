@@ -23,7 +23,7 @@ module Ppldomainpoly: (PPLDOMAIN_TYPE with type region = polyhedron) =
       ppl_new_NNC_Polyhedron_from_space_dimension dims Universe
 
     let make_point varlist =
-      let poly = ppl_new_C_Polyhedron_from_space_dimension (List.length varlist) Universe in
+      let poly = ppl_new_NNC_Polyhedron_from_space_dimension (List.length varlist) Universe in
         List.iter
           (fun (varid, varval) ->
              ppl_Polyhedron_add_constraint

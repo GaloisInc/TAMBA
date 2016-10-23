@@ -579,14 +579,14 @@ module MakePStateset(* create pstateset from a stateset *)
     let rec improve_lower_bounds checker runner init lim ps =
       if ps.est.smin <> ps.est.smax then (* if smin =/= smax, there is approximation *)
         if lim > 0 then
-          (ifdebug (print_endline ("Sample #" ^ string_of_int (!Cmd.opt_improve_lower_bounds - lim + 1)));
+          (ifverbose1 (print_endline ("Sample #" ^ string_of_int (!Cmd.opt_improve_lower_bounds - lim + 1)));
           let sample_pt = SS.get_sample ps.ss in (* get a sample point from stateset *)
           let sample = init#copy in
           set_dim ps.ss sample sample_pt; (* assign secret vars according to sample_pt *)
           if checker sample then (* run checker closure, makes sure actual = expected *)
             let (smin_new, pc_poly) = runner sample in (* get path condition, and call underapproximation tool *)
             if smin_new > ps.est.smin then
-              (ifdebug (print_endline ("old s_min = " ^ (Z.to_string ps.est.smin) ^ ", new s_min = " ^ (Z.to_string smin_new)));
+              (ifverbose1 (print_endline ("old s_min = " ^ (Z.to_string ps.est.smin) ^ ", new s_min = " ^ (Z.to_string smin_new)));
                { ps with est = {
                    ps.est with
                    smin = smin_new;

@@ -16,7 +16,7 @@ let poly_of_gen_poly (p : gen_poly) : polyhedron list =
   let fvs = List.map fst (VarIDMap.bindings p.bounds) in
   let ret_sz = List.length p.constraints in
 
-  let ret = list_replicate_f ret_sz (fun () -> ppl_new_C_Polyhedron_from_space_dimension (List.length fvs) Universe) in
+  let ret = list_replicate_f ret_sz (fun () -> ppl_new_NNC_Polyhedron_from_space_dimension (List.length fvs) Universe) in
 
   let append_bound (p : polyhedron) (var : varid) (b : int * int) : unit =
     let (l, u) = b in
