@@ -193,11 +193,11 @@ querydef combined ship time berths_needed -> result :
   endif;
   if ship == 7 then
     ship_eta = ship7_eta;
-    ship_berths = ship5_berths
+    ship_berths = ship7_berths
   endif;
   if ship == 8 then
     ship_eta = ship8_eta;
-    ship_berths = ship6_berths
+    ship_berths = ship8_berths
   endif;
   if ship == 9 then
     ship_eta = ship9_eta;

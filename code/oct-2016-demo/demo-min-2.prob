@@ -1,0 +1,72 @@
+secret:
+  (* BRP Quezon *)
+  int ship1_eta    = 40;
+  int ship1_berths = 200;
+
+  (* BRP Rizal *)
+  int ship2_eta    = 50;
+  int ship2_berths = 200;
+
+
+
+belief:
+(* ETA belief *)
+  int ship1_eta = uniform 0 1000;
+  int ship2_eta = uniform 0 1000;
+
+  int ship1_berths = uniform 0 1000;
+  int ship2_berths = uniform 0 1000;
+
+querydef close_enough ship time -> result :
+  int ship_eta = 0;
+  if ship == 1 then
+    ship_eta    = ship1_eta;
+  endif;
+  if ship == 2 then
+    ship_eta = ship2_eta;
+  endif;
+
+  int result = 0;
+  if ship_eta <= time then
+    result = 1
+  endif;
+
+querydef enough_berths ship berths_needed -> result :
+  int ship_berths = 0;
+  if ship == 1 then
+    ship_berths = ship1_berths
+  endif;
+  if ship == 2 then
+    ship_berths = ship2_berths
+  endif;
+
+  int result = 0;
+  if (ship_berths >= berths_needed) then
+    result = 1
+  endif;
+
+querydef combined ship time berths_needed -> result :
+  int ship_eta = 0;
+  int ship_berths = 0;
+  if ship == 1 then
+    ship_eta    = ship1_eta;
+    ship_berths = ship1_berths
+  endif;
+  if ship == 2 then
+    ship_eta = ship2_eta;
+    ship_berths = ship2_berths
+  endif;
+
+  int available = 0;
+  if ship_eta <= time then
+    available = 1
+  endif;
+
+  int result = 0;
+  if (ship_berths >= berths_needed) and (available == 1) then
+    result = 1
+  endif;
+
+query close_enough:
+  int ship = 1;
+  int time = 200;
