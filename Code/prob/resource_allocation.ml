@@ -1,4 +1,5 @@
 open State
+open Sys
 open Lang
 open Printf
 open Pdefs
@@ -18,9 +19,23 @@ end;;
 module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
   module PSYS = MAKE_PSYSTEM(ESYS)
 
+  type style = Separate | Combined
+
+  let output_prob sty qn args =
+    let out_chan_opt = match sty with
+                   | Separate -> !Globals.alloc_sep_out
+                   | Combined -> !Globals.alloc_com_out in
+    match out_chan_opt with
+    | None -> printf "in None\n"; ()
+    | Some out_chan ->
+            let print_arg (name, v) = fprintf out_chan "  int %s = %d;\n" name v in
+
+            fprintf out_chan "query %s:\n" qn;
+            List.iter print_arg args;
+            fprintf out_chan "\n"
+
   let assoc_with_vid ass vid =
     let (_, vid_name) = vid in
-    printf "vid_name: %s\n%!" vid_name;
     Some (List.assoc vid_name ass)
 
   let get_query_params_list args inlist =
@@ -96,16 +111,20 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
         match ss with
         | []    -> accum
         (* "can ship [i] arrive within [T] time units?" *)
-        | s::ts -> let args = [("ship", s); ("time", t)] in
-                   let res = run_query "close_enough" args meta_info  in
+        | s::ts -> let args = [("ship", s); ("eta", t)] in
+                   let qn = "close_enough" in
+                   output_prob Separate qn args;
+                   let res = run_query qn args meta_info  in
                    if res
                    then go (List.append accum [s]) ts
                    else go accum ts in
       go [] ships in
 
     let close_ships = eta_loop ship_ids in
-    printf "Length of `close_ships`: %d\n%!" (List.length close_ships);
+    printf "Ships that are close enough:\n    %!";
     List.iter (fun x -> printf "%d, " x) close_ships;
+    print_newline ();
+    
 
     (* initialize array of lower and upper bounds on the number of berths, initially set to 0 and 1000 *)
     let berths = Array.make (List.length close_ships) (0,1000) in
@@ -116,8 +135,10 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
       then ()
       else let ask = mid berths.(n) in
            (* "does ship [ship_ids[i]] have at least [ask] berths?" *)
-           let args = [("ship", n);("berths_needed", ask)] in
-           let result = run_query "enough_berths" args meta_info in
+           let args = [("ship", (n + 1));("amount", ask)] in
+           let qn = "enough_berths" in
+           output_prob Separate qn args;
+           let result = run_query qn args meta_info in
            (if result
             then (* positive result improves lower bound *)
                 berths.(n) <- (ask, snd (berths.(n)))
@@ -134,7 +155,43 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
       then ()
       else solve_loop () in
 
-    printf "Before solve_loop\n%!";
+    solve_loop ()
+
+  let algo_combined meta_info =
+    let t = !Cmd.alloc_eta in
+    let mid (x,y) = (x + y) / 2 in
+    let ship_ids = [1;2;3;4;5;6;7] in
+    let check_solution bs = let sm = Util.list_sum (List.map fst bs) in
+                            (* printf "sm: %d\n%!" sm; *)
+                            sm >= !Cmd.alloc_berths in
+
+    let berths = Array.make (List.length ship_ids) (0,1000) in
+
+    let rec bounds_loop n =
+      if n >= Array.length berths
+      then ()
+      else let ask = mid berths.(n) in
+           (* "does ship [ship_ids[i]] have at least [ask] berths?" *)
+           let args = [("ship", (n + 1));("amount", ask);("eta", t)] in
+           let qn = "combined" in
+           output_prob Combined qn args;
+           let result = run_query "combined" args meta_info in
+           (if result
+            then (* positive result improves lower bound *)
+                berths.(n) <- (ask, snd (berths.(n)))
+            else (* negative result improves upper bound *)
+                berths.(n) <- (fst (berths.(n)), ask));
+           bounds_loop (n+1) in
+
+    let rec solve_loop () = 
+      let () = bounds_loop 0 in
+
+      let res = check_solution (Array.to_list berths) in
+      (* printf "res: %s\n%!" (string_of_bool res); *)
+      if res
+      then ()
+      else solve_loop () in
+
     solve_loop ()
 
   let run asetup =
@@ -159,10 +216,14 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
 
       let startdist = ESYS.peval_start sa_beliefstmt in
 
-      printf "Before algo\n%!";
+      printf "----------------------------------------------------\n";
+      printf "----------------------- Separate -------------------\n";
+      printf "----------------------------------------------------\n";
       let () = algo_separate (querydefs, secretvars, secretstate) in
-      printf "After algo\n%!";
-      printf "Cmd.alloc_berths: %d\n%!" !Cmd.alloc_berths;
+      printf "----------------------------------------------------\n";
+      printf "----------------------- Combined -------------------\n";
+      printf "----------------------------------------------------\n";
+      algo_combined (querydefs, secretvars, secretstate);
 
 end
 ;;
@@ -174,7 +235,12 @@ let main () =
   Arg.parse [
     ("--prefix",
      Arg.String (fun s ->
-                   Globals.alloc_out_pre := s;
+                   let cwd = getcwd () in
+                   printf "working dir: %s\n" cwd;
+                   let sep_file = open_out (s ^ "-1.prob") in
+                   let com_file = open_out (s ^ "-2.prob") in
+                   Globals.alloc_sep_out := Some sep_file;
+                   Globals.alloc_com_out := Some com_file;
                 ),
      "The prefix for the output files for each algorithm, --prefix \"test\" results in test-1.prob and test-2.prob");
     ("--eta",
