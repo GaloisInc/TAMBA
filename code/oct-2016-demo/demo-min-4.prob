@@ -102,4 +102,65 @@ querydef combined ship eta amount -> result :
 
 query close_enough:
   int ship = 1;
-  int eta = 200;
+  int eta = 1000;
+
+query close_enough:
+  int ship = 2;
+  int eta = 1000;
+
+query close_enough:
+  int ship = 3;
+  int eta = 1000;
+
+query close_enough:
+  int ship = 4;
+  int eta = 1000;
+
+query enough_berths:
+  int ship = 1;
+  int amount = 500;
+
+query enough_berths:
+  int ship = 2;
+  int amount = 500;
+
+query enough_berths:
+  int ship = 3;
+  int amount = 500;
+
+query enough_berths:
+  int ship = 4;
+  int amount = 500;
+
+query enough_berths:
+  int ship = 1;
+  int amount = 250;
+
+query enough_berths:
+  int ship = 2;
+  int amount = 250;
+
+query enough_berths:
+  int ship = 3;
+  int amount = 250;
+
+query enough_berths:
+  int ship = 4;
+  int amount = 250;
+
+query enough_berths:
+  int ship = 1;
+  int amount = 125;
+
+query enough_berths:
+  int ship = 2;
+  int amount = 125;
+
+query enough_berths:
+  int ship = 3;
+  int amount = 125;
+
+query enough_berths:
+  int ship = 4;
+  int amount = 125;
+

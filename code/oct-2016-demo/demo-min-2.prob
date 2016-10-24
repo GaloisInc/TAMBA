@@ -75,3 +75,27 @@ query close_enough:
   int ship = 2;
   int eta = 1000;
 
+query enough_berths:
+  int ship = 1;
+  int amount = 500;
+
+query enough_berths:
+  int ship = 2;
+  int amount = 500;
+
+query enough_berths:
+  int ship = 1;
+  int amount = 250;
+
+query enough_berths:
+  int ship = 2;
+  int amount = 250;
+
+query enough_berths:
+  int ship = 1;
+  int amount = 125;
+
+query enough_berths:
+  int ship = 2;
+  int amount = 125;
+

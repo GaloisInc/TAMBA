@@ -23,29 +23,6 @@ secret:
   int ship6_eta    = 500;
   int ship6_berths = 200;
 
-  (* KRI Dr Shoeharso *)
-  int ship7_eta    = 250;
-  int ship7_berths = 200;
-
-  (* HMAS Success *)
-  int ship8_eta    = 500;
-  int ship8_berths = 200;
-
-  (* KRI Dr Shoeharso *)
-  int ship9_eta    = 250;
-  int ship9_berths = 200;
-
-  (* HMAS Success *)
-  int ship10_eta    = 500;
-  int ship10_berths = 200;
-
-  (* KRI Dr Shoeharso *)
-  int ship11_eta    = 250;
-  int ship11_berths = 200;
-
-  (* HMAS Success *)
-  int ship12_eta    = 500;
-  int ship12_berths = 200;
 
 
 belief:
@@ -56,12 +33,6 @@ belief:
   int ship4_eta = uniform 0 1000;
   int ship5_eta = uniform 0 1000;
   int ship6_eta = uniform 0 1000;
-  int ship7_eta = uniform 0 1000;
-  int ship8_eta = uniform 0 1000;
-  int ship9_eta = uniform 0 1000;
-  int ship10_eta = uniform 0 1000;
-  int ship11_eta = uniform 0 1000;
-  int ship12_eta = uniform 0 1000;
 
   int ship1_berths = uniform 0 1000;
   int ship2_berths = uniform 0 1000;
@@ -69,12 +40,6 @@ belief:
   int ship4_berths = uniform 0 1000;
   int ship5_berths = uniform 0 1000;
   int ship6_berths = uniform 0 1000;
-  int ship7_berths = uniform 0 1000;
-  int ship8_berths = uniform 0 1000;
-  int ship9_berths = uniform 0 1000;
-  int ship10_berths = uniform 0 1000;
-  int ship11_berths = uniform 0 1000;
-  int ship12_berths = uniform 0 1000;
 
 querydef close_enough ship eta -> result :
   int ship_eta = 0;
@@ -95,24 +60,6 @@ querydef close_enough ship eta -> result :
   endif;
   if ship == 6 then
     ship_eta = ship6_eta;
-  endif;
-  if ship == 7 then
-    ship_eta = ship7_eta;
-  endif;
-  if ship == 8 then
-    ship_eta = ship8_eta;
-  endif;
-  if ship == 9 then
-    ship_eta = ship9_eta;
-  endif;
-  if ship == 10 then
-    ship_eta = ship10_eta;
-  endif;
-  if ship == 11 then
-    ship_eta = ship11_eta;
-  endif;
-  if ship == 12 then
-    ship_eta = ship12_eta;
   endif;
 
   int result = 0;
@@ -139,24 +86,6 @@ querydef enough_berths ship amount -> result :
   endif;
   if ship == 6 then
     ship_berths = ship6_berths
-  endif;
-  if ship == 7 then
-    ship_berths = ship7_berths
-  endif;
-  if ship == 8 then
-    ship_berths = ship8_berths
-  endif;
-  if ship == 9 then
-    ship_berths = ship9_berths
-  endif;
-  if ship == 10 then
-    ship_berths = ship10_berths
-  endif;
-  if ship == 11 then
-    ship_berths = ship11_berths
-  endif;
-  if ship == 12 then
-    ship_berths = ship12_berths
   endif;
 
   int result = 0;
@@ -191,30 +120,6 @@ querydef combined ship eta amount -> result :
     ship_eta = ship6_eta;
     ship_berths = ship6_berths
   endif;
-  if ship == 7 then
-    ship_eta = ship7_eta;
-    ship_berths = ship5_berths
-  endif;
-  if ship == 8 then
-    ship_eta = ship8_eta;
-    ship_berths = ship6_berths
-  endif;
-  if ship == 9 then
-    ship_eta = ship9_eta;
-    ship_berths = ship9_berths
-  endif;
-  if ship == 10 then
-    ship_eta = ship10_eta;
-    ship_berths = ship10_berths
-  endif;
-  if ship == 11 then
-    ship_eta = ship11_eta;
-    ship_berths = ship11_berths
-  endif;
-  if ship == 12 then
-    ship_eta = ship12_eta;
-    ship_berths = ship12_berths
-  endif;
 
   int available = 0;
   if ship_eta <= eta then
@@ -228,4 +133,97 @@ querydef combined ship eta amount -> result :
 
 query close_enough:
   int ship = 1;
-  int eta = 200;
+  int eta = 1000;
+
+query close_enough:
+  int ship = 2;
+  int eta = 1000;
+
+query close_enough:
+  int ship = 3;
+  int eta = 1000;
+
+query close_enough:
+  int ship = 4;
+  int eta = 1000;
+
+query close_enough:
+  int ship = 5;
+  int eta = 1000;
+
+query close_enough:
+  int ship = 6;
+  int eta = 1000;
+
+query enough_berths:
+  int ship = 1;
+  int amount = 500;
+
+query enough_berths:
+  int ship = 2;
+  int amount = 500;
+
+query enough_berths:
+  int ship = 3;
+  int amount = 500;
+
+query enough_berths:
+  int ship = 4;
+  int amount = 500;
+
+query enough_berths:
+  int ship = 5;
+  int amount = 500;
+
+query enough_berths:
+  int ship = 6;
+  int amount = 500;
+
+query enough_berths:
+  int ship = 1;
+  int amount = 250;
+
+query enough_berths:
+  int ship = 2;
+  int amount = 250;
+
+query enough_berths:
+  int ship = 3;
+  int amount = 250;
+
+query enough_berths:
+  int ship = 4;
+  int amount = 250;
+
+query enough_berths:
+  int ship = 5;
+  int amount = 250;
+
+query enough_berths:
+  int ship = 6;
+  int amount = 250;
+
+query enough_berths:
+  int ship = 1;
+  int amount = 125;
+
+query enough_berths:
+  int ship = 2;
+  int amount = 125;
+
+query enough_berths:
+  int ship = 3;
+  int amount = 125;
+
+query enough_berths:
+  int ship = 4;
+  int amount = 125;
+
+query enough_berths:
+  int ship = 5;
+  int amount = 125;
+
+query enough_berths:
+  int ship = 6;
+  int amount = 125;
+
