@@ -69,4 +69,9 @@ querydef combined ship eta amount -> result :
 
 query close_enough:
   int ship = 1;
-  int eta = 200;
+  int eta = 1000;
+
+query close_enough:
+  int ship = 2;
+  int eta = 1000;
+

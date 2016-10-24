@@ -97,11 +97,18 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
     | 0 -> false
     | _ -> raise (General_error "result should be a boolean")
 
+  let from_to i j =
+    let rec go acc m =
+      if m > j
+      then acc
+      else go (List.append acc [m]) (m + 1) in
+    go [] i
+
 
   let algo_separate meta_info =
     let t = !Cmd.alloc_eta in
     let mid (x,y) = (x + y) / 2 in
-    let ship_ids = [1;2;3;4;5;6;7] in
+    let ship_ids = from_to 1 !Cmd.alloc_ships in
     let check_solution bs = let sm = Util.list_sum (List.map fst bs) in
                             (* printf "sm: %d\n%!" sm; *)
                             sm >= !Cmd.alloc_berths in
@@ -160,7 +167,7 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
   let algo_combined meta_info =
     let t = !Cmd.alloc_eta in
     let mid (x,y) = (x + y) / 2 in
-    let ship_ids = [1;2;3;4;5;6;7] in
+    let ship_ids = from_to 1 !Cmd.alloc_ships in
     let check_solution bs = let sm = Util.list_sum (List.map fst bs) in
                             (* printf "sm: %d\n%!" sm; *)
                             sm >= !Cmd.alloc_berths in
@@ -249,6 +256,9 @@ let main () =
     ("--berths",
      Arg.Set_int Cmd.alloc_berths,
      "The desired number of berths");
+    ("--ships",
+     Arg.Set_int Cmd.alloc_ships,
+     "The desired number of ships");
     ("--debug",
      Arg.Set Cmd.opt_debug,
      "Set debugging output");

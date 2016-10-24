@@ -14,6 +14,7 @@ let opt_domain = ref 4
 let opt_count_bin = ref "count"
 let alloc_eta    = ref 0
 let alloc_berths = ref 0
+let alloc_ships = ref 7
 (* space saved for bench *)
 let opt_count_latte = ref false
 (* space saved for bench latte *)
