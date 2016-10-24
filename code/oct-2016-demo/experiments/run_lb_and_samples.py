@@ -1,10 +1,13 @@
 #!/usr/bin/python
 import os
 import re
+import sys
 from subprocess import check_output
 from decimal import *
 
-ret = []
+n = int(sys.argv[1])
+size = int(sys.argv[2])
+
 lb_pattern = re.compile("max-belief \(after improve lower bounds\): ([0-9]+)/([0-9]+)")
 sample_pattern = re.compile("max-belief \(post-sampling\): ([0-9]+)/([0-9]+)")
 
@@ -20,22 +23,22 @@ lb_den = Decimal(lex_lb.group(2))
 lb_val = lb_num / lb_den
 
 
-for num_samples in range(1, 41):
-    samp_num = num_samples * 250
+for i in range(1, n + 1):
+    num_samples = i * size
 
-    out_samples = check_output(["./prob", "--domain", "box", "--inline", "--samples", str(samp_num), "../oct-2016-demo/manhattan-pairwise-single.prob"])
+    out_samples = check_output(["./prob", "--domain", "box", "--inline", "--samples", str(num_samples), "../oct-2016-demo/manhattan-pairwise-single.prob"])
     lex_samples = sample_pattern.search(out_samples)
     samples_num = Decimal(lex_samples.group(1))
     samples_den = Decimal(lex_samples.group(2))
     samples_val = samples_num / samples_den
 
-    out_lb_samples = check_output(["./prob", "--domain", "box", "--inline", "--improve-lower-bounds", "100", "--samples", str(samp_num), "../oct-2016-demo/manhattan-pairwise-single.prob"])
+    out_lb_samples = check_output(["./prob", "--domain", "box", "--inline", "--improve-lower-bounds", "100", "--samples", str(num_samples), "../oct-2016-demo/manhattan-pairwise-single.prob"])
     lex_lb_samples = sample_pattern.search(out_lb_samples)
     lb_samples_num = Decimal(lex_lb_samples.group(1))
     lb_samples_den = Decimal(lex_lb_samples.group(2))
     lb_samples_val = lb_samples_num / lb_samples_den
 
-    print "%d,%.50f,%.50f,%.50f" % (samp_num, lb_val, samples_val, lb_samples_val)
+    print "%d,%.50f,%.50f,%.50f,%.50f" % (num_samples, 1, lb_val, samples_val, lb_samples_val)
 
     
 
