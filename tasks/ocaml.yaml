@@ -9,65 +9,91 @@
 #  args:
 #    creates: test.touch
 #  become: yes
-#  become_user: vagrant
+#  become_user: jmct
 #
 #- shell: echo $USER >> test.touch
 #  become: yes
-#  become_user: vagrant
+#  become_user: jmct
 
 
 - name: init OPAM
   become: yes
-  become_user: vagrant
+  become_user: jmct
   command: opam init -y
   args:
-    creates: /home/vagrant/.opam/
+    creates: /home/jmct/.opam/
 
 - name: update OPAM
   become: yes
-  become_user: vagrant
-  shell: opam update && touch /home/vagrant/.opam-updated
+  become_user: jmct
+  shell: opam update && touch /home/jmct/.opam-updated
   args:
-    creates: /home/vagrant/.opam-updated
+    creates: /home/jmct/.opam-updated
 
 
 - name: switch to OCaml 4.02.0
   become: yes
-  become_user: vagrant
+  become_user: jmct
   command: opam switch 4.02.0
   run_once: true
 
 - name: Install ocamlfind
   become: yes
-  become_user: vagrant
+  become_user: jmct
   command: opam install ocamlfind -y
 
 - name: Install camlp5
   become: yes
-  become_user: vagrant
+  become_user: jmct
   command: opam install camlp5=6.15 -y
 
 - name: Install ocaml GMP bindings
   become: yes
-  become_user: vagrant
+  become_user: jmct
   command: opam install mlgmp -y
 
 - name: Install ocaml GSL-bindings
   become: yes
-  become_user: vagrant
+  become_user: jmct
   command: opam install gsl -y
 
 - name: Install pareto
   become: yes
-  become_user: vagrant
+  become_user: jmct
   command: opam install pareto -y
+
+- name: Install Ocephes
+  become: yes
+  become_user: jmct
+  command: opam install ocephes -y
+
+- name: Install core_extended
+  become: yes
+  become_user: jmct
+  command: opam install core_extended -y
+
+- name: Install Async
+  become: yes
+  become_user: jmct
+  command: opam install async -y
+
+- name: Install cohttp
+  become: yes
+  become_user: jmct
+  command: opam install cohttp lwt -y
 
 - name: Install utop
   become: yes
-  become_user: vagrant
+  become_user: jmct
   command: opam install utop -y
 
+
+- name: Install yojson
+  become: yes
+  become_user: jmct
+  command: opam install yojson -y
+
 - name: Ensure OPAM env is set in bash profile
-  shell: sh -c 'echo "eval \`opam config env\`" >> /home/vagrant/.profile' && touch /home/vagrant/.opam-config-profile
+  shell: sh -c 'echo "eval \`opam config env\`" >> /home/jmct/.profile' && touch /home/jmct/.opam-config-profile
   args:
-    creates: /home/vagrant/.opam-config-profile
+    creates: /home/jmct/.opam-config-profile

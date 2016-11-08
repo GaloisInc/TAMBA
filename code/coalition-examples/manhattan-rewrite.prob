@@ -1,0 +1,92 @@
+secret: (* Ship in 2-dimensional space *)
+int ship1_loc_x = 51;
+int ship1_loc_y = 45;
+int ship1_berths = 200;
+
+
+int ship2_loc_x = 10;
+int ship2_loc_y = 10;
+int ship2_berths = 100;
+
+int ship3_loc_x = 50;
+int ship3_loc_y = 50;
+int ship3_berths = 300;
+
+belief:
+  int ship1_loc_x = uniform 0 100;
+  int ship1_loc_y = uniform 0 100;
+
+  int ship2_loc_x = uniform 0 100;
+  int ship2_loc_y = uniform 0 100;
+
+  int ship3_loc_x = uniform 0 100;
+  int ship3_loc_y = uniform 0 100;
+
+  int ship1_berths = uniform 0 1000;
+  int ship2_berths = uniform 0 1000;
+  int ship3_berths = uniform 0 1000;
+
+querydef close_enough ship loc_x loc_y dist -> result :
+  int ship_loc_x = 0;
+  int ship_loc_y = 0;
+  int ship_berths = 0;
+  if ship == 1 then
+    ship_loc_x = ship1_loc_x;
+    ship_loc_y = ship1_loc_y;
+    ship_berths = ship1_berths
+  endif;
+  if ship == 2 then
+    ship_loc_x = ship2_loc_x;
+    ship_loc_y = ship2_loc_y;
+    ship_berths = ship2_berths
+  endif;
+  if ship == 3 then
+    ship_loc_x = ship3_loc_x;
+    ship_loc_y = ship3_loc_y;
+    ship_berths = ship3_berths
+  endif;
+
+  int diff_x1 = loc_x - ship_loc_x;
+  int neg_diff_x1 = ship_loc_x - loc_x;
+  int diff_y1 = loc_y - ship_loc_y;
+  int neg_diff_y1 = ship_loc_y - loc_y;
+  
+  int result = 0;
+  if (diff_x1 + diff_y1 <= dist) and
+     (diff_x1 + neg_diff_y1 <= dist) and
+     (neg_diff_x1 + diff_y1 <= dist) and
+     (neg_diff_x1 + neg_diff_y1 <= dist) then
+    result = 1;
+  endif;
+
+querydef enough_berths ship berths_needed -> result :
+  int ship_loc_x = 0;
+  int ship_loc_y = 0;
+  int ship_berths = 0;
+  if ship == 1 then
+    ship_loc_x = ship1_loc_x;
+    ship_loc_y = ship1_loc_y;
+    ship_berths = ship1_berths
+  endif;
+  if ship == 2 then
+    ship_loc_x = ship2_loc_x;
+    ship_loc_y = ship2_loc_y;
+    ship_berths = ship2_berths
+  endif;
+  if ship == 3 then
+    ship_loc_x = ship3_loc_x;
+    ship_loc_y = ship3_loc_y;
+    ship_berths = ship3_berths
+  endif;
+
+  int result = 0;
+  if (ship_berths >= berths_needed) then
+    result = 1
+  endif;
+
+
+query close_enough:
+  int loc_x = 50;
+  int loc_y = 50;
+  int dist = 10;
+  int ship = 1;

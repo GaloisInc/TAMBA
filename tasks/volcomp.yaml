@@ -1,0 +1,27 @@
+---
+
+- name: Get volComp source archive
+  become: yes
+  become_user: vagrant
+  get_url: url=http://www.cs.umd.edu/~ins/volComp.tgz dest=/home/vagrant/volComp.tgz
+
+- name: Unarchive volComp source
+  become: yes
+  become_user: vagrant
+  unarchive: src=/home/vagrant/volComp.tgz dest=/home/vagrant/ copy=no
+  args:
+    creates: /home/vagrant/volComp/
+
+- name: make volComp
+  become: yes
+  become_user: vagrant
+  shell: make
+  args:
+    chdir: /home/vagrant/volComp/src-gmp
+    creates: /home/vagrant/volComp/src-gmp/volComp
+
+- name: Put volComp PATH
+  become: yes
+  shell: cp /home/vagrant/volComp/src-gmp/volComp /usr/bin/
+  args:
+    creates: /usr/bin/volComp

@@ -1,0 +1,45 @@
+secret:
+  int ship3_loc    = 380;
+  int ship3_berths = 300;
+
+belief:
+  int ship3_loc = uniform 0 1000;
+  int ship3_berths = uniform 0 1000;
+
+querydef close_enough ship dest -> result :
+  int result = 0;
+
+  if ship == 3 then
+    if (ship3_loc - dest <= 200) and (ship3_loc - dest >= -200) then
+      result = 1
+    endif;
+  endif;
+
+querydef enough_berths ship berths_needed -> result :
+  int result = 0;
+  if ship == 3 then
+    if ship3_berths >= berths_needed then
+      result = 1
+    endif;
+  endif;
+
+query close_enough:
+  int ship = 3;
+  int dest = 250;
+
+query enough_berths:
+  int ship = 3;
+  int berths_needed = 500;
+
+query enough_berths:
+  int ship = 3;
+  int berths_needed = 250;
+
+query enough_berths:
+  int ship = 3;
+  int berths_needed = 375;
+
+query enough_berths:
+  int ship = 3;
+  int berths_needed = 375;
+

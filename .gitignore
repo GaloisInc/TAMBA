@@ -1,8 +1,10 @@
+.vagrant/
 *.pdf
 *.swp
 qif/
 *.cmi
 *.cmo
+*.cmx
 *.hi
 *.o
 *.log

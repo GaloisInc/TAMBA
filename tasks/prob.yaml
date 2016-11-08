@@ -1,0 +1,16 @@
+---
+
+- name: Build prob
+  become: yes
+  become_user: jmct
+  shell: eval `opam config env`; make prob
+  args:
+    chdir: /home/jmct/tamba/code/prob
+    creates: /home/jmct/tamba/code/prob/prob
+
+- name: Install prob
+  become: yes
+  shell: cp ./prob /usr/local/bin/prob
+  args:
+    chdir: /home/jmct/tamba/code/prob
+    creates: /usr/local/bin/prob

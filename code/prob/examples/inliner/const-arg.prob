@@ -1,0 +1,27 @@
+secret:
+  int x = 290;
+
+belief:
+  int x = uniform 0 1000;
+
+querydef fun i j -> y :
+  int y = 0;
+  if i == 1 then
+    y = j + x;
+  endif;
+  if i == 2 then
+    y = 7;
+  endif;
+
+query fun:
+  int i = 1;
+  int j = 250;
+
+(* This program should propogate i and j to all occurences.
+   This will eliminate the two if statements, leaving us with only
+   the body of the first one since i == 1.
+
+   int y;
+   y = 250 + x;
+
+*)

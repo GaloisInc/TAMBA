@@ -8,14 +8,26 @@
 - name: install C++ compiler
   apt: name=g++ state=present
 
+- name: Install Valgrind
+  apt: name=valgrind state=present
+
 - name: install pkg-config
   apt: name=pkg-config state=present
+
+- name: install autoconf
+  apt: name=autoconf state=present
+
+- name: install libtool
+  apt: name=libtool state=present
 
 - name: install vim
   apt: name=vim state=present
 
-- name: install emacs
-  apt: name=emacs state=present
+- name: install Graphviz
+  apt: name=graphviz state=present
+
+- name: install Pip :'(
+  apt: name=python-pip state=present
 
 - name: install wget
   apt: name=wget state=present
@@ -30,3 +42,17 @@
   shell: ln -s /usr/lib/cdd-test/scdd_gmp /usr/bin/scdd_gmp
   args:
     creates: /usr/bin/scdd_gmp
+
+- name: install boost
+  apt: name=libboost-dev state=present
+
+- name: install boost program options
+  apt: name=libboost-program-options-dev state=present
+
+- name: install glpk
+  apt: name=libglpk-dev state=present
+
+- name: Install gprof2dot (for callgraphs from callgrind)
+  shell: pip install gprof2dot
+  args:
+    creates: /usr/local/bin/gprof2dot

@@ -1,0 +1,163 @@
+secret:
+  int ship1_loc    = 290;
+  int ship1_berths = 200;
+
+  int ship2_loc    = 300;
+  int ship2_berths = 100;
+
+  int ship3_loc    = 380;
+  int ship3_berths = 300;
+
+  int ship4_loc    = 100;
+  int ship4_berths = 200;
+
+  int ship5_loc    = 500;
+  int ship5_berths = 500
+
+belief:
+  int ship1_loc = uniform 0 1000;
+  int ship2_loc = uniform 0 1000;
+  int ship3_loc = uniform 0 1000;
+  int ship4_loc = uniform 0 1000;
+  int ship5_loc = uniform 0 1000;
+  int ship1_berths = uniform 0 1000;
+  int ship2_berths = uniform 0 1000;
+  int ship3_berths = uniform 0 1000;
+  int ship4_berths = uniform 0 1000;
+  int ship5_berths = uniform 0 1000;
+
+querydef close_enough ship dest -> result :
+  int ship_loc = 0;
+  int ship_berths = 0;
+  if ship == 1 then
+    ship_loc    = ship1_loc;
+    ship_berths = ship1_berths
+  endif;
+  if ship == 2 then
+    ship_loc = ship2_loc;
+    ship_berths = ship2_berths
+  endif;
+  if ship == 3 then
+    ship_loc = ship3_loc;
+    ship_berths = ship3_berths
+  endif;
+  if ship == 4 then
+    ship_loc = ship4_loc;
+    ship_berths = ship4_berths
+  endif;
+  if ship == 5 then
+    ship_loc = ship5_loc;
+    ship_berths = ship5_berths
+  endif;
+
+  int dest = ship_loc - dest;
+  if dest < 0 then
+    dest = -1 * dest
+  endif;
+
+  int result = 0;
+  if (dest <= 200) and (dest >= -200) then
+    result = 1
+  endif;
+
+querydef enough_berths ship berths_needed -> result :
+  int ship_loc = 0;
+  int ship_berths = 0;
+  if ship == 1 then
+    ship_loc    = ship1_loc;
+    ship_berths = ship1_berths
+  endif;
+  if ship == 2 then
+    ship_loc = ship2_loc;
+    ship_berths = ship2_berths
+  endif;
+  if ship == 3 then
+    ship_loc = ship3_loc;
+    ship_berths = ship3_berths
+  endif;
+  if ship == 4 then
+    ship_loc = ship4_loc;
+    ship_berths = ship4_berths
+  endif;
+  if ship == 5 then
+    ship_loc = ship5_loc;
+    ship_berths = ship5_berths
+  endif;
+
+  int dest = ship_loc - dest;
+  if dest < 0 then
+    dest = -1 * dest
+  endif;
+
+  int result = 0;
+  if (ship_berths >= berths_needed) then
+    result = 1
+  endif;
+
+query close_enough:
+  int ship = 1;
+  int dest = 250;
+
+query close_enough:
+  int ship = 2;
+  int dest = 250;
+
+query close_enough:
+  int ship = 3;
+  int dest = 250;
+
+query close_enough:
+  int ship = 4;
+  int dest = 250;
+
+query close_enough:
+  int ship = 5;
+  int dest = 250;
+
+query enough_berths:
+  int ship = 1;
+  int berths_needed = 500;
+
+query enough_berths:
+  int ship = 2;
+  int berths_needed = 500;
+
+query enough_berths:
+  int ship = 3;
+  int berths_needed = 500;
+
+query enough_berths:
+  int ship = 4;
+  int berths_needed = 500;
+
+query enough_berths:
+  int ship = 1;
+  int berths_needed = 250;
+
+query enough_berths:
+  int ship = 2;
+  int berths_needed = 250;
+
+query enough_berths:
+  int ship = 3;
+  int berths_needed = 250;
+
+query enough_berths:
+  int ship = 4;
+  int berths_needed = 250;
+
+query enough_berths:
+  int ship = 1;
+  int berths_needed = 125;
+
+query enough_berths:
+  int ship = 2;
+  int berths_needed = 125;
+
+query enough_berths:
+  int ship = 3;
+  int berths_needed = 375;
+
+query enough_berths:
+  int ship = 4;
+  int berths_needed = 125;

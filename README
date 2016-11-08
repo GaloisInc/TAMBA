@@ -25,6 +25,11 @@ Debian image and install the necessary software (including OCaml, PPL, LattE,
 etc.). Some things require building from source and therefore this initial
 provisioning can take quite a while (around 30 minutes on my machine).
 
+Part of running `vagrant up` is a provisioning step where vagrant uses ansible
+to install all of the necessary software on the VM. If anything fails during
+this step please email jmct@galois.com with as much log information as you have
+available.
+
 After the VM has been provisioned you'll be able to ssh into the VM using
 `vagrant ssh`. Once logged in you'll be in a standard Linux install with all of
 the necessary software for TAMBA. The VM will be sharing the root of this repo
@@ -41,6 +46,22 @@ reinstalling everything).
 Lastly, if we do change any part of the provisioning (for example, we switch to
 a newer version of OCaml) you just need to run `vagrant provision` and it will
 make the necessary changes without reinstalling anything it doesn't need to.
+
+What is where
+-------------
+
+The tool of interest to most people is the `prob` tool which is installed by
+default on the VM. The source for the tool can be found in this directory under
+`code/prob`, and from within the VM at `/vagrant/code/prob`.
+
+Proof of concept implementations of other metrics can be found in `code/MILGF`
+and `code/R`.
+
+`code/coalition-examples` has input queries for use with the `prob` tool based
+on the coalition CRT scenarios from the Brandeis project.
+
+The `computation` directory holds some `mathematica` notebooks that illustrate
+how one would analyze information leakage for simple SQL queries by hand.
 
 Repo Conventions
 ----------------

@@ -8,5 +8,8 @@
 - name: install GSL-dev
   apt: name=libgsl0-dev
 
+- name: install libFFI
+  apt: name=libffi-dev
+
 #- name: install PPL
 #  apt: name=ppl-dev state=present
