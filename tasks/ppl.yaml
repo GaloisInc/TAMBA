@@ -8,16 +8,16 @@
 
 - name: run configure for PPL lib
   become: yes
-  become_user: vagrant
-  shell: ./configure --enable-interfaces=ocaml --with-mlgmp=/home/vagrant/.opam/4.02.0/lib/gmp/ CFLAGS=-g
+  become_user: jmct
+  shell: ./configure --enable-interfaces=ocaml --with-mlgmp=/home/jmct/.opam/4.02.0/lib/gmp/ CFLAGS=-g
   args:
     chdir: /usr/share/ppl-1.1
     creates: /usr/share/ppl-1.1/Makefile
 
 - name: make PPL
   become: yes
-  become_user: vagrant
-  shell: eval `opam config env`; make
+  become_user: jmct
+  shell: bash -c 'eval `opam config env`; make'
   args:
     chdir: /usr/share/ppl-1.1
     creates: /usr/share/ppl-1.1/src/.libs/libppl.so

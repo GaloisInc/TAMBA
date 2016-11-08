@@ -171,7 +171,7 @@ module MAKE_PSYSTEM (ESYS: EVAL_SYSTEM) = struct
         policysystem_check_policies (count + 1) r distout distbelief distactual outputs
 
 
-  let policysystem_answer (ps: policysystem) (querytup: (string * (Lang.varid list * Lang.varid list * Lang.stmt))) (queryinput_stmt: Lang.stmt) :  policysystemresult =
+  let policysystem_answer (ps: policysystem) (querytup: (string * (Lang.varid list * Lang.varid list * Lang.stmt))) conc_res (queryinput_stmt: Lang.stmt) :  policysystemresult =
     (* todo: simplify some of this query preparation, factor out to someplace else, also done repeatedly in prob.ml *)
 
     ifverbose1 (
@@ -230,7 +230,7 @@ module MAKE_PSYSTEM (ESYS: EVAL_SYSTEM) = struct
                      else sa_querystmt in
 
     ifverbose1 (print_stmt sa_querystmt; printf "\n--------------\n");
-    ifverbose1 (print_stmt final_stmt; printf "\n--------------\n");
+    ifdebug (print_stmt final_stmt; printf "\n--------------\n");
 
     inputstate_full#merge ps.valcache;
 
@@ -258,6 +258,10 @@ module MAKE_PSYSTEM (ESYS: EVAL_SYSTEM) = struct
 
               (*
                let startrelent = ESYS.psrep_relative_entropy inputdist secretdist in *)
+
+    let _ = match conc_res with
+            | None   -> ()
+            | Some r -> outputstate#set ("", "result") r in
 
     let enddist =
       ESYS.psrep_on_vars

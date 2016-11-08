@@ -66,7 +66,7 @@ querydef close_enough ship time -> result :
     result = 1
   endif;
 
-querydef enough_berths ship berths_needed -> result :
+querydef enough_berths ship amount -> result :
   int ship_berths = 0;
   if ship == 1 then
     ship_berths = ship1_berths
@@ -88,11 +88,11 @@ querydef enough_berths ship berths_needed -> result :
   endif;
 
   int result = 0;
-  if (ship_berths >= berths_needed) then
+  if (ship_berths >= amount) then
     result = 1
   endif;
 
-querydef combined ship time berths_needed -> result :
+querydef combined ship eta amount -> result :
   int ship_eta = 0;
   int ship_berths = 0;
   if ship == 1 then
@@ -121,81 +121,81 @@ querydef combined ship time berths_needed -> result :
   endif;
 
   int available = 0;
-  if ship_eta <= time then
+  if ship_eta <= eta then
     available = 1
   endif;
 
   int result = 0;
-  if (ship_berths >= berths_needed) and (available == 1) then
+  if (ship_berths >= amount) and (available == 1) then
     result = 1
   endif;
 
 query combined:
   int ship = 1;
-  int time = 200;
-  int berths_needed = 500;
+  int eta = 200;
+  int amount = 500;
 
 query combined:
   int ship = 2;
-  int time = 200;
-  int berths_needed = 500;
+  int eta = 200;
+  int amount = 500;
 
 query combined:
   int ship = 3;
-  int time = 200;
-  int berths_needed = 500;
+  int eta = 200;
+  int amount = 500;
 
 query combined:
   int ship = 4;
-  int time = 200;
-  int berths_needed = 500;
+  int eta = 200;
+  int amount = 500;
 
 query combined:
   int ship = 5;
-  int time = 200;
-  int berths_needed = 500;
+  int eta = 200;
+  int amount = 500;
 
 query combined:
   int ship = 1;
-  int time = 200;
-  int berths_needed = 250;
+  int eta = 200;
+  int amount = 250;
 
 query combined:
   int ship = 2;
-  int time = 200;
-  int berths_needed = 250;
+  int eta = 200;
+  int amount = 250;
 
 query combined:
   int ship = 3;
-  int time = 200;
-  int berths_needed = 250;
+  int eta = 200;
+  int amount = 250;
 
 query combined:
   int ship = 4;
-  int time = 200;
-  int berths_needed = 250;
+  int eta = 200;
+  int amount = 250;
 
 query combined:
   int ship = 5;
-  int time = 200;
-  int berths_needed = 250;
+  int eta = 200;
+  int amount = 250;
 
 query combined:
   int ship = 1;
-  int time = 200;
-  int berths_needed = 125;
+  int eta = 200;
+  int amount = 125;
 
 query combined:
   int ship = 2;
-  int time = 200;
-  int berths_needed = 125;
+  int eta = 200;
+  int amount = 125;
 
 query combined:
   int ship = 3;
-  int time = 200;
-  int berths_needed = 375;
+  int eta = 200;
+  int amount = 375;
 
 query combined:
   int ship = 4;
-  int time = 200;
-  int berths_needed = 125;
+  int eta = 200;
+  int amount = 125;

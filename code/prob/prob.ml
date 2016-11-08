@@ -31,7 +31,7 @@ let add_policy_records aexp =
     aexp.policies;;
 
 module type EXP_SYSTEM = sig
-  val run: Core.Std.Unix.File_descr.t option -> Pdefs.tpmocksetup -> unit
+  val run: (Core.Std.Unix.File_descr.t * Core.Std.Unix.File_descr.t) option -> Pdefs.tpmocksetup -> unit
 end;;
 
 module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
@@ -119,7 +119,7 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
         printf "sample_true = %d\nsample_false = %d\n" y n
       )
 
-  let common_run (queryname, querystmt) querydefs ps_in =
+  let common_run (queryname, querystmt) conc_res querydefs ps_in =
         ifbench Globals.start_timer Globals.timer_query;
 
         let ps = ps_in in
@@ -170,7 +170,7 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
           (printf "\nquery (single assignment):\n"; print_stmt progstmt; printf "\n");
 
 
-        let ans = PSYS.policysystem_answer ps (queryname, querytuple) querystmt in
+        let ans = PSYS.policysystem_answer ps (queryname, querytuple) conc_res querystmt in
         let res = ans.PSYS.result in
         let ps = PSYS.policysystem_answered ps ans.PSYS.update in
 
@@ -200,7 +200,7 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
     | [] -> ps_in
     | (queryname, querystmt) :: t ->
         printf "\n--- Query #%d ------------------\n" count;
-        let ps_out = common_run (queryname, querystmt) querydefs ps_in in
+        let ps_out = common_run (queryname, querystmt) None querydefs ps_in in
         pmock_queries (count + 1) t querydefs ps_out
 
   (* Lower Bound additions <begin> *)
@@ -281,21 +281,82 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
 
   let prob_line = Core_extended.Readline.input_line ~prompt:"prob >> "
 
-  let test_pipe r_opt str =
-    match r_opt with
-      | None -> ()
-      | Some r ->
-        if str = "read_pipe"
-        then let buff = Core_string.create 100 in
-             Core.Std.Unix.read r buff;
-             printf "%s" (Core_string.to_string buff)
+  let manage_models qn model ps_ins ps_orig =
+      let ps_ins2 = List.remove_assoc model ps_ins in
+      let exists = List.mem_assoc model ps_ins in
+      match qn with
+      | "init_model"   -> let ps_outs = (model, ps_orig) :: ps_ins2 in
+                          let msg = if exists
+                                    then "model reinitialized\n"
+                                    else "model initialized\n" in
+                          (msg, ps_outs)
+      | "delete_model" -> let ps_outs = ps_ins2 in
+                          let msg = if exists
+                                    then "Model deleted.\n"
+                                    else "Model does not exist.\n" in
+                          (msg, ps_outs)
 
-  let interpreter reader_opt count querydefs ps_orig =
+  let manage_query querydefs ps_ins ps_orig (qn, ins, model, res) =
+      let (inlist, outlist, progstmt) = try List.assoc qn querydefs
+                                        with e -> raise (General_error qn) in
+      ifdebug (printf "inlist: %s\n%!" (varid_list_to_string inlist));
+
+      (* We get the actual model under test from our assoc list (ps_in)
+       * and then create a list that does not have it as a member (ps_ins2)
+       *
+       * The reason we do that latter now is because we are a bit memory
+       * constrained and we want to be able to garbage collect the old one
+       * ASAP as we are a analysing the query.
+       *)
+      let ps_in  = try List.assoc model ps_ins
+                   with e -> raise (General_error ("model number " ^
+                                                   (string_of_int model) ^
+                                                   " not in ps_ins." ^
+                                                   " This should not happen\n")) in
+      let ps_ins2 = List.remove_assoc model ps_ins in
+
+      (* Here we create the preamble for the concrete execution and then run
+       * the analysis *)
+      let ins2 = List.map (fun (n,x) -> (n, Some x)) ins in
+      let ps_out = let qstmt = make_int_assignments ins2 in
+                   common_run (qn, qstmt) res querydefs ps_in in
+      ifdebug (printf "Query has been run\n%!");
+
+      (* Once we've run the analysis we produce our response string and
+       * package up the new assoc list of models *)
+      let rev_belief = ESYS.psrep_max_belief ps_out.belief in
+      (* lg (U/V) == lg U - lg V *)
+      let cuma_leakage = lg (Gmp.Q.to_float rev_belief) -. lg (!Globals.init_max_belief) in
+      let msg = string_of_float cuma_leakage ^ "\n" in
+
+      let ps_outs = (model, ps_out) :: ps_ins2 in
+      (msg, ps_outs)
+
+  let server (p_read, p_write) querydefs ps_orig =
+      let query_names = List.map (fun (qname, _) -> printf "qname: %s\n%!" qname; qname) querydefs in
+      let rec server_loop ps_ins =
+          ifdebug (printf "Top of server_loop\n%!");
+          let cmd = Pervasives.input_line p_read in
+          ifdebug (printf "The command: %s\n" cmd);
+          let cmd_info = Json.parse_query_json cmd in
+          let (qn, ins, model, res) = cmd_info in
+          let (msg, ps_outs) = if qn = "init_model" || qn = "delete_model"
+                               then manage_models qn model ps_ins ps_orig
+                               else manage_query querydefs ps_ins ps_orig cmd_info in
+          output_string p_write msg;
+          ifdebug (printf "%s has been written to p_write\n%!" msg);
+          flush p_write;
+          ifdebug (printf "p_write has been flushed\n%!");
+          server_loop ps_outs
+      in
+      server_loop []
+
+  let interpreter count querydefs ps_orig =
       let query_names = List.map (fun (qname, _) -> qname) querydefs in
       let rec interpreter_loop count user_in ps_in =
           match user_in with
             | None -> printf "We're done.\n"; ps_in
-            | Some str -> test_pipe reader_opt str;
+            | Some str ->
                 if not (List.mem str query_names)
                 then (printf "%s is not a valid query.\n" str;
                      printf "Queries Available: \n\n";
@@ -307,7 +368,7 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
                                   (* TODO: Print out which inputs failed (snd of the tuple will be None) *)
                                   then (printf "Input(s) are not valid\n"; ps_in)
                                   else (let qstmt = make_int_assignments ins in
-                                        common_run (str, qstmt) querydefs) ps_in in
+                                        common_run (str, qstmt) None querydefs) ps_in in
                      interpreter_loop (count + 1)
                                  (prob_line ())
                                  ps_out)
@@ -317,7 +378,7 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
       let user_in = prob_line () in
       interpreter_loop 0 user_in ps_orig
 
-  let run reader_opt asetup =
+  let run pipe_opt asetup =
     ifverbose1 (printf "Binary for counting: %s\n%!" !Cmd.opt_count_bin;);
 
     Printexc.record_backtrace true;
@@ -365,9 +426,16 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
 
           ifdebug (printf "\n\nBefore pmock_queries\n\n");
 
-          let base_final_dist = if !Cmd.opt_interactive
-                                then interpreter reader_opt 1 querydefs ps
-                                else pmock_queries 1 queries querydefs ps in
+          let base_final_dist =
+                if !Cmd.opt_interactive
+                then interpreter 1 querydefs ps
+                else if !Cmd.opt_server
+                then (match pipe_opt with
+                      | None       -> raise (General_error "server failed to allocate pipes")
+                      | Some (r,w) -> let r_chan = in_channel_of_descr r in
+                                      let w_chan = out_channel_of_descr w in
+                                      server (r_chan, w_chan) querydefs ps)
+                else pmock_queries 1 queries querydefs ps in
 
           (* Lower Bound work <begin> *)
           (if !Cmd.opt_improve_lower_bounds > 0 then
@@ -425,7 +493,8 @@ let main () =
      Arg.Set Cmd.opt_dsa,
      "convert to dynamic single assignment");
     ("--server",
-     Arg.Int (fun i -> Cmd.opt_server_port := i; Cmd.opt_server := true),
+     Arg.Int (fun i -> Cmd.opt_server_port := i;
+                       Cmd.opt_server := true),
      "run TAMBA web service (TM) on specified port");
     ("--precision",
      Arg.Set_int Cmd.opt_precision,
@@ -503,7 +572,7 @@ let main () =
 
   try
 
-    let prob reader_opt () =
+    let prob pipe_opt () =
       (* note to self: why is this called pmock? What is pmock? *)
       let policy = parse !Cmd.input_file Parser.pmock in
 
@@ -524,7 +593,7 @@ let main () =
 
       ifdebug(printf "\n\nBefore evaluation\n\n");
 
-      Runner.run reader_opt policy;
+      Runner.run pipe_opt policy;
 
       ifdebug(printf "\n\nAfter evaluation\n\n";
               printf "maximum complexity encountered = %d\n" !Globals.max_complexity;
@@ -533,10 +602,17 @@ let main () =
 
 
     if !Cmd.opt_server
-    then let (r,w) = pipe () in
+    then let (prob_r, server_w) = pipe () in
+         let (server_r, prob_w) = pipe () in
          match fork () with
-           | `In_the_parent pid -> Server.start_server pid !Cmd.opt_server_port w ();
-           | `In_the_child -> prob (Some r) ();
+           | `In_the_parent pid -> close prob_r;
+                                   close prob_w;
+                                   Server.start_server pid
+                                                       !Cmd.opt_server_port
+                                                       (server_r, server_w) ();
+           | `In_the_child -> close server_w;
+                              close server_r;
+                              prob (Some (prob_r, prob_w)) ();
     else prob None ();
 
   with
