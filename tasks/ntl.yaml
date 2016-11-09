@@ -8,7 +8,7 @@
 
 - name: run configure for NTL lib
   become: yes
-  become_user: jmct
+  become_user: "{{ user_name }}"
   shell: ./configure NTL_GMP_LIP=on
   args:
     chdir: /usr/share/ntl-9.10.0/src

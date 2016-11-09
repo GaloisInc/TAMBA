@@ -1,0 +1,8 @@
+---
+
+- name: Define desired username
+  set_fact:
+    user_name: vagrant
+- name: Define desired build location for prob
+  set_fact:
+    build_dir: /vagrant/code/prob

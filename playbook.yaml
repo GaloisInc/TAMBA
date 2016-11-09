@@ -4,6 +4,7 @@
   tasks:
     - name: update apt cache
       apt: update_cache=yes
+    - include: tasks/user.yaml
     - include: tasks/system.yaml
     - include: tasks/c.yaml
     - include: tasks/haskell.yaml
