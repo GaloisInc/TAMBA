@@ -123,8 +123,6 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
       let secretvars = Lang.all_vars beliefstmt in
 
       let sa_beliefstmt = (sa_of_stmt beliefstmt [] secretvars) in
-      let sa_beliefstmt = (if !Globals.use_dsa then sa_beliefstmt else beliefstmt) in
-      (*let sa_beliefstmt = beliefstmt in*)
 
       let startdist = ESYS.peval_start sa_beliefstmt in
 
