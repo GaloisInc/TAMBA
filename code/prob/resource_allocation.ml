@@ -244,8 +244,8 @@ let main () =
      Arg.String (fun s ->
                    let cwd = getcwd () in
                    printf "working dir: %s\n" cwd;
-                   let sep_file = open_out (s ^ "-1.prob") in
-                   let com_file = open_out (s ^ "-2.prob") in
+                   let sep_file = open_out ("../../" ^ s ^ "-1.prob") in
+                   let com_file = open_out ("../../" ^ s ^ "-2.prob") in
                    Globals.alloc_sep_out := Some sep_file;
                    Globals.alloc_com_out := Some com_file;
                 ),
