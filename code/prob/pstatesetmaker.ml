@@ -553,6 +553,7 @@ module MakePStateset(* create pstateset from a stateset *)
                                 in eval
                              ) es in
         let (yes,no) = SS.sample_region pset.ss n evals in
+        let (yes,no) = (pset.est.numy + yes, pset.est.numn + no) in
         let (myalpha, mybeta) = (float_of_int (yes + 1), float_of_int (no + 1)) in
         let sizes = Z.to_float (SS.stateset_size pset.ss) in
         (* printf "\nsize of stateset: %f\n" sizes; *)

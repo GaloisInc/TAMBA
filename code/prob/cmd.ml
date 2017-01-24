@@ -1,4 +1,5 @@
 open Util
+open Gmp
 
 (* options *)
 let opt_latte_minmax = ref false
@@ -8,6 +9,8 @@ let opt_precision = ref 0
 let opt_server = ref false
 let opt_server_port = ref 8080
 let opt_samples = ref 0
+let opt_max_belief = ref Q.zero
+let opt_mb_level = ref (Q.from_zs (Z.from_int 8) (Z.from_int 10))
 let opt_blackbox = ref false
 let opt_split_factor = ref 1
 let opt_domain = ref 4

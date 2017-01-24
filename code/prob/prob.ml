@@ -117,7 +117,25 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
         printf "mmin = %f\n" mmi;
         printf "mmax = %f\n" mma;
         printf "sample_true = %d\nsample_false = %d\n" y n
-      )
+        )
+
+  let maxbelief_final queries querydefs ps =
+    let enddist = ps.PSYS.belief in
+    let trips = List.map (make_trip querydefs ps) queries in
+    let rec maxbelief_final' samples_so_far ps_so_far =
+      let mb_so_far = ESYS.psrep_max_belief ps_so_far in
+      let (y, n) = ESYS.get_alpha_beta ps_so_far in
+      printf "%d %s\n" samples_so_far (Q.to_string mb_so_far);
+      flush Pervasives.stdout;
+      if Q.cmp (Q.div !Cmd.opt_max_belief mb_so_far) !Cmd.opt_mb_level < 0 then (* (optimal mb / so far mb) < desired prec. *)
+        let ps_so_far = ESYS.psrep_sample ps_so_far !Cmd.opt_samples trips in
+        maxbelief_final' (samples_so_far + !Cmd.opt_samples) ps_so_far
+      else
+        (printf "Needed %d samples to reach a precision of %s on max-belief\n" samples_so_far (Q.to_string !Cmd.opt_mb_level);
+        (samples_so_far, ps_so_far))
+    in
+    let _ = maxbelief_final' 0 enddist in
+    ()
 
   let common_run (queryname, querystmt) conc_res querydefs ps_in =
         ifbench Globals.start_timer Globals.timer_query;
@@ -466,7 +484,10 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
 
           if !Cmd.opt_count_latte
           then printf "Number of calls to LattE: %d\n" !Globals.latte_count;
-          sample_final queries querydefs improved_final_dist
+          if Q.is_zero !Cmd.opt_max_belief then
+            sample_final queries querydefs improved_final_dist
+          else
+            maxbelief_final queries querydefs improved_final_dist
   (*with
       | e ->
           printf "%s\n" (Printexc.to_string e);
@@ -505,6 +526,10 @@ let main () =
     ("--samples",
      Arg.Set_int Cmd.opt_samples,
      "set the number of samples to use");
+    ("--max-belief",
+     Arg.String (fun s ->
+         Cmd.opt_max_belief := Util.of_string_Q s),
+     "specify an optimal max-belief, if this option is set then the arg to --samples will be assumed to be an increment amount");
     ("--blackbox",
      Arg.Set Cmd.opt_blackbox,
      "reset the belief to uniform between each query");
