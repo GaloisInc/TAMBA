@@ -188,7 +188,9 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
                 berths.(n) <- (ask, snd (berths.(n)))
             else (* negative result improves upper bound *)
                 berths.(n) <- (fst (berths.(n)), ask));
-           bounds_loop (n+1) in
+           (if check_solution (Array.to_list berths)
+            then ()
+            else bounds_loop (n+1)) in
 
     let rec solve_loop () = 
       let () = bounds_loop 0 in
