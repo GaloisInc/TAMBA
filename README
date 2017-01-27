@@ -17,6 +17,7 @@ First there are a few dependencies:
 Once you have those installed, it should just be a simple matter of running
 `vagrant up` from the root of this repository.
 
+
 Using Vagrant
 -------------
 
