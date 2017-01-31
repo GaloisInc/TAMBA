@@ -1,0 +1,190 @@
+secret:
+  (* BRP Quezon *)
+  int ship1_x      = 80;
+  int ship1_y      = 100;
+  int ship1_berths = 500;
+
+  (* BRP Rizal *)
+  int ship2_x      = 90;
+  int ship2_y      = 100;
+  int ship2_berths = 500;
+
+  (* USNS Mercy *)
+  int ship3_x      = 110;
+  int ship3_y      = 100;
+  int ship3_berths = 500;
+
+  (* USNS Comfort *)
+  int ship4_x      = 120;
+  int ship4_y      = 100;
+  int ship4_berths = 500;
+
+  (* KRI Dr Shoeharso *)
+  int ship5_x      = 100;
+  int ship5_y      = 80;
+  int ship5_berths = 500;
+
+belief:
+  int ship1_x = uniform 0 1000;
+  int ship1_y = uniform 0 1000;
+
+  int ship2_x = uniform 0 1000;
+  int ship2_y = uniform 0 1000;
+
+  int ship3_x = uniform 0 1000;
+  int ship3_y = uniform 0 1000;
+
+  int ship4_x = uniform 0 1000;
+  int ship4_y = uniform 0 1000;
+
+  int ship5_x = uniform 0 1000;
+  int ship5_y = uniform 0 1000;
+
+  int ship1_berths = uniform 0 1000;
+  int ship2_berths = uniform 0 1000;
+  int ship3_berths = uniform 0 1000;
+  int ship4_berths = uniform 0 1000;
+  int ship5_berths = uniform 0 1000;
+
+querydef close_enough ship eta -> result :
+  int ship_x = 0;
+  int ship_y = 0;
+
+  if ship == 1 then
+    ship_x = ship1_x;
+    ship_y = ship1_y;
+  endif;
+  if ship == 2 then
+    ship_x = ship2_x;
+    ship_y = ship2_y;
+  endif;
+  if ship == 3 then
+    ship_x = ship3_x;
+    ship_y = ship3_y;
+  endif;
+  if ship == 4 then
+    ship_x = ship4_x;
+    ship_y = ship4_y;
+  endif;
+  if ship == 5 then
+    ship_x = ship5_x;
+    ship_y = ship5_y;
+  endif;
+      
+  int island_x = 100;
+  int island_y = 100;
+
+  int diff_x = ship_x - island_x;
+  int diff_y = ship_y - island_y;
+
+  (* Take absolute value of diff_x *)
+  int diff_x_abs = 0;
+  if diff_x < 0 then
+    diff_x_abs = diff_x * -1;
+  endif;
+  if diff_x >= 0 then
+    diff_x_abs = diff_x;
+  endif;
+
+  (* Take absolute value of diff_y *)
+  int diff_y_abs = 0;
+  if diff_y < 0 then
+    diff_y_abs = diff_y * -1;
+  endif;
+  if diff_y >= 0 then
+    diff_y_abs = diff_y;
+  endif;
+
+  int result = 0;
+  if ((diff_x_abs + diff_y_abs) <= eta) then
+    result = 1;
+  endif;
+
+querydef enough_berths ship amount -> result :
+  int ship_berths = 0;
+  
+  if ship == 1 then
+    ship_berths = ship1_berths;
+  endif;
+  if ship == 2 then
+    ship_berths = ship2_berths;
+  endif;
+  if ship == 3 then
+    ship_berths = ship3_berths;
+  endif;
+  if ship == 4 then
+    ship_berths = ship4_berths;
+  endif;
+  if ship == 5 then
+    ship_berths = ship5_berths;
+  endif;
+      
+  int result = 0;
+  if (ship_berths >= amount) then
+    result = 1;
+  endif;
+
+querydef combined ship eta amount -> result :
+  int ship_x = 0;
+  int ship_y = 0;
+  int ship_berths = 0;
+
+  if ship == 1 then
+    ship_x = ship1_x;
+    ship_y = ship1_y;
+    ship_berths = ship1_berths;
+  endif;
+  if ship == 2 then
+    ship_x = ship2_x;
+    ship_y = ship2_y;
+    ship_berths = ship2_berths;
+  endif;
+  if ship == 3 then
+    ship_x = ship3_x;
+    ship_y = ship3_y;
+    ship_berths = ship3_berths;
+  endif;
+  if ship == 4 then
+    ship_x = ship4_x;
+    ship_y = ship4_y;
+    ship_berths = ship4_berths;
+  endif;
+  if ship == 5 then
+    ship_x = ship5_x;
+    ship_y = ship5_y;
+    ship_berths = ship5_berths;
+  endif;
+      
+  int island_x = 100;
+  int island_y = 100;
+
+  int diff_x = ship_x - island_x;
+  int diff_y = ship_y - island_y;
+
+  (* Take absolute value of diff_x *)
+  int diff_x_abs = 0;
+  if diff_x < 0 then
+    diff_x_abs = diff_x * -1;
+  endif;
+  if diff_x >= 0 then
+    diff_x_abs = diff_x;
+  endif;
+
+  (* Take absolute value of diff_y *)
+  int diff_y_abs = 0;
+  if diff_y < 0 then
+    diff_y_abs = diff_y * -1;
+  endif;
+  if diff_y >= 0 then
+    diff_y_abs = diff_y;
+  endif;
+
+  int result = 0;
+  if ((diff_x_abs + diff_y_abs) <= eta and ship_berths >= amount) then
+    result = 1;
+  endif;
+
+query combined:
+  int ship = 1;
+  int eta  = 30;
+  int amount = 500;
