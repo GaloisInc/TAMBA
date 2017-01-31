@@ -471,7 +471,29 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
                                  base_final_dist.PSYS.valcache
                                  !Cmd.opt_improve_lower_bounds
                                  base_final_dist.PSYS.belief in
-              { base_final_dist with belief = belief_new }
+              let ret = { base_final_dist with belief = belief_new } in
+
+              let (y,n) = ESYS.get_alpha_beta ret.belief in
+              let size_z = Z.to_float (ESYS.psrep_size ret.belief) in
+              let (pmi, pma) = let (i, a) = ESYS.psrep_pmin_pmax ret.belief
+                               in (Q.float_from i, Q.float_from a) in
+              let (smi, sma) = ESYS.psrep_smin_smax ret.belief in
+              let (mmi, mma) = let (i, a) = ESYS.psrep_mmin_mmax ret.belief
+                               in (Q.float_from i, Q.float_from a) in
+
+              ifverbose1 (
+                printf "\n\nsize_z = %f\n" size_z;
+                printf "pmin = %f\n" pmi;
+                printf "pmax = %f\n" pma;
+                printf "smin = %s\n" (Z.string_from smi);
+                printf "smax = %s\n" (Z.string_from sma);
+                printf "mmin = %f\n" mmi;
+                printf "mmax = %f\n" mma;
+                printf "sample_true = %d\nsample_false = %d\n" y n
+              );
+
+              ret
+             
             else
               base_final_dist in
           (if !Cmd.opt_improve_lower_bounds > 0 then
