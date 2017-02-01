@@ -546,6 +546,10 @@ module MakePStateset(* create pstateset from a stateset *)
                                              let ret = List.for_all (fun (vid, d_res) ->
                                                                state2#get vid = d_res)
                                                                     expected in
+
+
+
+
                                              if not_in_underapprox then
                                                Some (ret)
                                              else
@@ -588,8 +592,8 @@ module MakePStateset(* create pstateset from a stateset *)
         let pset_new = {
             pset with est = {
                       pset.est with
-                                    mmin = if pset.est.mmin < mmin_cand then mmin_cand else pset.est.mmin; (* raise lower bound *)
-                                    mmax = if mmax_cand < pset.est.mmax then mmax_cand else pset.est.mmax; (* lower upper bound *)
+                                    mmin = if pset.est.mmin </ mmin_cand then mmin_cand else pset.est.mmin; (* raise lower bound *)
+                                    mmax = if mmax_cand </ pset.est.mmax then mmax_cand else pset.est.mmax; (* lower upper bound *)
                                     smin = smin_best;
                                     smax = smax_best;
                                     numn = no;

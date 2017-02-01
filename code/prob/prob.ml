@@ -83,11 +83,9 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
       printf "\n";
       let size_z = Z.to_float (ESYS.psrep_size enddist2) in
 
-      let (pmi, pma) = let (i, a) = ESYS.psrep_pmin_pmax enddist2
-                       in (Q.float_from i, Q.float_from a) in
+      let (pmi, pma) = ESYS.psrep_pmin_pmax enddist2 in
       let (smi, sma) = ESYS.psrep_smin_smax enddist2 in
-      let (mmi, mma) = let (i, a) = ESYS.psrep_mmin_mmax enddist2
-                       in (Q.float_from i, Q.float_from a) in
+      let (mmi, mma) = ESYS.psrep_mmin_mmax enddist2 in
 
 
       (* The following code is using GSL via Pareto, and sometimes
@@ -110,12 +108,12 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
       (* Output to be processed by bench.hs *)
       ifverbose1 (
         printf "\n\nsize_z = %f\n" size_z;
-        printf "pmin = %f\n" pmi;
-        printf "pmax = %f\n" pma;
+        printf "pmin = %s\n" (Q.to_string pmi);
+        printf "pmax = %s\n" (Q.to_string pma);
         printf "smin = %s\n" (Z.string_from smi);
         printf "smax = %s\n" (Z.string_from sma);
-        printf "mmin = %f\n" mmi;
-        printf "mmax = %f\n" mma;
+        printf "mmin = %s\n" (Q.to_string mmi);
+        printf "mmax = %s\n" (Q.to_string mma);
         printf "sample_true = %d\nsample_false = %d\n" y n
         )
 
