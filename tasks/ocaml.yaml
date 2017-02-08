@@ -52,6 +52,12 @@
   become_user: "{{ user_name }}"
   command: opam install mlgmp -y
 
+- name: Pin ocaml GSL-bindings
+  become: yes
+  become_user: "{{ user_name }}"
+  command: opam pin add gsl 1.19.1 -y
+
+
 - name: Install ocaml GSL-bindings
   become: yes
   become_user: "{{ user_name }}"
