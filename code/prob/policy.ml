@@ -263,11 +263,14 @@ module MAKE_PSYSTEM (ESYS: EVAL_SYSTEM) = struct
             | None   -> ()
             | Some r -> outputstate#set ("", "result") r in
 
-    let enddist =
-      ESYS.psrep_on_vars
-        (ESYS.psrep_given_state outputdist outputstate)
-        secretvars in
+    let enddist1 = ESYS.psrep_given_state outputdist outputstate in
 
+    ifverbose1 (
+        printf "\nafter intersect:\n"; ESYS.print_psrep enddist1
+      );
+
+    let enddist = ESYS.psrep_on_vars enddist1 secretvars in
+    
     let ps_updater = {newbelief = enddist} in
 
     (* let ps_updater = {newbelief = outputdist} in *)
