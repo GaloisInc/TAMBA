@@ -2,79 +2,86 @@
 import os
 import re
 import sys
+import copy
+import time
 from subprocess import check_output
 from decimal import *
 
+normal_pattern = re.compile("Revised max-belief: ([0-9]+)/([0-9]+)")
 lb_pattern = re.compile("max-belief \(after improve lower bounds\): ([0-9]+)/([0-9]+)")
 sample_pattern = re.compile("max-belief \(post-sampling\): ([0-9]+)/([0-9]+)")
 
-def run_lb(samp, prog):
-    out_lb = check_output(["./prob",
-                           "--domain", "box",
-                           "--inline",
-                           "--improve-lower-bounds", str(samp),
-                           program])
+complexity_limit = int(sys.argv[1])
+precision_limit = int(sys.argv[2])
+sample_limit = int(sys.argv[3])
+sample_increment = int(sys.argv[4])
+program_prefix = sys.argv[5]
 
-    lex_lb = lb_pattern.search(out_lb)
-
-    if lex_lb is None:
-        return Decimal(1)
-
-    lb_num = Decimal(lex_lb.group(1))
-    lb_den = Decimal(lex_lb.group(2))
-    return lb_num / lb_den
-
-def run_samp(samp, prog):
-    out_samp = check_output(["./prob",
-                             "--domain", "box",
-                             "--inline",
-                             "--samples", str(samp),
-                             program])
-
-    lex_samp = sample_pattern.search(out_samp)
-
-    if lex_samp is None:
-        return Decimal(1)
-
-    samp_num = Decimal(lex_samp.group(1))
-    samp_den = Decimal(lex_samp.group(2))
-    return samp_num / samp_den
-
-def run_both(samp_lb, samp_samp, prog):
-    out_both = check_output(["./prob",
-                             "--domain", "box",
-                             "--inline",
-                             "--improve-lower-bounds", str(samp_lb),
-                             "--samples", str(samp_samp),
-                             program])
-
-    lex_both = sample_pattern.search(out_both)
-
-    if lex_both is None:
-        return Decimal(1)
-
-    both_num = Decimal(lex_both.group(1))
-    both_den = Decimal(lex_both.group(2))
-    return both_num / both_den
-
-n = int(sys.argv[1])
-size = int(sys.argv[2])
-program = sys.argv[3]
-
-print "num_samples,mb_lb,mb_sampling,mb_lb_sampling"
+print "analysis,complexity,precision,samples,time,max_belief"
 
 os.chdir("../prob")
 
-# lower bound
-lb_val = run_lb(n * size, program)
+for a in ["Box", "Concolic", "Sampling", "Both"]:
+    for c in range(1, complexity_limit + 1):
+        for p in range(0, precision_limit + 1):
+            p_scaled = 2**p
 
-for i in range(1, n + 1):
-    num_samples = i * size
+            args = ["./prob", "--inline"]
 
-    samp_val = run_samp(num_samples, program)
-    both_val = run_both(n * size, num_samples, program)
-   
-    print "%d,%.50f,%.50f,%.50f" % (num_samples, lb_val, samp_val, both_val)
+            # Set analysis type
+            if a == "AI":
+                args += ["--domain", "poly"]
+            else:
+                args += ["--domain", "box"]
 
-    
+            # Set the precision
+            args += ["--precision", str(p_scaled)]
 
+            # If its AI or Box, just pre-compute the result and report same result for all samples
+            if a == "AI" or a == "Box":
+                args_final = copy.deepcopy(args)
+
+                args_final += [program_prefix + "-" + str(c) + ".prob"]
+
+                try:
+                    before = time.time()
+                    result = check_output(args_final)
+                    after  = time.time()
+
+                    elapsed = (after - before) * 1000
+
+                    lex_result = normal_pattern.search(result)
+
+                    if lex_result is None:
+                        result = Decimal(1)
+                    else:
+                        num = Decimal(lex_result.group(1))
+                        den = Decimal(lex_result.group(2))
+                        result = num / den
+                except:
+                    result = Decimal(-1)
+                    elapsed = float(60000)
+
+                for s in range(1, sample_limit + 1):
+                    samples = s * sample_increment
+                    print "%s,%d,%d,%d,%.50f,%.50f" % (a, c, p_scaled, samples, elapsed, result)
+            else:
+                for s in range(1, sample_limit + 1):
+                    samples = s * sample_increment
+
+                    args_final = copy.deepcopy(args)
+
+                    if a == "Concolic":
+                        args_final += ["--improve-lower-bounds", str(samples)]
+                    elif a == "Sampling":
+                        args_final += ["--samples", str(samples)]
+                    else:
+                        args_final += ["--improve-lower-bounds", str(samples),
+                                     "--samples", str(samples)]
+
+                    args_final += [program_prefix + "-" + str(c) + ".prob"]
+
+                    #result = check_output(args_final)
+                    result = 50
+
+                    print "%s,%d,%d,%d,%d,%.50f" % (a, c, p_scaled, samples, 1000, float(result))

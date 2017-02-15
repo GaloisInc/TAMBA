@@ -77,26 +77,17 @@ querydef close_enough ship_1 ship_2 dist -> result :
     ship_2_loc_y = ship5_loc_y;
   endif;
 
-  int diff_x1 = ship_1_loc_x - ship_2_loc_x;
-  int diff_x = 0;
-  if diff_x1 < 0 then
-    diff_x = diff_x1 * -1;
-  endif;
-  if diff_x1 >= 0 then
-    diff_x = diff_x1;
-  endif;
-  
-  int diff_y1 = ship_1_loc_y - ship_2_loc_y;
-  int diff_y = 0;
-  if diff_y1 < 0 then
-    diff_y = diff_y1 * -1;
-  endif;
-  if diff_y1 >= 0 then
-    diff_y = diff_y1;
-  endif;
-  
+  int diff_x = ship_1_loc_x - ship_2_loc_x;
+  int diff_y = ship_1_loc_y - ship_2_loc_y;
+  int neg_diff_x = diff_x * -1;
+  int neg_diff_y = diff_y * -1;
+
   int result = 0;
-  if ((diff_x + diff_y) <= dist) then
+
+  if (diff_x     + diff_y     <= dist) and
+     (diff_x     + neg_diff_y <= dist) and
+     (neg_diff_x + diff_y     <= dist) and
+     (neg_diff_x + neg_diff_y <= dist) then
     result = 1;
   endif;
 
