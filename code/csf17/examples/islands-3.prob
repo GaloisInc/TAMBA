@@ -1,0 +1,57 @@
+secret: (* Ship in 2-dimensional space *)
+int ship_x = 75;
+int ship_y = 50;
+
+belief:
+  int ship_x = uniform 0 1000;
+  int ship_y = uniform 0 1000;
+
+querydef close_enough dist -> result :
+  int island1_x = 50;
+  int island1_y = 50;
+
+  int island2_x = 100;
+  int island2_y = 50;
+
+  int island3_x = 150;
+  int island3_y = 50;
+
+  int diff_x1 = ship_x - island1_x;
+  int diff_y1 = ship_y - island1_y;
+  int neg_diff_x1 = diff_x1 * -1;
+  int neg_diff_y1 = diff_y1 * -1;
+
+  int diff_x2 = ship_x - island2_x;
+  int diff_y2 = ship_y - island2_y;
+  int neg_diff_x2 = diff_x2 * -1;
+  int neg_diff_y2 = diff_y2 * -1;
+
+  int diff_x3 = ship_x - island3_x;
+  int diff_y3 = ship_y - island3_y;
+  int neg_diff_x3 = diff_x3 * -1;
+  int neg_diff_y3 = diff_y3 * -1;
+  int result = 0;
+
+  if (diff_x1     + diff_y1     <= dist) and
+     (diff_x1     + neg_diff_y1 <= dist) and
+     (neg_diff_x1 + diff_y1     <= dist) and
+     (neg_diff_x1 + neg_diff_y1 <= dist) then
+    result = 1;
+  endif;
+
+  if (diff_x2     + diff_y2     <= dist) and
+     (diff_x2     + neg_diff_y2 <= dist) and
+     (neg_diff_x2 + diff_y2     <= dist) and
+     (neg_diff_x2 + neg_diff_y2 <= dist) then
+    result = 1;
+  endif;
+
+  if (diff_x3     + diff_y3    <= dist) and
+     (diff_x3     + neg_diff_y3 <= dist) and
+     (neg_diff_x3 + diff_y3     <= dist) and
+     (neg_diff_x3 + neg_diff_y3 <= dist) then
+    result = 1;
+  endif;
+
+query close_enough:
+  int dist = 25;
