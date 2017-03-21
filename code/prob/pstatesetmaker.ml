@@ -565,22 +565,35 @@ module MakePStateset(* create pstateset from a stateset *)
             let smin1 = (sizes -. (Z.to_float pset.est.smin)) *. (incbi myalpha mybeta 0.001) in
             let smin2 = Z.from_float smin1 in
             best_bounds (Z.add pset.est.smin smin2) pset.est.smax smin2 smax2
+            let smax1 = (sizes -. (Z.to_float pset.est.smin)) *. (incbi myalpha mybeta 0.999) in
+            let smax2 = Z.from_float smax1 in
+            let smax3 = Z.add pset.est.smin smax2 in
+
+            best_bounds pset.est.smin pset.est.smax smin3 smax3
           else
             let smin1 = sizes *. (incbi myalpha mybeta 0.001) in
             let smin2 = Z.from_float smin1 in
+
+            let smax1 = sizes *. (incbi myalpha mybeta 0.999) in
+            let smax2 = Z.from_float smax1 in
+
             best_bounds pset.est.smin pset.est.smax smin2 smax2
         in
 
         (* incbi in R is called qbeta. TODO: write qbeta wrapper that asserts non-zero input *)
+
+        let mmin_cand = pset.est.pmin */ (Q.from_z smin_best) in
+        let mmax_cand = pset.est.pmax */ (Q.from_z smax_best) in
+
         let pset_new = {
             pset with est = {
                       pset.est with
-                                    mmax = pset.est.pmax */ (Q.from_z smax_best);
-                                    mmin = pset.est.pmin */ (Q.from_z smin_best);
-                                    smax = smax_best;
+                                    mmin = if pset.est.mmin < mmin_cand then mmin_cand else pset.est.mmin; (* raise lower bound *)
+                                    mmax = if mmax_cand < pset.est.mmax then mmax_cand else pset.est.mmax; (* lower upper bound *)
                                     smin = smin_best;
-                                    numy = yes;
+                                    smax = smax_best;
                                     numn = no;
+                                    numy = yes;
                             }
                        } in
         pset_new
@@ -596,12 +609,13 @@ module MakePStateset(* create pstateset from a stateset *)
             let (smin_new, pc_poly) = runner sample in (* get path condition, and call underapproximation tool *)
             if smin_new > ps.est.smin then
               (ifverbose1 (print_endline ("old s_min = " ^ (Z.to_string ps.est.smin) ^ ", new s_min = " ^ (Z.to_string smin_new)));
-               { ps with est = {
-                   ps.est with
-                   smin = smin_new;
-                   mmin = ps.est.pmin */ (Q.from_z smin_new);
-                   underapprox = pc_poly
-                 }
+              let mmin_cand = ps.est.pmin */ (Q.from_z smin_new) in
+              { ps with est = {
+                ps.est with
+                mmin = if ps.est.mmin < mmin_cand then mmin_cand else ps.est.mmin;
+                smin = smin_new;
+                underapprox = pc_poly
+                }
               })
             else
               ps
