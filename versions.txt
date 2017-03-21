@@ -14,10 +14,10 @@ biniou               1.0.12  Binary data format designed for speed, safety, ease
 camlp4               4.02+7  Camlp4 is a system for writing extensible parsers f
 camlp5                 6.15  Preprocessor-pretty-printer of OCaml
 camomile              0.8.5  A comprehensive Unicode library
-cmdliner              1.0.0  Declarative definition of command line interfaces f
-cohttp               0.19.0  HTTP library for Lwt, Async and Mirage
+cmdliner              0.9.8 (pinned)  Declarative definition of command line interfaces f
+cohttp               0.19.0 (pinned)  HTTP library for Lwt, Async and Mirage
 comparelib        109.60.00  Part of Jane Street’s Core library
-conduit               0.7.1  Network connection library for TCP and SSL
+conduit               0.8.8 (pinned)  Network connection library for TCP and SSL
 conf-gmp                  1  Virtual package relying on a GMP lib system install
 conf-gsl                  1  Virtual package relying on a GSL lib system install
 conf-m4                   1  Virtual package relying on m4
@@ -29,7 +29,7 @@ core_extended     112.01.00  Extra components that are not as closely vetted or
 core_kernel       112.01.00  Industrial strength alternative to OCaml's standard
 cppo                  1.4.1  Equivalent of the C preprocessor for OCaml programs
 cstruct               1.9.0  access C structures via a camlp4 extension
-ctypes               0.11.3  Combinators for binding to C libraries without writ
+ctypes               0.10.2 (pinned)  Combinators for binding to C libraries without writ
 ctypes-foreign        0.4.0  Virtual package for enabling the ctypes.foreign sub
 custom_printf     112.01.00  Extension for printf format strings
 easy-format           1.2.0  High-level and functional interface to the Format m
@@ -38,13 +38,12 @@ fieldslib         109.20.03  Syntax extension to define first class values repre
 gsl                  1.19.1 (pinned)  GSL - Bindings to the GNU Scientific Library
 herelib           109.35.02  Part of Jane Street’s Core library
 ipaddr                2.6.1  IP (and MAC) address representation library
-lambda-term          1.10.1  Terminal manipulation library for OCaml
 lwt                   2.7.0  Monadic promises and concurrent I/O
 magic-mime            1.0.0  Convert file extensions to MIME types
 mlgmp              20120224  Interface of GNU MP and MPFR
 oasis                 0.4.8  Tooling for building OCaml libraries and applicatio
 ocamlbuild                0  Build system distributed with the OCaml compiler si
-ocamlfind             1.7.1  A library manager for OCaml
+ocamlfind             1.6.2 (pinned)  A library manager for OCaml
 ocamlify              0.0.1  Include files in OCaml code
 ocamlmod              0.0.8  Generate OCaml modules from source files
 ocephes               0.8.2  Bindings to special math functions from the Cephes 
@@ -67,7 +66,6 @@ topkg                 0.9.0  The transitory OCaml software packager
 type_conv         112.01.01  Library for building type-driven syntax extensions
 typerep           111.17.00  typerep is a library for runtime types.
 uri                   1.9.1  RFC3986 URI/URL parsing library
-utop                 1.19.3  Universal toplevel for OCaml
 variantslib       109.15.03  Part of Jane Street’s Core library
 yojson                1.3.3  Yojson is an optimized parsing and printing library
 zed                     1.4  Abstract engine for text edition in OCaml
