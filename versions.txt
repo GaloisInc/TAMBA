@@ -29,7 +29,7 @@ core_extended     112.01.00  Extra components that are not as closely vetted or
 core_kernel       112.01.00  Industrial strength alternative to OCaml's standard
 cppo                  1.4.1  Equivalent of the C preprocessor for OCaml programs
 cstruct               1.9.0  access C structures via a camlp4 extension
-ctypes               0.10.2 (pinned)  Combinators for binding to C libraries without writ
+ctypes               0.10.2  Combinators for binding to C libraries without writ
 ctypes-foreign        0.4.0  Virtual package for enabling the ctypes.foreign sub
 custom_printf     112.01.00  Extension for printf format strings
 easy-format           1.2.0  High-level and functional interface to the Format m
@@ -38,10 +38,10 @@ fieldslib         109.20.03  Syntax extension to define first class values repre
 gsl                  1.19.1 (pinned)  GSL - Bindings to the GNU Scientific Library
 herelib           109.35.02  Part of Jane Street’s Core library
 ipaddr                2.6.1  IP (and MAC) address representation library
-lwt                   2.7.0  Monadic promises and concurrent I/O
+lwt                   2.6.0 (pinned)  Cooperative threads and I/O in monadic style
 magic-mime            1.0.0  Convert file extensions to MIME types
 mlgmp              20120224  Interface of GNU MP and MPFR
-oasis                 0.4.8  Tooling for building OCaml libraries and applicatio
+oasis                 0.4.7 (pinned)  Tooling for building OCaml libraries and applicatio
 ocamlbuild                0  Build system distributed with the OCaml compiler si
 ocamlfind             1.6.2 (pinned)  A library manager for OCaml
 ocamlify              0.0.1  Include files in OCaml code
@@ -57,12 +57,12 @@ pipebang          110.01.00  Part of Jane Street’s Core library
 ppx_tools        5.0+4.02.0  Tools for authors of ppx rewriters and other syntac
 re                    1.7.1  RE is a regular expression library for OCaml
 re2               111.08.00  OCaml bindings for RE2, Google's regular expression
-react                 1.2.1  Declarative events and signals for OCaml
+react                 1.2.0 (pinned)  Declarative events and signals for OCaml
 result                  1.2  Compatibility Result module
 sexplib           112.01.00  Library for serializing OCaml values to and from S-
 stringext             1.4.3  Extra string functions for OCaml
 textutils         112.01.00  Text output utilities
-topkg                 0.9.0  The transitory OCaml software packager
+topkg                 0.8.1 (pinned)  The transitory OCaml software packager
 type_conv         112.01.01  Library for building type-driven syntax extensions
 typerep           111.17.00  typerep is a library for runtime types.
 uri                   1.9.1  RFC3986 URI/URL parsing library
