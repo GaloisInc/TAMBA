@@ -63,7 +63,7 @@ sexplib           112.01.00  Library for serializing OCaml values to and from S-
 stringext             1.4.3  Extra string functions for OCaml
 textutils         112.01.00  Text output utilities
 topkg                 0.8.1 (pinned)  The transitory OCaml software packager
-type_conv         112.01.01  Library for building type-driven syntax extensions
+type_conv         112.01.00 (pinned)  Library for building type-driven syntax extensions
 typerep           111.17.00  typerep is a library for runtime types.
 uri                   1.9.1  RFC3986 URI/URL parsing library
 variantslib       109.15.03  Part of Jane Street’s Core library
