@@ -1,0 +1,84 @@
+secret:
+  (* Comfort *)
+  int ship1_id = 1;
+  int ship1_loc_x = 500;
+  int ship1_loc_y = 500;
+  int ship1_length = 50;
+  int ship1_draft = 25;
+  int ship1_speed = 25;
+  int ship1_cargo = 75;
+
+belief:
+  int ship1_id = 1;
+  int ship1_loc_x = uniform 0 999;
+  int ship1_loc_y = uniform 0 999;
+  int ship1_length = uniform 1 100;
+  int ship1_draft = uniform 1 100;
+  int ship1_speed = uniform 1 50;
+  int ship1_cargo = 75;
+
+querydef feasible ship_id port_loc_x port_loc_y port_harbor_depth port_offload_capacity deadline -> result :
+  if ship_id == 1 then
+    int ship_loc_x = ship1_loc_x;
+    int ship_loc_y = ship1_loc_y;
+    int ship_length = ship1_length;
+    int ship_draft = ship1_draft;
+    int ship_speed = ship1_speed;
+    int ship_cargo = ship1_cargo
+  else
+    int ship_loc_x = ship2_loc_x;
+    int ship_loc_y = ship2_loc_y;
+    int ship_length = ship2_length;
+    int ship_draft = ship2_draft;
+    int ship_speed = ship2_speed;
+  endif;
+    
+  (* Part A -- Determine if port can be reached by the ship before deadline. *)
+
+  int port_reachable = 0;
+
+  (* X distance between ship and port *)
+  int port_dist_x = ship_loc_x - port_loc_x;
+  int port_dist_x_abs = 0;
+  if port_dist_x < 0 then
+    port_dist_x_abs = port_dist_x * -1;
+  endif;
+  if port_dist_x >= 0 then
+    port_dist_x_abs = port_dist_x;
+  endif;
+
+  (* Y distance between ship and port *)
+  int port_dist_y = ship_loc_y - port_loc_y;
+  int port_dist_y_abs = 0;
+  if port_dist_y < 0 then
+    port_dist_y_abs = port_dist_y * -1;
+  endif;
+  if port_dist_y >= 0 then
+    port_dist_y_abs = port_dist_y;
+  endif;
+
+  (* int port_eta = (port_dist_x_abs + port_dist_y_abs) / ship_speed; *)
+  int port_eta = 1;
+
+  (* if (port_eta <= deadline) then *)
+  if (port_dist_x_abs + port_dist_y_abs) <= deadline * ship_speed then
+    port_reachable = 1;
+  endif;
+
+  (* Part B -- Determine ports that satisfy ship/harbor physical compatibility constraints *)
+
+  (* Note: Second constrationt `ship_cargo < port_offload_capacity` does not affect information flow
+     from perspective of ship owner *)
+  int result = 0;
+  if (port_reachable == 1 and ship_draft < port_harbor_depth and ship_cargo < port_offload_capacity) then
+    result = 1;
+  endif;
+
+(* One query per-port *)
+query feasible:
+  int ship_id = 1;
+  int port_loc_x = 250;
+  int port_loc_y = 250;
+  int port_harbor_depth = 30;
+  int port_offload_capacity = 100;
+  int deadline = 15;
