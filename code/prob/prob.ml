@@ -253,6 +253,8 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
          s2_bounds
       | SUniform (name, lower, upper) ->
          VarIDMap.add name (lower, upper) acc
+      | SAssign (name, AEInt b) ->
+         VarIDMap.add name (b, b) acc
       | _ -> acc
     in
 
