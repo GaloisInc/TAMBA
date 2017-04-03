@@ -276,7 +276,7 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
                                 else
                                   (max, max_idx, idx + 1)) (Z.zero, 0, 0) ret in
 
-    print_endline ("count {\n" ^ (string_of_gen_poly p) ^ "\n} = " ^ (Z.to_string ret) ^ "\n");
+    ifverbose1 (print_endline ("count {\n" ^ (string_of_gen_poly p) ^ "\n} = " ^ (Z.to_string ret) ^ "\n"));
     (ret, List.nth (poly_of_gen_poly p) max_idx)
             
   (* Lower Bound additions <end> *)
@@ -441,7 +441,7 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
 
           (* Lower Bound work <begin> *)
           (if !Cmd.opt_improve_lower_bounds > 0 then
-             printf "\n\n== Improve Lower Bounds == \n\n"
+             printf "\n--- Improve Lower Bounds ------------------- \n"
            else
              ());
           let improved_final_dist =
@@ -460,7 +460,7 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
               base_final_dist in
           (if !Cmd.opt_improve_lower_bounds > 0 then
             let m_belief = ESYS.psrep_max_belief improved_final_dist.belief in
-            printf "\nmax-belief (after improve lower bounds): %s\n" (Q.to_string m_belief)
+            printf "max-belief (after improve lower bounds): %s\n" (Q.to_string m_belief)
           else
             ());
 
