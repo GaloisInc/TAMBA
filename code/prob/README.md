@@ -4,6 +4,35 @@ Piotr Mardziel, Stephen Magill, Michael Hicks, Mudhakar Srivatsa
 
 **CSF 2011, JCS 2013 Implementation and experiments**
 
+### Mapping Semantics to Code
+
+The entire implementation is contained in [prob](https://github.com/GaloisInc/TAMBA/tree/master/code/prob).
+
+The following sections describe a conceptual mapping between the `prob` source code and the descriptions
+in the paper.
+
+#### Abstract Syntax
+
+The core language syntax of `prob` is presented in Figure 2 of the paper. 
+
+The [lexer](https://github.com/GaloisInc/TAMBA/blob/master/code/prob/lexer.mll) and [parser](https://github.com/GaloisInc/TAMBA/blob/master/code/prob/parser.mly)
+take a file containing concrete syntax (e.g. [bday.pol](https://github.com/GaloisInc/TAMBA/blob/master/code/prob/examples/bench/bday_bday.query)) and
+produce abstract syntax. The data structure which defines the abtract syntax tree is defined in [lang.ml](https://github.com/GaloisInc/TAMBA/blob/master/code/prob/lang.ml).
+The lexer and parser files are not OCaml source files. Instead, they are used by tools called [ocamllex and ocamlyacc](https://caml.inria.fr/pub/docs/manual-ocaml/lexyacc.html)
+to *generate* OCaml source files which perform the lexing and parsing. The implementation then refers to the generated OCaml source files.
+
+Once we have an abstract syntax tree (henceforth called AST), we can choose to interpret it in many ways.
+
+#### Concrete, Standard Semantics
+
+The most obvious way of interpreting the abstract syntax is through its standard, concrete semantics. When see `AEBinop("+", AEInt 2, AEInt 3)` then the result
+should be `AEInt 5`. These semantics are so well-known that they are not presented in the paper. They are pretty standard in PL literature.
+
+The concrete, standard semantics are implemented by [evalstate.ml](https://github.com/GaloisInc/TAMBA/blob/master/code/prob/evalstate.ml).
+
+<!-- TODO: Figure out right way to explain the rest... paper doesn't map exactly to code. In particular (1) paper only describes poly, but code
+           has boxes and octagons too and (2) the abstract operations and ppoly operations are separate in paper but conflated in code -->
+
 ## Knowledge-Oriented Secure Multiparty Computation [pdf](http://www.cs.umd.edu/~mwh/papers/belief-smc.pdf)
 
 Piotr Mardziel, Michael Hicks, Jonathan Katz, Mudhakar Srivatsa
