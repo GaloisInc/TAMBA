@@ -1,21 +1,38 @@
 secret:
   (* Comfort *)
   int ship1_id = 1;
-  int ship1_loc_x = 500;
-  int ship1_loc_y = 500;
-  int ship1_length = 50;
-  int ship1_draft = 25;
-  int ship1_speed = 25;
-  int ship1_cargo = 75;
+  int ship1_loc_x = 121944782;
+  int ship1_loc_y = 8963735;
+  int ship1_length = 600;
+  int ship1_draft = 40;
+  int ship1_speed = 10;
+  int ship1_cargo = 1000;
+
+  (* Mercy *)
+  int ship2_id = 2;
+  int ship2_loc_x = 122524406;
+  int ship2_loc_y = 8287618;
+  int ship2_length = 800;
+  int ship2_draft = 50;
+  int ship2_speed = 20;
+  int ship2_cargo = 2000;
 
 belief:
   int ship1_id = 1;
-  int ship1_loc_x = uniform 0 999;
-  int ship1_loc_y = uniform 0 999;
-  int ship1_length = uniform 1 100;
-  int ship1_draft = uniform 1 100;
-  int ship1_speed = uniform 1 50;
-  int ship1_cargo = 75;
+  int ship1_loc_x = uniform 100000000 130000000;
+  int ship1_loc_y = uniform 7000000 10000000;
+  int ship1_length = uniform 300 1000;
+  int ship1_draft = uniform 20 100;
+  int ship1_speed = uniform 5 50;
+  int ship1_cargo = 1000;
+
+  int ship1_id = 1;
+  int ship1_loc_x = uniform 100000000 130000000;
+  int ship1_loc_y = uniform 7000000 10000000;
+  int ship1_length = uniform 300 1000;
+  int ship1_draft = uniform 20 100;
+  int ship1_speed = uniform 5 50;
+  int ship2_cargo = 2000;
 
 querydef feasible ship_id port_loc_x port_loc_y port_harbor_depth port_offload_capacity deadline -> result :
   if ship_id == 1 then
@@ -24,13 +41,14 @@ querydef feasible ship_id port_loc_x port_loc_y port_harbor_depth port_offload_c
     int ship_length = ship1_length;
     int ship_draft = ship1_draft;
     int ship_speed = ship1_speed;
-    int ship_cargo = ship1_cargo
+    int ship_cargo = ship1_cargo;
   else
     int ship_loc_x = ship2_loc_x;
     int ship_loc_y = ship2_loc_y;
     int ship_length = ship2_length;
     int ship_draft = ship2_draft;
     int ship_speed = ship2_speed;
+    int ship_cargo = ship2_cargo;
   endif;
     
   (* Part A -- Determine if port can be reached by the ship before deadline. *)
@@ -75,10 +93,13 @@ querydef feasible ship_id port_loc_x port_loc_y port_harbor_depth port_offload_c
   endif;
 
 (* One query per-port *)
+(* name, lat, long, offload_cap, offload_time, depth, available *)
+(* CebuCity, 10316000, 123886000, 2500, 2, 65, true *)
 query feasible:
   int ship_id = 1;
-  int port_loc_x = 250;
-  int port_loc_y = 250;
-  int port_harbor_depth = 30;
-  int port_offload_capacity = 100;
-  int deadline = 15;
+  int port_loc_x = 123886000;
+  int port_loc_y = 10316000;
+  int port_harbor_depth = 65;
+  int port_offload_capacity = 2500;
+  int deadline = 12;
+

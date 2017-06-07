@@ -1,0 +1,67 @@
+secret:
+  (* 1: CebuCity, 10.316, 123.886, 2500, 2, 65, true *)
+  int port_id = 1;
+  int port_loc_x = 123886000;
+  int port_loc_y = 10316000;
+  int port_harbor_depth = 65;
+  int port_offload_capacity = 2500;
+
+belief:
+  int ship_id = 1;
+  int port_loc_x = 123886000;
+  int port_loc_y = 10316000;
+  int port_harbor_depth = uniform 25 150;
+  int port_offload_capacity = uniform 600 3000;
+
+querydef feasible deadline ship_id ship_loc_x ship_loc_y ship_length ship_draft ship_speed ship_cargo -> result :
+    
+  (* Part A -- Determine if port can be reached by the ship before deadline. *)
+
+  int port_reachable = 0;
+
+  (* int port_eta = (port_dist_x_abs + port_dist_y_abs) / ship_speed; *)
+
+  (* if (port_eta <= deadline) then *)
+  if (ship_loc_x - port_loc_x + ship_loc_y - port_loc_y) <= deadline * ship_speed and
+     (port_loc_x - ship_loc_x + ship_loc_y - port_loc_y) <= deadline * ship_speed and
+     (ship_loc_x - port_loc_x + port_loc_y - ship_loc_y) <= deadline * ship_speed and
+     (port_loc_x - ship_loc_x + port_loc_y - ship_loc_y) <= deadline * ship_speed
+ then
+    port_reachable = 1;
+  endif;
+
+  (* Part B -- Determine ports that satisfy ship/harbor physical compatibility constraints *)
+
+  (* Note: Second constrationt `ship_cargo < port_offload_capacity` does not affect information flow
+     from perspective of ship owner *)
+  int result = 0;
+  if (port_reachable == 1 and ship_draft < port_harbor_depth and ship_cargo < port_offload_capacity) then
+    result = 1;
+  endif;
+
+(* One query per-port *)
+(* name, lat, long, offload_cap, offload_time, depth, available *)
+
+(*
+query feasible:
+  (* Comfort *)
+  int ship_id = 1;
+  int ship_loc_x = 121944782;
+  int ship_loc_y = 8963735;
+  int ship_length = 600;
+  int ship_draft = 40;
+  int ship_speed = 10000000;
+  int ship_cargo = 1000;
+  int deadline = 12;
+*)
+
+query feasible:
+  (* Mercy *)
+  int ship_id = 1;
+  int ship_loc_x = 122524406;
+  int ship_loc_y = 8287618;
+  int ship_length = 800;
+  int ship_draft = 50;
+  int ship_speed = 20000000;
+  int ship_cargo = 2000;
+  int deadline = 12;
