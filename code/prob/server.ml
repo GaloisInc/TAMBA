@@ -158,7 +158,8 @@ let handler ~body:_ _sock req =
              | Some v -> v in
   Log.string log_in (host ^ " " ^ Uri.to_string uri);
   let header = Cohttp.Request.headers req in
-  ifdebug (printf "\nheader: %s\n%!" (Cohttp.Header.to_string header));
+  (* TODO: Find equivalent `to_string' method in newer cohttp versions. *)
+  (* ifdebug (printf "\nheader: %s\n%!" (Cohttp.Header.to_string header)); *)
   match Uri.path uri with
   | "/home" -> Server.respond_with_string "This is a home, get out.\n"
   | "/query" ->    Uri.get_query_param uri "ship"
