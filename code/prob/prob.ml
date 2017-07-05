@@ -482,6 +482,7 @@ module EVALS_PPSS_POLY = MAKE_EVALS(ESYS_PPSS_POLY);;
 module EVALS_PPSS_BOX  = MAKE_EVALS(ESYS_PPSS_BOX);;
 module EVALS_PPSS_OCTA = MAKE_EVALS(ESYS_PPSS_OCTA);;
 module EVALS_PPSS_OCTALATTE = MAKE_EVALS(ESYS_PPSS_OCTALATTE);;
+module EVALS_PDPSS_POLY = MAKE_EVALS(ESYS_PDPSS_POLY);;
 
 let main () =
   Arg.parse [
@@ -591,6 +592,7 @@ let main () =
               | 2 -> (module EVALS_PPSS_OCTA : EXP_SYSTEM)
               | 3 -> (module EVALS_PPSS_OCTALATTE : EXP_SYSTEM)
               | 4 -> (module EVALS_PPSS_POLY : EXP_SYSTEM)
+              | 5 -> (module EVALS_PDPSS_POLY : EXP_SYSTEM)
               | _ -> raise Not_expected) : EXP_SYSTEM) in
 
       ifdebug(printf "\n\nBefore evaluation\n\n");

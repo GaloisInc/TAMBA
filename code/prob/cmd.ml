@@ -37,6 +37,7 @@ let set_domain str =
       | "octa" -> 2
       | "octalatte" -> 3
       | "poly" -> 4
+      | "decomposed-poly" -> 5
       | _ -> raise (General_error ("unknown domain: " ^ str)))
 
 let set_volume_computation str =
