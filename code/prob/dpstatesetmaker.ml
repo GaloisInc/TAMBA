@@ -54,18 +54,21 @@ module MakeDPStateset
   let _greatest_lower_factorization dpss1 dpss2 =
     let vars1 = sort compare (concat (map PSS.vars dpss1)) in
     let vars2 = sort compare (concat (map PSS.vars dpss2)) in
-    if vars1 != vars2 then raise(General_error("Incompatible Polyhedra"));
-    let vars = vars1 in
+    let vars = sort_uniq compare (vars1 @ vars2) in
     let fim1 = _factor_index_mapping dpss1 in
     let fim2 = _factor_index_mapping dpss2 in
     let result_factorization = [] in
     let accommodate_var r a =
       (* These patterns are irrefutable given the compatibility check above. *)
-      let (Some (s1, p1)) = _find_factor a fim1 in
-      let (Some (s2, p2)) = _find_factor a fim2 in
-        match _find_factor a r with
-        | None -> (s1 +@ s2, ([p1], [p2])) :: r
-        | Some (s, (p1s, p2s)) -> (s +@ s1 +@ s2, ([p1] +@ p1s, [p2] +@ p2s)) :: (remove_assoc s r) in
+      let (s1, p1) = match _find_factor a fim1 with
+        | Some (s1, p1) -> (s1, [p1])
+        | None -> ([a], []) in
+      let (s2, p2) = match _find_factor a fim2 with
+        | Some (s2, p2) -> (s2, [p2])
+        | None -> ([a], []) in
+      match _find_factor a r with
+        | None -> (s1 +@ s2, (p1, p2)) :: r
+        | Some (s, (p1s, p2s)) -> (s +@ s1 +@ s2, (p1 +@ p1s, p2 +@ p2s)) :: (remove_assoc s r) in
     fold_left accommodate_var [] vars
 
   (** Merge the PSSs corresponding to those indexed by NS in DPSS. *)
@@ -79,6 +82,8 @@ module MakeDPStateset
     let glb_factorization = _greatest_lower_factorization dpss1 dpss2 in
     let (fs1, fs2) = split (snd (split glb_factorization)) in
     (_merge_according_to dpss1 fs1, _merge_according_to dpss2 fs2)
+
+  let _pairwise_apply_pss f dpss1 dpss2 = let (dpss1r, dpss2r) = _pairwise_promote dpss1 dpss2 in map2 f dpss1 dpss2
 
   let copy = List.map PSS.copy
   let make_empty () = []
