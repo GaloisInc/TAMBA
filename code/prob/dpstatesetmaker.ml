@@ -7,6 +7,7 @@ open Gmp
 open Gmp.Q.Infixes
 open Gmp.Z.Infixes
 open Globals
+open List
 
 open Gmp_util
 
@@ -29,6 +30,55 @@ module MakeDPStateset
   let recompose dpss = match dpss with
     | [] -> PSS.make_empty ()
     | h :: t -> List.fold_left PSS.prod h t
+
+  let ( +@ ) lst1 lst2 = sort_uniq compare (lst1 @ lst2)
+  let ( *@ ) lst1 lst2 = filter (fun x -> mem x lst1 && mem x lst2) (lst1 @ lst2)
+
+  (** Given a DPSS, return a mapping [K -> i], where for each component PSS, K is the set of
+   * variables managed by that PSS, and i is the index of that PSS in the DPSS.
+   *)
+  let _factor_index_mapping = mapi (fun i p -> (PSS.vars p, i))
+
+  (** Given a variable k and a factor mapping [K -> v], find the pair (K, v) such that k ∈ K, or
+   * None. *)
+  let rec _find_factor k m = match m with
+    | [] -> None
+    | (s, v) :: t when mem k s -> Some (s, v)
+    | _ :: t -> _find_factor k t
+
+  (** Given two DPSSs, return a mapping [K -> (N1s, N2s)] where each maplet corresponds to a factor
+   * in a resultant DPSS, K is the set of variables managed by that component, and N1s and N2s are the
+   * indices of PSSs in the first and second DPSSs respectively which need to be merged, in order to
+   * produce their pairwise corresponding factor.
+   *)
+  let _greatest_lower_factorization dpss1 dpss2 =
+    let vars1 = sort compare (concat (map PSS.vars dpss1)) in
+    let vars2 = sort compare (concat (map PSS.vars dpss2)) in
+    if vars1 != vars2 then raise(General_error("Incompatible Polyhedra"));
+    let vars = vars1 in
+    let fim1 = _factor_index_mapping dpss1 in
+    let fim2 = _factor_index_mapping dpss2 in
+    let result_factorization = [] in
+    let accommodate_var r a =
+      (* These patterns are irrefutable given the compatibility check above. *)
+      let (Some (s1, p1)) = _find_factor a fim1 in
+      let (Some (s2, p2)) = _find_factor a fim2 in
+        match _find_factor a r with
+        | None -> (s1 +@ s2, ([p1], [p2])) :: r
+        | Some (s, (p1s, p2s)) -> (s +@ s1 +@ s2, ([p1] +@ p1s, [p2] +@ p2s)) :: (remove_assoc s r) in
+    fold_left accommodate_var [] vars
+
+  (** Merge the PSSs corresponding to those indexed by NS in DPSS. *)
+  let _merge dpss ns = fold_left (fun a n -> PSS.prod a (nth dpss n))
+
+  (** Create a new DPSS where each component corresponds to a merged factor determined by FS. *)
+  let _merge_according_to dpss fs = List.map (fun ns -> _merge dpss ns)
+
+  (** Given two DPSSs, normalize each according to their best common factorization. *)
+  let _pairwise_promote dpss1 dpss2 =
+    let glb_factorization = _greatest_lower_factorization dpss1 dpss2 in
+    let (fs1, fs2) = split (snd (split glb_factorization)) in
+    (_merge_according_to dpss1 fs1, _merge_according_to dpss2 fs2)
 
   let copy = List.map PSS.copy
   let make_empty () = []
