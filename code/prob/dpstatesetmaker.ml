@@ -59,7 +59,6 @@ module MakeDPStateset
     let fim2 = _factor_index_mapping dpss2 in
     let result_factorization = [] in
     let accommodate_var r a =
-      (* These patterns are irrefutable given the compatibility check above. *)
       let (s1, p1) = match _find_factor a fim1 with
         | Some (s1, p1) -> (s1, [p1])
         | None -> ([a], []) in
