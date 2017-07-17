@@ -46,43 +46,80 @@ module MakeDPStateset
     | (s, v) :: t when mem k s -> Some (s, v)
     | _ :: t -> _find_factor k t
 
-  (** Given two DPSSs, return a mapping [K -> (N1s, N2s)] where each maplet corresponds to a factor
-   * in a resultant DPSS, K is the set of variables managed by that component, and N1s and N2s are the
-   * indices of PSSs in the first and second DPSSs respectively which need to be merged, in order to
-   * produce their pairwise corresponding factor.
-   *)
-  let _greatest_lower_factorization dpss1 dpss2 =
-    let vars1 = sort compare (concat (map PSS.vars dpss1)) in
-    let vars2 = sort compare (concat (map PSS.vars dpss2)) in
-    let vars = sort_uniq compare (vars1 @ vars2) in
-    let fim1 = _factor_index_mapping dpss1 in
-    let fim2 = _factor_index_mapping dpss2 in
-    let result_factorization = [] in
+  (** Factorization API:
+   * 1. *)
+
+  type _factor_t = Lang.varid list
+  type _factorization_t = _factor_t list
+
+  (** Extract the factorization from a decomposed polyhedron. *)
+  let _factorization_of (dpss: pstateset) : _factorization_t = map PSS.vars dpss
+
+  (** Return the factor in a decomposed polyhedron for a given variable, None if variable is
+   * implicitly unconstrained. *)
+  let rec _get_factor_for_var (fs: _factorization_t) (v: Lang.varid) : _factor_t option = match fs with
+    | [] -> None
+    | h :: t when mem v h -> Some h
+    | h :: t -> _get_factor_for_var t v
+
+  (** Return the polyhedral component for a given factor in a decomposed polyhedron, None if the
+   * factor is not represented. *)
+  let rec _get_poly_for_factor (dpss: pstateset) (f: _factor_t): base_pstateset option =
+    let s = sort_uniq compare f in
+    match dpss with
+    | [] -> None
+    | h :: t when s = sort_uniq compare (PSS.vars h) -> Some h
+    | h :: t -> _get_poly_for_factor t f
+
+  let _reconstitute_factor (dpss: pstateset) (f: _factor_t): base_pstateset =
+    let rec catSomes opts = match opts with
+      | [] -> []
+      | Some x :: t -> x :: catSomes t
+      | None :: t -> catSomes t in
+    let base_factorization = _factorization_of dpss in
+    let constituent_factors = sort_uniq compare (catSomes (map (_get_factor_for_var base_factorization) f)) in
+    fold_left PSS.prod (PSS.make_new []) (catSomes (map (_get_poly_for_factor dpss) constituent_factors))
+
+  let _pull_factor_to_front fs f =
+    match  _get_factor_for_var fs (hd f) with
+    | None -> raise (General_error ("Invariant failed while pulling factor to front."))
+    | Some fp -> fp :: filter (fun fq -> fq != fp) fs
+
+  (** Refactorize a decomposed polyhedron with respect to a given factorization by merging
+   * polyhedra as necessary. *)
+  let rec _refactorize (dpss: pstateset) (fs: _factorization_t) : pstateset = match fs with
+    | [] -> []
+    | f :: t -> _reconstitute_factor dpss f :: _refactorize dpss t
+
+  (** Determine the best common factorization of a pair of decomposed polyhedra. *)
+  let _best_common_factorization (fs1: _factorization_t) (fs2: _factorization_t) : _factorization_t =
+    let common_vars = sort_uniq compare (concat (fs1 @ fs2)) in
+    let default a ma = match ma with
+      | None -> a
+      | Some b -> b in
     let accommodate_var r a =
-      let (s1, p1) = match _find_factor a fim1 with
-        | Some (s1, p1) -> (s1, [p1])
-        | None -> ([a], []) in
-      let (s2, p2) = match _find_factor a fim2 with
-        | Some (s2, p2) -> (s2, [p2])
-        | None -> ([a], []) in
-      match _find_factor a r with
-        | None -> (s1 +@ s2, (p1, p2)) :: r
-        | Some (s, (p1s, p2s)) -> (s +@ s1 +@ s2, (p1 +@ p1s, p2 +@ p2s)) :: (remove_assoc s r) in
-    fold_left accommodate_var [] vars
+      let s1 = default [a] (_get_factor_for_var fs1 a) in
+      let s2 = default [a] (_get_factor_for_var fs2 a) in
+      try (a, assoc a r +@ s1 +@ s2) :: (remove_assoc a r) with Not_found -> (a, s1 +@ s2) :: r in
+    sort_uniq compare (snd (split (fold_left accommodate_var [] common_vars)))
 
-  (** Merge the PSSs corresponding to those indexed by NS in DPSS. *)
-  let _merge dpss ns = fold_left (fun a n -> PSS.prod a (nth dpss n))
+  let _best_common_factorization_for_dpsss (dpss1: pstateset) (dpss2: pstateset): _factorization_t =
+    let vars_1 = map PSS.vars dpss1 in
+    let vars_2 = map PSS.vars dpss2 in
+    _best_common_factorization vars_1 vars_2
 
-  (** Create a new DPSS where each component corresponds to a merged factor determined by FS. *)
-  let _merge_according_to dpss fs = List.map (fun ns -> _merge dpss ns)
+  let print dpss = printf "Decomposition:\n"; List.iter PSS.print dpss
+  let _print_factorization fs =
+    print_string "Factorization: ";
+    print_string "[";
+    print_string (String.concat ", " (map Lang.varid_list_to_string fs));
+    print_string "]\n"
 
-  (** Given two DPSSs, normalize each according to their best common factorization. *)
-  let _pairwise_promote dpss1 dpss2 =
-    let glb_factorization = _greatest_lower_factorization dpss1 dpss2 in
-    let (fs1, fs2) = split (snd (split glb_factorization)) in
-    (_merge_according_to dpss1 fs1, _merge_according_to dpss2 fs2)
-
-  let _pairwise_apply_pss f dpss1 dpss2 = let (dpss1r, dpss2r) = _pairwise_promote dpss1 dpss2 in map2 f dpss1 dpss2
+  let _pairwise_refactor_apply dpss1 dpss2 f =
+    let common_factorization = _best_common_factorization_for_dpsss dpss1 dpss2 in
+    let new_dpss1 = _refactorize dpss1 common_factorization in
+    let new_dpss2 = _refactorize dpss2 common_factorization in
+    map (fun (p1, p2) -> f p1 p2) (combine new_dpss1 new_dpss2)
 
   let copy = List.map PSS.copy
   let make_empty () = []
@@ -92,14 +129,18 @@ module MakeDPStateset
 
   let addvar dpss v = make_new [v] @ dpss
 
-  let print dpss = printf "Decomposition:\n"; List.iter PSS.print dpss
-
-  let size dpss = PSS.size (recompose dpss)
-  let slack dpss = PSS.slack (recompose dpss)
-  let prod dpss1 dpss2 = [PSS.prod (recompose dpss1) (recompose dpss2)]
+  let size dpss = fold_left ( *! ) zone (map PSS.size dpss)
+  let slack dpss = raise Not_implemented
+  let prod dpss1 dpss2 = _pairwise_refactor_apply dpss1 dpss2 PSS.prod
   let make_uniform v lo hi = [PSS.make_uniform v lo hi]
   let transform dpss stmt = [PSS.transform (recompose dpss) stmt]
-  let intersect dpss ss = [PSS.intersect (recompose dpss) ss]
+  let intersect dpss ss =
+    let vars = SS.stateset_vars ss in
+    let common_factorization = _pull_factor_to_front (_best_common_factorization (_factorization_of dpss) [vars]) vars in
+    let new_dpss = _refactorize dpss common_factorization in
+    match new_dpss with
+    | h :: t -> PSS.intersect h ss :: t
+    | [] -> raise (General_error "")
   let exclude dpss1 dpss2 = raise Not_implemented
   let is_empty = List.for_all PSS.is_empty
 
