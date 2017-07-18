@@ -108,6 +108,9 @@ module MakeDPStateset
     let vars_2 = map PSS.vars dpss2 in
     _best_common_factorization vars_1 vars_2
 
+  let _normalize_factorization_with (fs: _factorization_t) (f: _factor_t): _factorization_t =
+    _pull_factor_to_front (_best_common_factorization fs [f]) f
+
   let print dpss = printf "Decomposition:\n"; List.iter PSS.print dpss
   let _print_factorization fs =
     print_string "Factorization: ";
@@ -121,6 +124,10 @@ module MakeDPStateset
     let new_dpss2 = _refactorize dpss2 common_factorization in
     map (fun (p1, p2) -> f p1 p2) (combine new_dpss1 new_dpss2)
 
+  let _dispatch_on_head dpss f = match dpss with
+    | h :: t -> f h :: t
+    | [] -> raise (General_error("_dispatch_on_head invariant failure."))
+
   let copy = List.map PSS.copy
   let make_empty () = []
   let make_point s = [PSS.make_point s]
@@ -133,14 +140,14 @@ module MakeDPStateset
   let slack dpss = raise Not_implemented
   let prod dpss1 dpss2 = _pairwise_refactor_apply dpss1 dpss2 PSS.prod
   let make_uniform v lo hi = [PSS.make_uniform v lo hi]
-  let transform dpss stmt = [PSS.transform (recompose dpss) stmt]
-  let intersect dpss ss =
-    let vars = SS.stateset_vars ss in
-    let common_factorization = _pull_factor_to_front (_best_common_factorization (_factorization_of dpss) [vars]) vars in
+  let transform dpss stmt =
+    let common_factorization = _normalize_factorization_with (_factorization_of dpss) (Lang.stmt_vars stmt) in
     let new_dpss = _refactorize dpss common_factorization in
-    match new_dpss with
-    | h :: t -> PSS.intersect h ss :: t
-    | [] -> raise (General_error "")
+    _dispatch_on_head new_dpss (fun dpss -> PSS.transform dpss stmt)
+  let intersect dpss ss =
+    let common_factorization = _normalize_factorization_with (_factorization_of dpss) (SS.stateset_vars ss) in
+    let new_dpss = _refactorize dpss common_factorization in
+    _dispatch_on_head new_dpss (fun dpss -> PSS.intersect dpss ss)
   let exclude dpss1 dpss2 = raise Not_implemented
   let is_empty = List.for_all PSS.is_empty
 
@@ -157,7 +164,7 @@ module MakeDPStateset
   let enum dpss = raise Not_implemented
   let enum_on_vars dpss vs = raise Not_implemented
 
-  let abstract_plus dpss1 dpss2 = [PSS.abstract_plus (recompose dpss1) (recompose dpss2)]
+  let abstract_plus dpss1 dpss2 = _pairwise_refactor_apply dpss1 dpss2 PSS.abstract_plus
   let relative_entropy dpss1 dpss2 = PSS.relative_entropy (recompose dpss1) (recompose dpss2)
 
   let prob_scale dpss scalar = [PSS.prob_scale (recompose dpss) scalar]
