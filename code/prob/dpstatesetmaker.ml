@@ -1,3 +1,4 @@
+open Lang
 open State
 open Printf
 open Util
@@ -23,163 +24,178 @@ module MakeDPStateset
   module PSS = PSSM
 
   type stateset = SS.stateset
-  type base_pstateset = PSS.pstateset
+  type factor = varid list
+  type base_pstateset = factor * PSS.pstateset
   type pstateset = base_pstateset list
   type splitter = SS.splitter
 
-  let recompose dpss = match dpss with
-    | [] -> PSS.make_empty ()
-    | h :: t -> List.fold_left PSS.prod h t
+  let (%) f g x = f (g x)
 
-  let ( +@ ) lst1 lst2 = sort_uniq compare (lst1 @ lst2)
-  let ( *@ ) lst1 lst2 = filter (fun x -> mem x lst1 && mem x lst2) (lst1 @ lst2)
+  let factor_to_string f = String.concat "" ["["; Lang.varid_list_to_string f; "]"]
+  let print_factor = print_string % factor_to_string
 
-  (** Given a DPSS, return a mapping [K -> i], where for each component PSS, K is the set of
-   * variables managed by that PSS, and i is the index of that PSS in the DPSS.
-   *)
-  let _factor_index_mapping = mapi (fun i p -> (PSS.vars p, i))
+  let factorization_to_string fs =
+    String.concat "" (["["] @ [String.concat " || " (map factor_to_string fs)] @ ["]"])
 
-  (** Given a variable k and a factor mapping [K -> v], find the pair (K, v) such that k ∈ K, or
-   * None. *)
-  let rec _find_factor k m = match m with
-    | [] -> None
-    | (s, v) :: t when mem k s -> Some (s, v)
-    | _ :: t -> _find_factor k t
+  let print_factorization = print_string % factorization_to_string
 
-  (** Factorization API:
-   * 1. *)
+  let print_bp (f, p) = print_string (factor_to_string f); PSS.print p
 
-  type _factor_t = Lang.varid list
-  type _factorization_t = _factor_t list
+  let print dpss =
+    print_string "Decomposition:\n";
+    iter (fun (f, p) ->
+        print_string "Factor ";
+        print_string (factor_to_string f);
+        print_string ":\n";
+        PSS.print p
+    ) dpss;
+    print_string "\n"
 
-  (** Extract the factorization from a decomposed polyhedron. *)
-  let _factorization_of (dpss: pstateset) : _factorization_t = map PSS.vars dpss
+  (* Poor man's set library. *)
 
-  (** Return the factor in a decomposed polyhedron for a given variable, None if variable is
-   * implicitly unconstrained. *)
-  let rec _get_factor_for_var (fs: _factorization_t) (v: Lang.varid) : _factor_t option = match fs with
-    | [] -> None
-    | h :: t when mem v h -> Some h
-    | h :: t -> _get_factor_for_var t v
+  let set_union lst1 lst2 = sort_uniq compare (lst1 @ lst2)
+  let ( +@ ) = set_union
 
-  (** Return the polyhedral component for a given factor in a decomposed polyhedron, None if the
-   * factor is not represented. *)
-  let rec _get_poly_for_factor (dpss: pstateset) (f: _factor_t): base_pstateset option =
-    let s = sort_uniq compare f in
-    match dpss with
-    | [] -> None
-    | h :: t when s = sort_uniq compare (PSS.vars h) -> Some h
-    | h :: t -> _get_poly_for_factor t f
+  let set_intersect lst1 lst2 = filter (fun i -> mem i lst2) lst1
+  let ( *@ ) = set_intersect
 
-  let _reconstitute_factor (dpss: pstateset) (f: _factor_t): base_pstateset =
-    let rec catSomes opts = match opts with
-      | [] -> []
-      | Some x :: t -> x :: catSomes t
-      | None :: t -> catSomes t in
-    let base_factorization = _factorization_of dpss in
-    let constituent_factors = sort_uniq compare (catSomes (map (_get_factor_for_var base_factorization) f)) in
-    fold_left PSS.prod (PSS.make_new []) (catSomes (map (_get_poly_for_factor dpss) constituent_factors))
+  let set_contained lst1 lst2 = lst1 = set_intersect lst1 lst2
+  let ( <=@ ) = set_contained
 
-  let _pull_factor_to_front fs f =
-    match  _get_factor_for_var fs (hd f) with
-    | None -> raise (General_error ("Invariant failed while pulling factor to front."))
-    | Some fp -> fp :: filter (fun fq -> fq != fp) fs
+  let set_eq s1 s2 = (sort_uniq compare s1) = (sort_uniq compare s2)
+  let set_set_eq ss1 ss2 = (sort_uniq compare (map (sort_uniq compare) ss1)) = (sort_uniq compare (map (sort_uniq compare) ss2))
 
-  (** Refactorize a decomposed polyhedron with respect to a given factorization by merging
-   * polyhedra as necessary. *)
-  let rec _refactorize (dpss: pstateset) (fs: _factorization_t) : pstateset = match fs with
+  let non_empty lst = lst != []
+  let (<$>) f ma = match ma with
+    | None -> None
+    | Some a -> Some (f a)
+
+  let rec catSomes opts = match opts with
     | [] -> []
-    | f :: t -> _reconstitute_factor dpss f :: _refactorize dpss t
+    | Some x :: t -> x :: catSomes t
+    | None :: t -> catSomes t
 
-  (** Determine the best common factorization of a pair of decomposed polyhedra. *)
-  let _best_common_factorization (fs1: _factorization_t) (fs2: _factorization_t) : _factorization_t =
-    let common_vars = sort_uniq compare (concat (fs1 @ fs2)) in
-    let default a ma = match ma with
-      | None -> a
-      | Some b -> b in
-    let accommodate_var r a =
-      let s1 = default [a] (_get_factor_for_var fs1 a) in
-      let s2 = default [a] (_get_factor_for_var fs2 a) in
-      try (a, assoc a r +@ s1 +@ s2) :: (remove_assoc a r) with Not_found -> (a, s1 +@ s2) :: r in
-    sort_uniq compare (snd (split (fold_left accommodate_var [] common_vars)))
+  (** Factorization Utilities *)
+  let factorization (dpss: pstateset): factor list = map fst dpss
 
-  let _best_common_factorization_for_dpsss (dpss1: pstateset) (dpss2: pstateset): _factorization_t =
-    let vars_1 = map PSS.vars dpss1 in
-    let vars_2 = map PSS.vars dpss2 in
-    _best_common_factorization vars_1 vars_2
+  let find_factor_by (fn: factor -> factor -> bool) (f: factor) (dpss: pstateset) : base_pstateset option
+    = try Some (find (fun (f', p) -> fn f f') dpss) with Not_found -> None
 
-  let _normalize_factorization_with (fs: _factorization_t) (f: _factor_t): _factorization_t =
-    _pull_factor_to_front (_best_common_factorization fs [f]) f
+  let rec reconcile_factor (fs: factor list) (f: factor) : factor list =
+    match fs with
+    | [] -> [f]
+    | _ -> let (haves, havenots) = partition (fun f' -> non_empty (set_intersect f f')) fs in
+           [fold_left set_union f haves] @ havenots
 
-  let print dpss = printf "Decomposition:\n"; List.iter PSS.print dpss
-  let _print_factorization fs =
-    print_string "Factorization: ";
-    print_string "[";
-    print_string (String.concat ", " (map Lang.varid_list_to_string fs));
-    print_string "]\n"
+  let prod_with_factor ((f, p): base_pstateset) ((f', p'): base_pstateset) : base_pstateset = (f +@ f', PSS.prod p p')
 
-  let _pairwise_refactor_apply dpss1 dpss2 f =
-    let common_factorization = _best_common_factorization_for_dpsss dpss1 dpss2 in
-    let new_dpss1 = _refactorize dpss1 common_factorization in
-    let new_dpss2 = _refactorize dpss2 common_factorization in
-    map (fun (p1, p2) -> f p1 p2) (combine new_dpss1 new_dpss2)
+  let lcf (fs1: factor list) (fs2: factor list) = fold_left reconcile_factor [] (fs1 @ fs2)
 
-  let _dispatch_on_head dpss f = match dpss with
-    | h :: t -> f h :: t
-    | [] -> raise (General_error("_dispatch_on_head invariant failure."))
+  let is_compatible_with (fs1: factor list) (fs2: factor list)
+    = for_all (fun f1 -> exists (fun f2 -> set_contained f1 f2) fs2) fs1
 
-  let copy = List.map PSS.copy
-  let make_empty () = []
-  let make_point s = [PSS.make_point s]
-  let make_point_of_stateset ss = [PSS.make_point_of_stateset ss]
-  let make_new vs = [PSS.make_new vs]
+  let _assert msg inv = if inv then () else failwith msg
+  let invariant b s = if b then () else failwith s
 
-  let addvar dpss v = make_new [v] @ dpss
+  let construct_factor_poly (dpss: pstateset) (f: factor) : base_pstateset =
+    let get_base_or_new v = match find_factor_by set_contained [v] dpss with
+      | None -> ([v], PSS.make_new [v])
+      | Some bp -> bp in
+    let constituents = sort_uniq (fun (f, p) (f', p') -> compare f f') (map get_base_or_new f) in
+    match constituents with
+    | [] -> ([], PSS.make_empty ())
+    | h :: t -> fold_left prod_with_factor h t
 
-  let size dpss = fold_left ( *! ) zone (map PSS.size dpss)
+  let normalize (dpss: pstateset) (fs: factor list) =
+    _assert "Factorizations incompatible!" (is_compatible_with (factorization dpss) fs);
+    map (construct_factor_poly dpss) (sort_uniq compare fs)
+
+  let pairwise_normalize (dpss1: pstateset) (dpss2: pstateset): (pstateset * pstateset) =
+    let cfs = lcf (factorization dpss1) (factorization dpss2) in
+    (normalize dpss1 cfs, normalize dpss2 cfs)
+
+  let rec with_factor (f: factor) (fn: base_pstateset -> base_pstateset) (dpss: pstateset) : pstateset =
+    match dpss with
+    | [] -> []
+    | (f', p) :: t when set_contained f f' -> fn (f', p) :: t
+    | h :: t -> h :: with_factor f fn t
+
+  let defactorize (dpss: pstateset) = snd (fold_left prod_with_factor ([], PSS.make_new []) dpss)
+
+  (** PStateset API *)
+  let copy (dpss: pstateset) = map (fun (f, p) -> (f, PSS.copy p)) dpss
+  let make_empty (): pstateset = []
+  let make_new (vs: varid list) = map (fun v -> ([v], PSS.make_new [v])) vs
+  let make_point (s: state): pstateset = [(s#vars, PSS.make_point s)]
+  let make_point_of_stateset (ss: stateset): pstateset = [(SS.stateset_vars ss, PSS.make_point_of_stateset ss)]
+  let make_singleton (pss: PSS.pstateset): pstateset = [(PSS.vars pss, pss)]
+  let vars (dpss: pstateset) = concat (factorization dpss)
+
+  let addvar (dpss: pstateset) (v: varid): pstateset =
+    _assert "Cannot add an existing var!" (not (mem v (vars dpss)));
+    make_new [v] @ dpss
+
+  let size (dpss: pstateset) = fold_left (fun s (f, p) -> s *! PSS.size p) zone dpss
+
+  let prod (dpss1: pstateset) (dpss2: pstateset) =
+    _assert "Operands to product must be disjoint!" (set_intersect (vars dpss1) (vars dpss2) = []);
+    dpss1 @ dpss2
+
+
   let slack dpss = raise Not_implemented
-  let prod dpss1 dpss2 = _pairwise_refactor_apply dpss1 dpss2 PSS.prod
-  let make_uniform v lo hi = [PSS.make_uniform v lo hi]
+  let make_uniform v lo hi = make_singleton (PSS.make_uniform v lo hi)
+
   let transform dpss stmt =
-    let common_factorization = _normalize_factorization_with (_factorization_of dpss) (Lang.stmt_vars stmt) in
-    let new_dpss = _refactorize dpss common_factorization in
-    _dispatch_on_head new_dpss (fun dpss -> PSS.transform dpss stmt)
+    let ndpss = normalize dpss (lcf (factorization dpss) [Lang.stmt_vars stmt]) in
+    with_factor (Lang.stmt_vars stmt) (fun (f, p) -> (f, PSS.transform p stmt)) ndpss
+
   let intersect dpss ss =
-    let common_factorization = _normalize_factorization_with (_factorization_of dpss) (SS.stateset_vars ss) in
-    let new_dpss = _refactorize dpss common_factorization in
-    _dispatch_on_head new_dpss (fun dpss -> PSS.intersect dpss ss)
+    let ndpss = normalize dpss (lcf (factorization dpss) [SS.stateset_vars ss]) in
+    with_factor (SS.stateset_vars ss) (fun (f, p) -> (f, PSS.intersect p ss)) ndpss
+
   let exclude dpss1 dpss2 = raise Not_implemented
-  let is_empty = List.for_all PSS.is_empty
+  let is_empty = for_all (fun (f, p) -> PSS.is_empty p)
 
   let make_splitter dpss lexp = raise Not_implemented
-  let split dpss lexp = raise Not_implemented
+  let split = raise Not_implemented
   let split_many dpss lexp = raise Not_implemented
   let split_many_with_splitter dpss vs splitters = raise Not_implemented
 
-  let set_all dpss vsis = [PSS.set_all (recompose dpss) vsis]
+  let set_all (dpss: pstateset) (vsis: (Lang.varid * int) list)
+    = fold_left (fun d (v, i) -> with_factor [v] (fun (f, p) -> (f, PSS.set_all p [(v, i)])) d) dpss vsis
 
-  let project dpss vs = [PSS.project (recompose dpss) vs]
+  let project dpss vs =
+    let partitions_by_factor = map (fun (f, _) -> filter (fun v -> mem v f) vs) dpss in
+    filter (fun (f, p) -> f != []) (map2 (fun (f, p) part -> (part, PSS.project p part)) dpss partitions_by_factor)
 
-  let vars dpss = List.concat (List.map PSS.vars dpss)
   let enum dpss = raise Not_implemented
   let enum_on_vars dpss vs = raise Not_implemented
 
-  let abstract_plus dpss1 dpss2 = _pairwise_refactor_apply dpss1 dpss2 PSS.abstract_plus
-  let relative_entropy dpss1 dpss2 = PSS.relative_entropy (recompose dpss1) (recompose dpss2)
+  let abstract_plus dpss1 dpss2 =
+    let (ndpss1, ndpss2) = pairwise_normalize dpss1 dpss2 in
+    map2 (fun (f1, p1) (f2, p2) ->
+        _assert "Pairwise normalizations must produce identical factors!" (f1 = f2);
+        (f1, PSS.abstract_plus p1 p2)
+    ) ndpss1 ndpss2
 
-  let prob_scale dpss scalar = [PSS.prob_scale (recompose dpss) scalar]
+  let relative_entropy dpss1 dpss2 = PSS.relative_entropy (defactorize dpss1) (defactorize dpss2)
 
-  let prob_max_in_min_out dpss s = PSS.prob_max_in_min_out (recompose dpss) s
-  let prob_max_norm dpss s = PSS.prob_max_norm (recompose dpss) s
-  let prob_max_min dpss = PSS.prob_max_min (recompose dpss)
-  let prob_smin_smax dpss = PSS.prob_smin_smax (recompose dpss)
-  let prob_pmin_pmax dpss = PSS.prob_pmin_pmax (recompose dpss)
-  let prob_mmin_mmax dpss = PSS.prob_mmin_mmax (recompose dpss)
-  let min_mass dpss = PSS.min_mass (recompose dpss)
-  let max_belief dpss = PSS.max_belief (recompose dpss)
-  let is_possible dpss = PSS.is_possible (recompose dpss)
-  let stateset_hull dpss = PSS.stateset_hull (recompose dpss)
-  let get_alpha_beta dpss = PSS.get_alpha_beta (recompose dpss)
-  let sample_pstateset dpss n es = [PSS.sample_pstateset (recompose dpss) n es]
-  let improve_lower_bounds checker runner init lim dpss = [PSS.improve_lower_bounds checker runner init lim (recompose dpss)]
+  (* TODO: Check correctness of these probability calculations *)
+
+  let prob_scale dpss scalar = make_singleton (PSS.prob_scale (defactorize dpss) scalar)
+
+  let prob_max_in_min_out dpss s = PSS.prob_max_in_min_out (defactorize dpss) s
+  let prob_max_norm dpss s = PSS.prob_max_norm (defactorize dpss) s
+  let prob_max_min dpss = PSS.prob_max_min (defactorize dpss)
+  let prob_smin_smax dpss = PSS.prob_smin_smax (defactorize dpss)
+  let prob_pmin_pmax dpss = PSS.prob_pmin_pmax (defactorize dpss)
+  let prob_mmin_mmax dpss = PSS.prob_mmin_mmax (defactorize dpss)
+  let min_mass dpss = fold_left ( +/ ) qzero (map (PSS.min_mass % snd) dpss)
+  let max_belief dpss = fold_left ( */ ) qone (map (PSS.max_belief % snd) dpss)
+  let is_possible dpss = for_all (fun (f, p) -> PSS.is_possible p) dpss
+  let stateset_hull dpss = PSS.stateset_hull (defactorize dpss)
+  let get_alpha_beta dpss = PSS.get_alpha_beta (defactorize dpss)
+  let sample_pstateset dpss n es = make_singleton (PSS.sample_pstateset (defactorize dpss) n es)
+  let improve_lower_bounds checker runner init lim dpss
+    = make_singleton (PSS.improve_lower_bounds checker runner init lim (defactorize dpss))
 end;;
