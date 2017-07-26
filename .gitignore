@@ -4,6 +4,8 @@
 qif/
 *.cmi
 *.cmo
+*.cmt
+*.cmti
 *.cmx
 *.hi
 *.o
