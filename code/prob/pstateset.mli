@@ -16,32 +16,50 @@ module type PSTATESET_TYPE =
 
     module SS: STATESET_TYPE
 
+    (** Copy a pstateset. Would be id, except if the pstateset contains ref-cells, etc. *)
     val copy: pstateset -> pstateset
 
+    (** Make an empty pstateset, which contains no points. *)
     val make_empty: unit -> pstateset
 
+    (** Make a pstateset containing a single point. *)
     val make_point: state -> pstateset
+
+    (** Make a pstateset containing the points in a given stateset. *)
     val make_point_of_stateset: stateset -> pstateset
 
+    (** Make an unconstrained pstateset which models the given variables. *)
     val make_new: Lang.varid list -> pstateset
 
+    (** Add an unconstrained variable to a given pstateset. *)
     val addvar: pstateset -> Lang.varid -> pstateset
 
+    (** Print a pstateset to stdout. *)
     val print: pstateset -> unit
 
+    (** Count the number of points inside a pstateset. *)
     val size: pstateset -> Z.t
 
     val slack: pstateset -> Q.t
 
+    (** Combine two pstatesets representing mutually exclusive sets of dimensions into a single
+     * pstateset. *)
     val prod: pstateset -> pstateset -> pstateset
 
+    (** Make a pstateset modeling a single given variable, constrained to have values within the
+     * given bounds, with each value uniformly possible. *)
     val make_uniform: Lang.varid -> Z.t -> Z.t -> pstateset
+
+    (** Transform a pstateset according to a given statement. *)
     val transform: pstateset -> stmt -> pstateset
 
+    (** Compute the intersection of a pstateset and a regular stateset, redistributing probability
+     * mass as necessary. *)
     val intersect: pstateset -> stateset -> pstateset
 
     val exclude: pstateset -> pstateset -> pstateset list
 
+    (** Check if a pstateset is empty. *)
     val is_empty: pstateset -> bool
 
     val make_splitter: pstateset -> lexp -> (splitter list * splitter list)
@@ -50,13 +68,20 @@ module type PSTATESET_TYPE =
     val split_many_with_splitter: pstateset -> Lang.varid list -> (splitter list * splitter list) ->
       (pstateset list * pstateset list)
 
+    (** Constrain all of the given variables to be equal to their corresponding values within a
+     * given pstateset. *)
     val set_all: pstateset -> (Lang.varid * int) list -> pstateset
 
+    (** From a given pstateset, project only the variables given, constructing a reduced
+     * dimensionality resulting pstateset with probability mass redistributed as necessary. *)
     val project: pstateset -> Lang.varid list -> pstateset
 
     (*val revise: pstateset -> state -> pstateset *)
 
+    (** Get a list of variables modeled by this pstateset. *)
     val vars: pstateset -> Lang.varid list
+
+    (** Enumerate the list of states in this pstateset. *)
     val enum: pstateset -> state list
     val enum_on_vars: pstateset -> Lang.varid list -> state list
 
