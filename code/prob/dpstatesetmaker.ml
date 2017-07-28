@@ -16,9 +16,9 @@ open Gmp_util
 module MakeDPStateset
   (SSM: STATESET_TYPE)
   (PSSM: PSTATESET_TYPE with type stateset = SSM.stateset
-                        and type splitter = SSM.splitter)
+                        )
   : (PSTATESET_TYPE with type stateset = SSM.stateset
-                    and type splitter = SSM.splitter)
+                    )
   = struct
   module SS = SSM
   module PSS = PSSM
@@ -27,7 +27,6 @@ module MakeDPStateset
   type factor = varid list
   type base_pstateset = factor * PSS.pstateset
   type pstateset = base_pstateset list
-  type splitter = SS.splitter
 
   let (%) f g x = f (g x)
 
@@ -50,6 +49,8 @@ module MakeDPStateset
         PSS.print p
     ) dpss;
     print_string "\n"
+
+  let purge_useless (dpss: pstateset) = filter (fun (f, p) -> f != []) dpss
 
   (* Poor man's set library. *)
 
@@ -157,9 +158,27 @@ module MakeDPStateset
   let is_empty = for_all (fun (f, p) -> PSS.is_empty p)
 
   let make_splitter dpss lexp = raise Not_implemented
-  let split = raise Not_implemented
-  let split_many dpss lexp = raise Not_implemented
-  let split_many_with_splitter dpss vs splitters = raise Not_implemented
+  let split dpss alexp =
+    let split_vars = Lang.collect_vars_lexp alexp in
+    let ndpss = normalize dpss (lcf (factorization dpss) [split_vars]) in
+    match find_factor_by (<=@) split_vars ndpss with
+    | None -> raise(General_error("Whoops."))
+    | Some (normalized_split_factor, normalized_split_pss) ->
+       let remaining = filter (fun (f, p) -> f != normalized_split_factor) ndpss in
+       let (split_ins, split_outs) = PSS.split normalized_split_pss alexp in
+       ( purge_useless ((normalized_split_factor, split_ins) :: remaining)
+       , purge_useless ((normalized_split_factor, split_outs) :: remaining))
+
+  let split_many dpss alexp =
+    let split_vars = Lang.collect_vars_lexp alexp in
+    let ndpss = normalize dpss (lcf (factorization dpss) [split_vars]) in
+    match find_factor_by (<=@) split_vars ndpss with
+    | None -> raise(General_error("Whoops."))
+    | Some (normalized_split_factor, normalized_split_pss) ->
+       let remaining = filter (fun (f, p) -> f != normalized_split_factor) ndpss in
+       let (split_inss, split_outss) = PSS.split_many normalized_split_pss alexp in
+       let tack_on_remaining p = (normalized_split_factor, p) :: remaining in
+       (map (purge_useless % tack_on_remaining) split_inss, map (purge_useless % tack_on_remaining) split_outss)
 
   let set_all (dpss: pstateset) (vsis: (Lang.varid * int) list)
     = fold_left (fun d (v, i) -> with_factor [v] (fun (f, p) -> (f, PSS.set_all p [(v, i)])) d) dpss vsis
@@ -184,14 +203,19 @@ module MakeDPStateset
 
   let prob_scale dpss scalar = make_singleton (PSS.prob_scale (defactorize dpss) scalar)
 
-  let prob_max_in_min_out dpss s = PSS.prob_max_in_min_out (defactorize dpss) s
-  let prob_max_norm dpss s = PSS.prob_max_norm (defactorize dpss) s
-  let prob_max_min dpss = PSS.prob_max_min (defactorize dpss)
-  let prob_smin_smax dpss = PSS.prob_smin_smax (defactorize dpss)
-  let prob_pmin_pmax dpss = PSS.prob_pmin_pmax (defactorize dpss)
-  let prob_mmin_mmax dpss = PSS.prob_mmin_mmax (defactorize dpss)
-  let min_mass dpss = fold_left ( +/ ) qzero (map (PSS.min_mass % snd) dpss)
-  let max_belief dpss = fold_left ( */ ) qone (map (PSS.max_belief % snd) dpss)
+  let fold_map_q f c = fold_left ( */ ) qone (map f c)
+  let fold_map_z f c = fold_left ( *! ) zone (map f c)
+  let bifold_map_q f c = fold_left (fun (a, b) (c, d) -> (a */ b, c */ d)) (qone, qone) (map f c)
+  let bifold_map_z f c = fold_left (fun (a, b) (c, d) -> (a *! b, c *! d)) (zone, zone) (map f c)
+
+  let prob_max_in_min_out dpss s = bifold_map_q (fun (_, p) -> PSS.prob_max_in_min_out p s) dpss
+  let prob_max_norm dpss s = fold_map_q (fun (_, p) -> PSS.prob_max_norm p s) dpss
+  let prob_max_min dpss = bifold_map_q (fun (_, p) -> PSS.prob_max_min p) dpss
+  let prob_smin_smax dpss = bifold_map_z (PSS.prob_smin_smax % snd) dpss
+  let prob_pmin_pmax dpss = bifold_map_q (PSS.prob_pmin_pmax % snd) dpss
+  let prob_mmin_mmax dpss = bifold_map_q (PSS.prob_mmin_mmax % snd) dpss
+  let min_mass dpss = fold_map_q (PSS.min_mass % snd) dpss
+  let max_belief dpss = fold_map_q (PSS.max_belief % snd) dpss
   let is_possible dpss = for_all (fun (f, p) -> PSS.is_possible p) dpss
   let stateset_hull dpss = PSS.stateset_hull (defactorize dpss)
   let get_alpha_beta dpss = PSS.get_alpha_beta (defactorize dpss)

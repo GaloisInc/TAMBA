@@ -12,7 +12,6 @@ module type PSTATESET_TYPE =
   sig
     type stateset
     type pstateset
-    type splitter
 
     module SS: STATESET_TYPE
 
@@ -62,11 +61,8 @@ module type PSTATESET_TYPE =
     (** Check if a pstateset is empty. *)
     val is_empty: pstateset -> bool
 
-    val make_splitter: pstateset -> lexp -> (splitter list * splitter list)
     val split: pstateset -> lexp -> (pstateset * pstateset)
     val split_many: pstateset -> lexp -> ((pstateset list) * (pstateset list))
-    val split_many_with_splitter: pstateset -> Lang.varid list -> (splitter list * splitter list) ->
-      (pstateset list * pstateset list)
 
     (** Constrain all of the given variables to be equal to their corresponding values within a
      * given pstateset. *)

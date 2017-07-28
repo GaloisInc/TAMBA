@@ -12,19 +12,13 @@ open Gmp_util
 
 module MakePPowerset (* create a powerset pstateset from a pstateset *)
   (SSM: STATESET_TYPE)
-  (PSSM: PSTATESET_TYPE with type stateset = SSM.stateset
-                        and type splitter = SSM.splitter
-  )
-  : (PSTATESET_TYPE with type stateset = SSM.stateset
-                    and type splitter = SSM.splitter
-    ) =
-
+  (PSSM: PSTATESET_TYPE with type stateset = SSM.stateset)
+  : (PSTATESET_TYPE with type stateset = SSM.stateset) =
 struct
   module SS = SSM
   module PSS = PSSM
 
   type stateset = SS.stateset
-  type splitter = SS.splitter
 
   type base_pstateset = PSSM.pstateset
 
@@ -166,27 +160,17 @@ struct
   let _simplify pss =
     _simplify_to_precision pss !Cmd.opt_precision
 
-  let make_splitter pss alexp = PSS.make_splitter (List.hd pss) alexp
-
-  let split_many_with_splitter pss vars splitter =
-    let (ins, outs) = (List.fold_left (fun (accin, accout) apss ->
-                                         let (ins, outs) = PSS.split_many_with_splitter apss vars splitter in
-                                           (List.append accin ins, List.append accout outs))
-                         ([], []) pss) in
-      ([_purge_useless ins], [_purge_useless outs])
-
   let split_many pss alexp =
-    let vars = Lang.collect_vars_lexp alexp in
-      if List.length pss = 0 then ([], []) else
-        (let splitter = PSS.make_splitter (List.hd pss) alexp in
-           split_many_with_splitter pss vars splitter)
+    let append_by_pair (xss, yss) (xs, ys) = (xss @ xs, yss @ ys) in
+    if List.length pss = 0 then ([], []) else
+      let (ins, outs) = List.fold_left append_by_pair ([], []) (List.map (fun p -> PSS.split_many p alexp) pss) in
+      ([_purge_useless ins], [_purge_useless outs])
 
   let split pss alexp =
     if (List.length pss) = 0 then ([], []) else
-      (
-        let (ins, outs) = split_many pss alexp in
-          (_simplify_to_precision (List.hd ins) !Cmd.opt_precision,
-           _simplify_to_precision (List.hd outs) !Cmd.opt_precision))
+      let (ins, outs) = split_many pss alexp in
+        (_simplify_to_precision (List.hd ins) !Cmd.opt_precision,
+         _simplify_to_precision (List.hd outs) !Cmd.opt_precision)
 
   let set_all pss sil = List.map (fun apss -> PSS.set_all apss sil) pss
 

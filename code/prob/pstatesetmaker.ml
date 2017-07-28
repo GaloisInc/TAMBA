@@ -14,14 +14,11 @@ open Gmp.Z.Infixes
 
 module MakePStateset(* create pstateset from a stateset *)
   (SSM: STATESET_TYPE) :
-  (PSTATESET_TYPE with type stateset = SSM.stateset
-                  and type splitter = SSM.splitter
-  ) = struct
+  (PSTATESET_TYPE with type stateset = SSM.stateset) = struct
 
     module SS = SSM
 
     type stateset = SS.stateset
-    type splitter = SS.splitter
 
     type estimator = {
       pmin: Q.t;
