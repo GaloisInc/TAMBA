@@ -208,14 +208,14 @@ module MakeDPStateset
   let bifold_map_q f c = fold_left (fun (a, b) (c, d) -> (a */ b, c */ d)) (qone, qone) (map f c)
   let bifold_map_z f c = fold_left (fun (a, b) (c, d) -> (a *! b, c *! d)) (zone, zone) (map f c)
 
-  let prob_max_in_min_out dpss s = bifold_map_q (fun (_, p) -> PSS.prob_max_in_min_out p s) dpss
+  let prob_max_in_min_out dpss s = PSS.prob_max_in_min_out (defactorize dpss) s
   let prob_max_norm dpss s = fold_map_q (fun (_, p) -> PSS.prob_max_norm p s) dpss
-  let prob_max_min dpss = bifold_map_q (fun (_, p) -> PSS.prob_max_min p) dpss
+  let prob_max_min dpss = PSS.prob_max_min (defactorize dpss) (* TODO: This one doesn't follow expected decomposition. *)
   let prob_smin_smax dpss = bifold_map_z (PSS.prob_smin_smax % snd) dpss
   let prob_pmin_pmax dpss = bifold_map_q (PSS.prob_pmin_pmax % snd) dpss
   let prob_mmin_mmax dpss = bifold_map_q (PSS.prob_mmin_mmax % snd) dpss
   let min_mass dpss = fold_map_q (PSS.min_mass % snd) dpss
-  let max_belief dpss = fold_map_q (PSS.max_belief % snd) dpss
+  let max_belief dpss = PSS.max_belief (defactorize dpss)
   let is_possible dpss = for_all (fun (f, p) -> PSS.is_possible p) dpss
   let stateset_hull dpss = PSS.stateset_hull (defactorize dpss)
   let get_alpha_beta dpss = PSS.get_alpha_beta (defactorize dpss)
