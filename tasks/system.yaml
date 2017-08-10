@@ -56,3 +56,6 @@
   shell: pip install gprof2dot
   args:
     creates: /usr/local/bin/gprof2dot
+
+- name: Install NTL
+  apt: name=libntl-dev state=present
