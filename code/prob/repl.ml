@@ -20,5 +20,9 @@ let get_query_params str querydefs =
         ) in
   map inlist get_in_vals
 
+let get_query_out () : int option =
+  printf "Output value:\n";
+  safe_parse_int (input_line ~prompt:("result = ") ())
+
 let all_safe xs =
   List.for_all xs (fun (_,x) -> Option.is_some x)

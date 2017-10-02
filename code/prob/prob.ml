@@ -369,8 +369,10 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
                      let ps_out = if not (all_safe ins)
                                   (* TODO: Print out which inputs failed (snd of the tuple will be None) *)
                                   then (printf "Input(s) are not valid\n"; ps_in)
-                                  else (let qstmt = make_int_assignments ins in
-                                        common_run (str, qstmt) None querydefs) ps_in in
+                                  else
+                                    (let conc_res = get_query_out () in
+                                     let qstmt = make_int_assignments ins in
+                                        common_run (str, qstmt) conc_res querydefs) ps_in in
                      interpreter_loop (count + 1)
                                  (prob_line ())
                                  ps_out)
