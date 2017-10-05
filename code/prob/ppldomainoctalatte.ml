@@ -297,6 +297,8 @@ module Ppldomainoctalatte: (PPLDOMAIN_TYPE with type region = octagonal_shape_mp
         done;
         !ret
 
+    let get_sample p = raise (General_error "get_sample not yet implemented for octalatte domain")
+
     let sample_region p t f = raise (General_error "sample_region not yet implemented for octalatte domain")
 
     let update_bounds p t = raise (General_error "update_bounds not yet implemented for octalatte domain")

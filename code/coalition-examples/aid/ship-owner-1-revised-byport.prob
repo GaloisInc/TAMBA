@@ -1,0 +1,137 @@
+secret:
+  (* Comfort *)
+  int ship_id = 1;
+  int ship_loc_x = 121944782;
+  int ship_loc_y = 8963735;
+  int ship_length = 600;
+  int ship_draft = 40;
+  int ship_speed = 10000000;
+  int ship_cargo = 900; (* changed slightly *)
+
+belief:
+  int ship_id = 1;
+  int ship_loc_x = uniform 120000000 130000000;
+  int ship_loc_y = uniform 8900000 10400000;
+  int ship_length = 600;
+  int ship_draft = uniform 25 150;
+  int ship_speed = uniform 5000000 15000000;
+  int ship_cargo = 900; (* changed slightly *)
+
+querydef feasible ship_id port_loc_x port_loc_y port_harbor_depth port_offload_capacity deadline -> result :
+    
+  (* Part A -- Determine if port can be reached by the ship before deadline. *)
+
+  int port_reachable = 0;
+
+  (* int port_eta = (port_dist_x_abs + port_dist_y_abs) / ship_speed; *)
+
+  (* if (port_eta <= deadline) then *)
+  if (ship_loc_x - port_loc_x + ship_loc_y - port_loc_y) <= deadline * ship_speed and
+     (port_loc_x - ship_loc_x + ship_loc_y - port_loc_y) <= deadline * ship_speed and
+     (ship_loc_x - port_loc_x + port_loc_y - ship_loc_y) <= deadline * ship_speed and
+     (port_loc_x - ship_loc_x + port_loc_y - ship_loc_y) <= deadline * ship_speed
+ then
+    port_reachable = 1;
+  endif;
+
+  (* Part B -- Determine ports that satisfy ship/harbor physical compatibility constraints *)
+
+  (* Note: Second constrationt `ship_cargo < port_offload_capacity` does not affect information flow
+     from perspective of ship owner *)
+  int result = 0;
+  if (port_reachable == 1 and ship_draft < port_harbor_depth and ship_cargo < port_offload_capacity) then
+    result = 1;
+  endif;
+
+(* One query per-port *)
+(* name, lat, long, offload_cap, offload_time, depth, available *)
+
+(* 1: CebuCity, 10.316, 123.886, 2500, 2, 65, true *)
+query feasible:
+  int ship_id = 1;
+  int port_loc_x = 123886000;
+  int port_loc_y = 10316000;
+  int port_harbor_depth = 65;
+  int port_offload_capacity = 2500;
+  int deadline = 12;
+
+(* 2: LapuLapu, 10.268, 123.994, 2000, 3, 55, false *)
+query feasible:
+  int ship_id = 1;
+  int port_loc_x = 123994000;
+  int port_loc_y = 10268000;
+  int port_harbor_depth = 55;
+  int port_offload_capacity = 2000;
+  int deadline = 12;
+
+(* 3: Alcoy      9.683, 123.500, 1500, 4, 45, true  *)
+query feasible:
+  int ship_id = 1;
+  int port_loc_x = 123500000;
+  int port_loc_y = 9683000;
+  int port_harbor_depth = 45;
+  int port_offload_capacity = 1500;
+  int deadline = 12;
+
+(* 4: Jagna,              9.650, 124.366, 2000, 3, 50, true *)
+query feasible:
+  int ship_id = 1;
+  int port_loc_x = 124366000;
+  int port_loc_y = 9650000;
+  int port_harbor_depth = 50;
+  int port_offload_capacity = 2000;
+  int deadline = 12;
+
+(* 5: 'Tagbilaran',         9.673, 123.873, 1800, 5, 45, false *)
+query feasible:
+  int ship_id = 1;
+  int port_loc_x = 123873000;
+  int port_loc_y = 9673000;
+  int port_harbor_depth = 45;
+  int port_offload_capacity = 1800;
+  int deadline = 12;
+
+(* 6: 'SiquijorCity',       9.213, 123.516,  800, 7, 30, false *)
+query feasible:
+  int ship_id = 1;
+  int port_loc_x = 123516000;
+  int port_loc_y = 9213000;
+  int port_harbor_depth = 30;
+  int port_offload_capacity = 800;
+  int deadline = 12;
+
+(* 7: 'SanJuan',            9.167, 123.500, 1000, 8, 40, false *)
+query feasible:
+  int ship_id = 1;
+  int port_loc_x = 123500000;
+  int port_loc_y = 9167000;
+  int port_harbor_depth = 40;
+  int port_offload_capacity = 1000;
+  int deadline = 12;
+
+(* 8: 'Maria',              9.200, 123.650, 1100, 6, 45, true *)
+query feasible:
+  int ship_id = 1;
+  int port_loc_x = 123650000;
+  int port_loc_y = 9200000;
+  int port_harbor_depth = 45;
+  int port_offload_capacity = 1100;
+  int deadline = 12;
+
+(* 9: 'Larena',             9.250, 123.600,  600, 5, 30, false *)
+query feasible:
+  int ship_id = 1;
+  int port_loc_x = 123600000;
+  int port_loc_y = 9250000;
+  int port_harbor_depth = 30;
+  int port_offload_capacity = 600;
+  int deadline = 12;
+
+(* 10: 'EnriqueVillanueve', 9.272, 123.638, 1500, 5, 50, false *)
+query feasible:
+  int ship_id = 1;
+  int port_loc_x = 123638000;
+  int port_loc_y = 9272000;
+  int port_harbor_depth = 50;
+  int port_offload_capacity = 1500;
+  int deadline = 12;

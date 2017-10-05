@@ -2,53 +2,53 @@
 
 - name: Get libBarvinok sources
   git: repo=http://repo.or.cz/barvinok.git
-       dest=/home/jmct/barvinok
+       dest=/home/{{ user_name }}/barvinok
        accept_hostkey=yes
        update=no
 
 - name: Get Barvinok submodules
-  shell: ./get_submodules.sh && touch /home/jmct/.barvinok_submoduled
+  shell: ./get_submodules.sh && touch /home/{{ user_name }}/.barvinok_submoduled
   args:
-    chdir: /home/jmct/barvinok
-    creates: /home/jmct/.barvinok_submoduled
+    chdir: /home/{{ user_name }}/barvinok
+    creates: /home/{{ user_name }}/.barvinok_submoduled
 
 - name: Create configuration
   shell: sh autogen.sh
   args:
-    chdir: /home/jmct/barvinok
-    creates: /home/jmct/barvinok/configure
+    chdir: /home/{{ user_name }}/barvinok
+    creates: /home/{{ user_name }}/barvinok/configure
 
 - name: run configure for Barvinok
   become: yes
   shell: ./configure
   args:
-    chdir: /home/jmct/barvinok
-    creates: /home/jmct/barvinok/Makefile
+    chdir: /home/{{ user_name }}/barvinok
+    creates: /home/{{ user_name }}/barvinok/Makefile
 
 - name: make Barvinok
   become: yes
   shell: make
   args:
-    chdir: /home/jmct/barvinok
-    creates: /home/jmct/barviok/barvinok_count
+    chdir: /home/{{ user_name }}/barvinok
+    creates: /home/{{ user_name }}/barviok/barvinok_count
 
 - name: make check Barvinok
   become: yes
-  shell: make check && touch /home/jmct/.barvinok_checked
+  shell: make check && touch /home/{{ user_name }}/.barvinok_checked
   args:
-    chdir: /home/jmct/barvinok
-    creates: /home/jmct/.barvinok_checked
+    chdir: /home/{{ user_name }}/barvinok
+    creates: /home/{{ user_name }}/.barvinok_checked
 
 - name: make install Barvinok
   become: yes
   shell: make install
   args:
-    chdir: /home/jmct/barvinok
+    chdir: /home/{{ user_name }}/barvinok
     creates: /usr/local/bin/barvinok_count
 
 - name: Install latte2polylib.pl
   become: yes
   shell: cp latte2polylib.pl /usr/local/bin/latte2polylib
   args:
-    chdir: /home/jmct/barvinok
+    chdir: /home/{{ user_name }}/barvinok
     creates: /usr/local/bin/latte2polylib

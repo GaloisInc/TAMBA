@@ -43,7 +43,19 @@
   args:
     creates: /usr/bin/scdd_gmp
 
+- name: install boost
+  apt: name=libboost-dev state=present
+
+- name: install boost program options
+  apt: name=libboost-program-options-dev state=present
+
+- name: install glpk
+  apt: name=libglpk-dev state=present
+
 - name: Install gprof2dot (for callgraphs from callgrind)
   shell: pip install gprof2dot
   args:
     creates: /usr/local/bin/gprof2dot
+
+- name: Install NTL
+  apt: name=libntl-dev state=present

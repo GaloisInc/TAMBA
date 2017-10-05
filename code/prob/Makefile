@@ -13,7 +13,7 @@ ifdef USE_OPT
   OEXT := cmx
   IEXT := cmxi
   LOEXT := cmxa
-  OCAMLC := $(OCAMLFIND) ocamlopt
+  OCAMLC := $(OCAMLFIND) ocamlopt -g
   OCAMLDEP := $(OCAMLFIND) ocamldep -native
 else
   OEXT := cmo
@@ -30,6 +30,7 @@ SOURCES_COMMON :=\
 	globals.ml \
 	json.ml \
 	lang.ml \
+	symbol.ml \
 	repl.ml \
 	logical.ml \
 	pdefs.ml smcdefs.ml \
@@ -41,15 +42,20 @@ SOURCES_COMMON :=\
 	maths.ml \
 	err.ml \
 	state.ml \
+	symstate.ml \
 	value_status.ml \
 	latte.ml \
+	volcomp.ml \
+	gen_poly.ml \
 	ppldomainpoly.ml \
 	ppldomainbox.ml \
 	ppldomainocta.ml \
 	ppldomainoctalatte.ml \
 	pplstatesetmaker.ml \
 	pstatesetmaker.ml \
+  dpstatesetmaker.ml \
 	evalstate.ml  \
+	evalsymstate.ml \
 	ppowersetmaker.ml \
 	evalpstateset.ml \
 	esys.ml \
@@ -71,6 +77,10 @@ SOURCES_OPT := \
 	$(SOURCES_COMMON) \
 	optimization_workbench.ml
 
+SOURCES_ALLOC := \
+	$(SOURCES_COMMON) \
+	resource_allocation.ml
+
 SOURCES_MPROB := \
 	$(SOURCES_COMMON) \
 	smcdefs.ml \
@@ -83,6 +93,7 @@ OBJS_PROB  := $(SOURCES_PROB:.ml=.$(OEXT))
 OBJS_MPROB := $(SOURCES_MPROB:.ml=.$(OEXT))
 OBJS_LATEX := $(SOURCES_LATEX:.ml=.$(OEXT))
 OBJS_OPT  := $(SOURCES_OPT:.ml=.$(OEXT))
+OBJS_ALLOC  := $(SOURCES_ALLOC:.ml=.$(OEXT))
 
 OBJS_ALL   := $(OBJS_PROB) $(OBJS_CEVAL)
 
@@ -94,7 +105,7 @@ INC_FLAGS = -package str -package unix -package gmp -package pareto -package oce
 LINK_FLAGS = $(DEBUG_FLAGS) $(INC_FLAGS) -linkpkg
 BUILD_FLAGS = $(DEBUG_FLAGS) $(INC_FLAGS) -pp "camlp5o ./pa_if.cmo" -I +camlp5
 
-prob: $(OBJS_PROB) latte_tmp
+prob: $(OBJS_PROB) latte_tmp volcomp_tmp
 	$(OCAMLC) $(PPL_LINK) $(LINK_FLAGS) -o prob $(OBJS_PROB)
 
 install: prob
@@ -105,6 +116,9 @@ exp: experiment.ml
 
 opt: $(OBJS_OPT)
 	$(OCAMLC) $(PPL_LINK) $(LINK_FLAGS) -o opt $(OBJS_OPT)
+
+alloc: $(OBJS_ALLOC)
+	$(OCAMLC) $(PPL_LINK) $(LINK_FLAGS) -o alloc $(OBJS_ALLOC)
 
 mprob: $(OBJS_MPROB) 
 	$(OCAMLC) $(PPL_LINK) $(LINK_FLAGS) -o mprob $(OBJS_MPROB)
@@ -120,17 +134,24 @@ util.ml: pa_if.cmo
 latte_tmp:
 	mkdir latte_tmp
 
+volcomp_tmp:
+	mkdir volcomp_tmp
+
 -include .dep
 
 clean_latte:
 	rm -Rf *.lp *.lps numOfLatticePoints totalTime numOfUnimodularCones latte_stats Check_emp.ddl.old latte_tmp/* tri.* *.ddl *.out *.cdd *.ead *.ext
 	rm -Rf latte_cdd.* Check_emp.* cdd.error
 
+clean_volcomp:
+	rm -Rf volcomp_tmp/*
+
 clean_build:
 	rm -rf *~ *.cm* *.o lexer.ml parser.ml parser.mli parser.output *.dSYM .dep .DS_Store 
 
 clean:
 	make clean_latte
+	make clean_volcomp
 	make clean_build
 	rm -Rf prob mprob latex
 

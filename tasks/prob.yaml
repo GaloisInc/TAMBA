@@ -2,15 +2,15 @@
 
 - name: Build prob
   become: yes
-  become_user: jmct
+  become_user: "{{ user_name }}"
   shell: eval `opam config env`; make prob
   args:
-    chdir: /home/jmct/tamba/code/prob
-    creates: /home/jmct/tamba/code/prob/prob
+    chdir: "{{ build_dir }}"
+    creates: "{{ build_dir }}/prob"
 
 - name: Install prob
   become: yes
   shell: cp ./prob /usr/local/bin/prob
   args:
-    chdir: /home/jmct/tamba/code/prob
+    chdir: "{{ build_dir }}"
     creates: /usr/local/bin/prob

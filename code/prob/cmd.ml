@@ -12,15 +12,21 @@ let opt_blackbox = ref false
 let opt_split_factor = ref 1
 let opt_domain = ref 4
 let opt_count_bin = ref "count"
+let alloc_eta    = ref 0
+let alloc_berths = ref 0
+let alloc_ships = ref 7
 (* space saved for bench *)
 let opt_count_latte = ref false
 (* space saved for bench latte *)
 let opt_verbose = ref 0
 let opt_debug = ref false
 let opt_inline = ref false
+let opt_improve_lower_bounds = ref 0
+let opt_volume_computation = ref 0
 let opt_simplify = ref 0
 let opt_seed = ref 0
 let opt_bakeoff = ref false
+let opt_precise_conditioning = ref false
 
 (* setters for options *)
 let set_domain str =
@@ -31,8 +37,16 @@ let set_domain str =
       | "octa" -> 2
       | "octalatte" -> 3
       | "poly" -> 4
+      | "decomposed-poly" -> 5
       | _ -> raise (General_error ("unknown domain: " ^ str)))
 
+let set_volume_computation str =
+  opt_volume_computation := (
+    match str with
+    | "latte" -> 0
+    | "volcomp" -> 1
+    | _ -> raise (General_error ("unknown volume computation tool: " ^ str)))
+                  
 let set_simplify str =
   opt_simplify := (
     match str with

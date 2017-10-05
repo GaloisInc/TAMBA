@@ -23,11 +23,19 @@ let rec render_datatype (t:datatype) : string = match t with
     "{"^rendered_body^"}"
   | _ -> failwith "Invalid datatype"
 
-
-
 type agent = string
 type varid = agent * string
 
+module OrderedVarID = struct
+  type t = varid
+  let compare (a, x) (b, y) =
+    match String.compare a b with
+    | 0 -> String.compare x y
+    | c -> c
+end
+
+module VarIDMap = Map.Make(OrderedVarID)
+                       
 let agent_list_to_string al = String.concat "," al
 
 let varid_to_string (owner, id) = if owner = "" then id else owner ^ "." ^ id

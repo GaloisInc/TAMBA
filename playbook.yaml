@@ -4,12 +4,14 @@
   tasks:
     - name: update apt cache
       apt: update_cache=yes
+    - include: tasks/user.yaml
     - include: tasks/system.yaml
     - include: tasks/c.yaml
-    - include: tasks/haskell.yaml
+#    - include: tasks/haskell.yaml
     - include: tasks/ocaml.yaml
     - include: tasks/ppl.yaml
     - include: tasks/ntl.yaml
     - include: tasks/barvinok.yaml
     - include: tasks/latte.yaml
+    - include: tasks/volcomp.yaml
     - include: tasks/prob.yaml

@@ -93,10 +93,17 @@ module Ppldomainbox: (PPLDOMAIN_TYPE with type region = rational_box) =
     let remove_higher_dimensions r dim = ppl_Rational_Box_remove_higher_space_dimensions r dim
     let duplicate_dimension r dim      = ppl_Rational_Box_expand_space_dimension r dim 1
 
-    let intersect_region_poly r p2 =
-      let p1 = ppl_new_NNC_Polyhedron_from_Rational_Box r in
+    let intersect_region_poly r p =
+      if !Cmd.opt_precise_conditioning then
+        let p1 = ppl_new_NNC_Polyhedron_from_Rational_Box r in
+        let p2 = p in
         ppl_Polyhedron_intersection_assign p1 p2;
-        ppl_new_Rational_Box_from_NNC_Polyhedron p1
+        ppl_new_Rational_Box_from_NNC_Polyhedron p1 
+      else
+        let r1 = ppl_new_Rational_Box_from_Rational_Box r in
+        let r2 = ppl_new_Rational_Box_from_NNC_Polyhedron p in
+        ppl_Rational_Box_intersection_assign r1 r2;
+        r1
 
     let intersect_regions_assign r1 r2    =
 (*      printf "\n---\nintersecting:\n\t";
@@ -162,16 +169,23 @@ module Ppldomainbox: (PPLDOMAIN_TYPE with type region = rational_box) =
         let ranges = Array.init (Array.length lo) f in
         Array.fold_left ( * ) 1 ranges;;
 
+      let get_sample p =
+        let bounds = _bounds_of_box p in
+        _sample_bounds bounds
+
       let sample_region p n evals =
           let bounds = _bounds_of_box p in
-          let rec f (yes,no) = if yes + no >= n
+          let rec f m (yes,no) = if m >= n
                                then (yes,no)
                                else let sample = _sample_bounds bounds in
                                     let ret_val = Util.list_func_and evals sample in
-                                        match ret_val with
-                                           | true -> f (yes + 1, no)
-                                           | false -> f (yes, no + 1) in
-          f (0,0)
+                                    let yes_no =
+                                        (match ret_val with
+                                           | Some (true) -> (yes + 1, no)
+                                           | Some (false) -> (yes, no + 1)
+                                           | _ -> (yes, no)) in
+                                    f (m + 1) yes_no in
+          f 0 (0,0)
 
       let update_bounds p t = raise (General_error "update_bounds not yet implemented for Box domain")
 

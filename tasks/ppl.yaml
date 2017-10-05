@@ -8,15 +8,15 @@
 
 - name: run configure for PPL lib
   become: yes
-  become_user: jmct
-  shell: ./configure --enable-interfaces=ocaml --with-mlgmp=/home/jmct/.opam/4.02.0/lib/gmp/ CFLAGS=-g
+  become_user: "{{ user_name }}"
+  shell: ./configure --enable-interfaces=ocaml --with-mlgmp=/home/{{ user_name }}/.opam/4.02.0/lib/gmp/ CFLAGS=-g
   args:
     chdir: /usr/share/ppl-1.1
     creates: /usr/share/ppl-1.1/Makefile
 
 - name: make PPL
   become: yes
-  become_user: jmct
+  become_user: "{{ user_name }}"
   shell: bash -c 'eval `opam config env`; make'
   args:
     chdir: /usr/share/ppl-1.1

@@ -1,0 +1,27 @@
+---
+
+- name: Get volComp source archive
+  become: yes
+  become_user: "{{ user_name }}"
+  get_url: url=http://www.cs.umd.edu/~ins/volComp.tgz dest=/home/{{ user_name }}/volComp.tgz
+
+- name: Unarchive volComp source
+  become: yes
+  become_user: "{{ user_name }}"
+  unarchive: src="/home/{{ user_name }}/volComp.tgz" dest=/home/{{ user_name }}/ copy=no
+  args:
+    creates: /home/{{ user_name }}/volComp/
+
+- name: make volComp
+  become: yes
+  become_user: "{{ user_name }}"
+  shell: make
+  args:
+    chdir: /home/{{ user_name }}/volComp/src-gmp
+    creates: /home/{{ user_name }}/volComp/src-gmp/volComp
+
+- name: Put volComp PATH
+  become: yes
+  shell: cp /home/{{ user_name }}/volComp/src-gmp/volComp /usr/bin/
+  args:
+    creates: /usr/bin/volComp

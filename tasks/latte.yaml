@@ -2,41 +2,41 @@
 
 - name: Get LattE source archive
   become: yes
-  become_user: jmct
-  get_url: url=https://www.math.ucdavis.edu/~mkoeppe/latte/download/experimental/latte-integrale-1.7.3b.tar.gz dest=/home/jmct/latte-integrale-1.7.3b.tar.gz
+  become_user: "{{ user_name }}"
+  get_url: url=https://www.math.ucdavis.edu/~mkoeppe/latte/download/experimental/latte-integrale-1.7.3b.tar.gz dest=/home/{{ user_name }}/latte-integrale-1.7.3b.tar.gz
 
 - name: Unarchive LattE source
   become: yes
-  become_user: jmct
-  unarchive: src=/home/jmct/latte-integrale-1.7.3b.tar.gz dest=/home/jmct/ copy=no
+  become_user: "{{ user_name }}"
+  unarchive: src=/home/{{ user_name }}/latte-integrale-1.7.3b.tar.gz dest=/home/{{ user_name }}/ copy=no
   args:
-    creates: /home/jmct/latte-integrale-1.7.3b/
+    creates: /home/{{ user_name }}/latte-integrale-1.7.3b/
 
 - name: run configure for LattE
   become: yes
-  become_user: jmct
+  become_user: "{{ user_name }}"
   shell: ./configure
   args:
-    chdir: /home/jmct/latte-integrale-1.7.3b
-    creates: /home/jmct/latte-integrale-1.7.3b/Makefile
+    chdir: /home/{{ user_name }}/latte-integrale-1.7.3b
+    creates: /home/{{ user_name }}/latte-integrale-1.7.3b/Makefile
 
 - name: make LattE
   become: yes
-  become_user: jmct
+  become_user: "{{ user_name }}"
   shell: make
   args:
-    chdir: /home/jmct/latte-integrale-1.7.3b
-    creates: /home/jmct/latte-integrale-1.7.3b/dest/bin/count
+    chdir: /home/{{ user_name }}/latte-integrale-1.7.3b
+    creates: /home/{{ user_name }}/latte-integrale-1.7.3b/dest/bin/count
 
 - name: Put LattE count in PATH
   become: yes
-  shell: cp /home/jmct/latte-integrale-1.7.3b/dest/bin/count /usr/bin/
+  shell: cp /home/{{ user_name }}/latte-integrale-1.7.3b/dest/bin/count /usr/bin/
   args:
     creates: /usr/bin/count
 
 - name: Put latte-maximize in PATH
   become: yes
-  shell: cp /home/jmct/latte-integrale-1.7.3b/dest/bin/latte-maximize /usr/bin/
+  shell: cp /home/{{ user_name }}/latte-integrale-1.7.3b/dest/bin/latte-maximize /usr/bin/
   args:
     creates: /usr/bin/latte-maximize
 

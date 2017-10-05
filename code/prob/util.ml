@@ -26,6 +26,30 @@ let lg n =
 let min_q a b = if Q.compare a b < 0 then a else b
 let max_q a b = if Q.compare a b > 0 then a else b
 
+let from_string_Q s =
+  let parts = Str.split (Str.regexp "\\.") s in
+  if (List.length parts = 1) then
+    Q.zero
+  else
+    let w :: ds :: [] = parts in
+
+    let w' : Q.t = Q.from_z (Z.from_string w) in (* portion to left of decimal *)
+
+    let rec pow_Z base exp =
+        if Z.cmp exp (Z.from_int 0) = 0 then
+        Z.from_int 1
+        else
+        Z.mul base (pow_Z base (Z.sub exp (Z.from_int 1)))
+    in
+
+    let num : Z.t = Z.from_string ds in
+    let den : Z.t = pow_Z (Z.from_int 10) (Z.from_int (String.length ds)) in
+
+    let ds' = Q.from_zs num den in
+
+    Q.add w' ds'
+
+                                                   
 let pair_first (a, b) = a
 let pair_second (a, b) = b
 
@@ -48,8 +72,12 @@ let fold_left1 f (x::xs) = List.fold_left f x xs
 
 let rec list_func_and fs x =
   match fs with
-    | []     -> true
-    | g::gs  -> g x && list_func_and gs x
+    | []     -> Some (true)
+    | g::gs  ->
+       (match (g x, list_func_and gs x) with
+       | None, _ -> None
+       | _, None -> None
+       | Some t1, Some t2 -> Some (t1 && t2))
 
 let list_of_queue q =
   Queue.fold (fun accum i -> i :: accum) [] q
@@ -77,7 +105,7 @@ let is_min a (b, c, d) =
   let ab = Z.compare a b in
   let ac = Z.compare a c in
   let ad = Z.compare a d in
-  (ab = -1 || ab = 0) && (ac = -1 || ac = 0) && (ad = -1 || ad = 0)
+  (ab <= 0) && (ac <= 0) && (ad <= 0)
 
 let best_bounds smin1 smax1 smin2 smax2 =
   let b1 = Z.abs (Z.sub smax1 smin1) in
@@ -236,6 +264,27 @@ let lists_append ll = List.fold_left List.append [] ll
 let list_subtract ll minus =
   List.filter (fun item -> not (List.mem item minus)) ll
 
+let rec list_replicate n ele =
+  if n = 0 then
+    []
+  else
+    ele :: (list_replicate (n - 1) ele)
+
+let rec list_replicate_f n f =
+  if n = 0 then
+    []
+  else
+    (f ()) :: (list_replicate_f (n - 1) f)
+
+let list_idx f l =
+  let rec list_idx' l' n =
+    match l' with
+    | [] -> -1
+    | h :: t -> if f h then n else list_idx' t (n + 1)
+  in
+
+  list_idx' l 0
+             
 let address o = ((Obj.magic (Obj.repr o)): int)
 
 let array_permute a =
