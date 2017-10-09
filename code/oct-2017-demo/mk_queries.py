@@ -37,6 +37,9 @@ def main ():
     if len(sys.argv) != 4:
         exit(1)
 
+    ship_var_data = [("latitude", -90000, 90000), ("longitude", -180000, 180000), ("maxspeed", 5, 50)]
+    port_var_data = [("harbordepth", 10, 100)]
+
     num_ships = int(sys.argv[1])
     num_ports = int(sys.argv[2])
     file_name = sys.argv[3]
@@ -45,15 +48,16 @@ def main ():
 
     out = open(file_name, 'w+')
 
+    # Secret
+
     secret_header = "secret:\n"
-    secret_header_stmt = "  skip;\n\n"
+    secret_header_stmt = "  skip;\n"
 
-    out.write(secret_header)
-    out.write(secret_header_stmt)
+    secret = secret_header + secret_header_stmt
 
-    # Are all these actually private? Or do some of them need to be public args to queries?
-    ship_var_data = [("latitude", -90000, 90000), ("longitude", -180000, 180000), ("maxspeed", 5, 50)]
-    port_var_data = [("harbordepth", 10, 100)]
+    out.write(secret)
+
+    # Belief
 
     belief_header = "belief:\n"
     belief_header_stmt = ""
@@ -68,54 +72,108 @@ def main ():
         for (prefix, rnd_min, rnd_max) in port_var_data:
             belief_header_stmt += ("  int port%d_%s = uniform %d %d;\n" % (i, prefix, rng_min, rng_max))
 
-    out.write(belief_header)
-    out.write(belief_header_stmt)
+    belief = belief_header + belief_header_stmt
 
-    querydefs = "\n"
+    out.write("\n" + belief)
+
+    # Queries
+
+    ## MPC Reachable
+
+    mpc_reachable_sig = "querydef mpc_reachable ship_id port_id port_latitude port_longitude deadline -> result :\n"
+
+    mpc_reachable_preamble = ""
+
+    for (prefix, _, _) in ship_var_data:
+        mpc_reachable_preamble += ("  int ship_%s = 0;\n" % prefix)
+
+    mpc_reachable_preamble += "\n"
+
+    for (prefix, _, _) in port_var_data:
+        mpc_reachable_preamble += ("  int port_%s = 0;\n" % prefix)
+
+    mpc_reachable_preamble += "\n"
 
     for i in range(num_ships):
         for j in range(num_ports):
-            querydef_name = "querydef aid_%d_%d ship_draft ship_cargo port_latitude port_longitude port_available port_cap deadline -> result :\n" % (i, j)
+            mpc_reachable_preamble += ("  if (ship_id == %d) and (port_id == %d) then\n" % (i, j))
 
-            querydef_reachable = ("  int reachable = 0;\n"
-                                  "\n"
-                                  "  int lat_steps = ship" + str(i) + "_latitude - port_latitude;\n"
-                                  "\n"
-                                  "  if lat_steps < 0 then\n"
-                                  "    lat_steps = -1 * lat_steps;\n"
-                                  "  endif;\n"
-                                  "\n"
-                                  "  int long_steps = ship" + str(i) + "_longitude - port_longitude;\n"
-                                  "\n"
-                                  "  if long_steps < 0 then\n"
-                                  "    long_step = -1 * long_steps;\n"
-                                  "  endif;\n"
-                                  "\n"
-                                  "  if (lat_steps + long_steps) / ship" + str(i) + "_maxspeed <= deadline then\n"
-                                  "    reachable = 1;\n"
-                                  "  endif;\n\n"
-                                  )
+            for (prefix, _, _) in ship_var_data:
+                mpc_reachable_preamble += ("    ship_%s = ship%d_%s;\n" % (prefix, i, prefix))
 
-            querydef_feasible = ("  int feasible = 0;\n"
-                                 "\n"
-                                 "  if (port_available == 1) and (ship_draft <= port" + str(j) + "_harbordepth) and (ship_cargo <= port_cap) then\n"
-                                 "    feasible = 1;\n"
-                                 "  endif;\n\n"
-                                 )
+            mpc_reachable_preamble += "\n"
 
-            querydef_aid = ("  int result = 0;\n"
-                            "\n"
-                            "  if (reachable == 1) and (feasible == 1) then\n"
-                            "    result = 1;\n"
-                            "  endif;\n"
-                            )
+            for (prefix, _, _) in port_var_data:
+                mpc_reachable_preamble += ("    port_%s = port%d_%s;\n" % (prefix, j, prefix))
 
-            querydefs += querydef_name
-            querydefs += querydef_reachable
-            querydefs += querydef_feasible
-            querydefs += querydef_aid
-            querydefs += "\n"
+            mpc_reachable_preamble += "  endif;\n"
 
-    out.write(querydefs)
+    mpc_reachable_body = mpc_reachable_preamble + "\n"
 
+    mpc_reachable_body += ("  int result = 0;\n"
+                           "\n"
+                           "  int lat_steps = ship_latitude - port_latitude;\n"
+                           "\n"
+                           "  if lat_steps < 0 then\n"
+                           "    lat_steps = -1 * lat_steps;\n"
+                           "  endif;\n"
+                           "\n"
+                           "  int long_steps = ship_longitude - port_longitude;\n"
+                           "\n"
+                           "  if long_steps < 0 then\n"
+                           "    long_steps = -1 * long_steps;\n"
+                           "  endif;\n"
+                           "\n"
+                           "  if (lat_steps + long_steps) <= deadline * ship_maxspeed then\n"
+                           "    result = 1;\n"
+                           "  endif;\n"
+                           )
+
+    mpc_reachable = mpc_reachable_sig + mpc_reachable_body
+
+    out.write("\n" + mpc_reachable)
+
+    ## MPC Aid
+
+    mpc_aid_sig = "querydef mpc_aid ship_id port_id ship_draft ship_cargo port_available port_longitude port_latitude port_capacity deadline -> result :\n"
+
+    mpc_aid_preamble = mpc_reachable_preamble
+
+    mpc_aid_body = mpc_aid_preamble + "\n"
+
+    mpc_aid_body += ("  int reachable = 0;\n"
+                     "\n"
+                     "  int lat_steps = ship_latitude - port_latitude;\n"
+                     "\n"
+                     "  if lat_steps < 0 then\n"
+                     "    lat_steps = -1 * lat_steps;\n"
+                     "  endif;\n"
+                     "\n"
+                     "  int long_steps = ship_longitude - port_longitude;\n"
+                     "\n"
+                     "  if long_steps < 0 then\n"
+                     "    long_steps = -1 * long_steps;\n"
+                     "  endif;\n"
+                     "\n"
+                     "  if (lat_steps + long_steps) <= deadline * ship_maxspeed then\n"
+                     "    reachable = 1;\n"
+                     "  endif;\n"
+                     "\n"
+                     "  int feasible = 0;\n"
+                     "\n"
+                     "  if (port_available == 1) and (ship_draft <= port_harbordepth) and (ship_cargo <= port_capacity) then\n"
+                     "    feasible = 1;\n"
+                     "  endif;\n"
+                     "\n"
+                     "  int result = 0;\n"
+                     "\n"
+                     "  if (reachable == 1) and (feasible == 1) then\n"
+                     "    result = 1;\n"
+                     "  endif;\n"
+                     )
+
+    mpc_aid = mpc_aid_sig + mpc_aid_body
+
+    out.write("\n" + mpc_aid)
+   
 if __name__ == "__main__": main ()
