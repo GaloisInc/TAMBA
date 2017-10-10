@@ -12,6 +12,7 @@ open Pareto.Distributions
 open Pareto.Distributions.Beta
 open Value_status
 open Optimize
+open Gen_poly
 open Core_extended.Readline
 open Repl
 
@@ -67,7 +68,7 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
     let enddist = ps.PSYS.belief in
       let trips = List.map (make_trip querydefs ps) queries in
       let enddist2 = try (ESYS.psrep_sample enddist !Cmd.opt_samples trips)
-                     with e -> enddist in
+                     with e -> (print_endline "sampling exception! No update."); enddist in
       let (y,n) = ESYS.get_alpha_beta enddist2 in
       let b_dist = beta (float_of_int (y + 1)) (float_of_int (n + 1)) in
       let { beta_alpha; beta_beta } = b_dist in
@@ -202,6 +203,84 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
         let ps_out = common_run (queryname, querystmt) None querydefs ps_in in
         pmock_queries (count + 1) t querydefs ps_out
 
+  (* Lower Bound additions <begin> *)
+
+  let run_query query querydefs init =
+    (* initial public state *)
+    let (qname, qstmt) = query in
+    let (_, instate) = Evalstate.eval qstmt (new state_empty) in
+    instate#merge init;
+
+    (* run query *)
+    let (_, _, pstmt) = List.assoc qname querydefs in
+    let (_, outstate) = Evalstate.eval pstmt instate in
+    outstate#copy
+
+  let run_queries queries querydefs init =
+    let pair_up query =
+      let (qname, _) = query in
+      let (_, outs, _) = List.assoc qname querydefs in
+      make_expected_pairs outs (run_query query querydefs init) in
+    List.map pair_up queries
+
+  let sym_query query querydefs init =
+    (* initial public state *)
+    let (qname, qstmt) = query in
+    let (_, instate) = Evalsymstate.eval qstmt init in
+
+    (* sym query *)
+    let (ins, outs, pstmt) = List.assoc qname querydefs in
+    let (_, outstate) = Evalsymstate.eval pstmt instate in
+    outstate
+
+  let sym_queries queries querydefs init =
+    let final = List.fold_left (fun st q -> sym_query q querydefs { init with pc = st.Symstate.pc }) init queries in
+    final.pc
+
+  let check_sample queries querydefs expected st =
+    let actual = run_queries queries querydefs st in
+    expected = actual
+
+  let underapproximate belief queries querydefs st =
+    let init = Symstate.state_to_symstate st in
+    let pc : Symbol.lsym = sym_queries queries querydefs init in
+
+    let rec belief_bounds (belief : stmt) (acc : (int * int) VarIDMap.t) : (int * int) VarIDMap.t =
+      match belief with
+      | SSeq (s1, s2) ->
+         let s1_bounds = belief_bounds s1 acc in
+         let s2_bounds = belief_bounds s2 s1_bounds in
+         s2_bounds
+      | SUniform (name, lower, upper) ->
+         VarIDMap.add name (lower, upper) acc
+      | SAssign (name, AEInt b) ->
+         VarIDMap.add name (b, b) acc
+      | _ -> acc
+    in
+
+    let belief' = belief_bounds belief VarIDMap.empty in
+    let linear_system = Symbol.linear_system_of_lsym pc in
+
+    (* now that we have a Volume Computation IR, we can use it to solve on any backend that handles it *)
+    let p : gen_poly = { bounds = belief'; constraints = linear_system } in
+
+    let ret =
+      (match !Cmd.opt_volume_computation with
+       | 0 -> List.map Latte.count_models (latte_of_gen_poly p)
+       | 1 -> List.map Volcomp.count_models (volcomp_of_gen_poly p)
+       | _ -> raise (General_error ("opt_volume_computation not valid, shouldn't be possible... should be caught with arg parsing"))) in
+
+    let (ret, max_idx, _) = List.fold_left (fun (max, max_idx, idx) curr ->
+                                if Z.compare curr max >= 0 then
+                                  (curr, idx, idx + 1)
+                                else
+                                  (max, max_idx, idx + 1)) (Z.zero, 0, 0) ret in
+
+    ifverbose1 (print_endline ("count {\n" ^ (string_of_gen_poly p) ^ "\n} = " ^ (Z.to_string ret) ^ "\n"));
+    (ret, List.nth (poly_of_gen_poly p) max_idx)
+
+  (* Lower Bound additions <end> *)
+
   let prob_line = Core_extended.Readline.input_line ~prompt:"prob >> "
 
   let manage_models qn model ps_ins ps_orig =
@@ -303,6 +382,7 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
 
   let run pipe_opt asetup =
     ifverbose1 (printf "Binary for counting: %s\n%!" !Cmd.opt_count_bin;);
+
     Printexc.record_backtrace true;
 (*      let vars = pmock_all_vars asetup in*)
       let secretstmt = Preeval.preeval asetup.secret in
@@ -347,7 +427,8 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
                   PSYS.valcache = secretstate} in
 
           ifdebug (printf "\n\nBefore pmock_queries\n\n");
-          let final_dist =
+
+          let base_final_dist =
                 if !Cmd.opt_interactive
                 then interpreter 1 querydefs ps
                 else if !Cmd.opt_server
@@ -357,9 +438,41 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
                                       let w_chan = out_channel_of_descr w in
                                       server (r_chan, w_chan) querydefs ps)
                 else pmock_queries 1 queries querydefs ps in
+
+          (* Lower Bound work <begin> *)
+          (if !Cmd.opt_improve_lower_bounds > 0 then
+             printf "\n--- Improve Lower Bounds ------------------- \n"
+           else
+             ());
+          let improved_final_dist =
+            if !Cmd.opt_improve_lower_bounds > 0 then
+              let expected = run_queries queries querydefs base_final_dist.PSYS.valcache in (* run queries with our secret values *)
+              let checker = check_sample queries querydefs expected in (* takes sample, run queries with sample, compare against expected *)
+              let runner = underapproximate beliefstmt queries querydefs in (* takes sample, symbolically run sample, perform counting *)
+              let belief_new = ESYS.psrep_improve_lower_bounds
+                                 checker
+                                 runner
+                                 base_final_dist.PSYS.valcache
+                                 !Cmd.opt_improve_lower_bounds
+                                 base_final_dist.PSYS.belief in
+              { base_final_dist with belief = belief_new }
+            else
+              base_final_dist in
+          (if !Cmd.opt_improve_lower_bounds > 0 then
+            let m_belief = ESYS.psrep_max_belief improved_final_dist.belief in
+            printf "max-belief (after improve lower bounds): %s\n" (Q.to_string m_belief)
+          else
+            ());
+
+          (* Lower Bound work <end> *)
+
           if !Cmd.opt_count_latte
           then printf "Number of calls to LattE: %d\n" !Globals.latte_count;
-          sample_final queries querydefs final_dist
+          sample_final queries querydefs improved_final_dist
+  (*with
+      | e ->
+          printf "%s\n" (Printexc.to_string e);
+          Printexc.print_backtrace stdout*)
 
 end
 ;;
@@ -369,6 +482,7 @@ module EVALS_PPSS_POLY = MAKE_EVALS(ESYS_PPSS_POLY);;
 module EVALS_PPSS_BOX  = MAKE_EVALS(ESYS_PPSS_BOX);;
 module EVALS_PPSS_OCTA = MAKE_EVALS(ESYS_PPSS_OCTA);;
 module EVALS_PPSS_OCTALATTE = MAKE_EVALS(ESYS_PPSS_OCTALATTE);;
+module EVALS_PDPSS_POLY = MAKE_EVALS(ESYS_PDPSS_POLY);;
 
 let main () =
   Arg.parse [
@@ -388,6 +502,9 @@ let main () =
     ("--precision",
      Arg.Set_int Cmd.opt_precision,
      "set the precision");
+    ("--precise-conditioning",
+     Arg.Set Cmd.opt_precise_conditioning,
+     "use polyhedral intersection for conditional statements, otherwise use default domain, default = false");
     ("--samples",
      Arg.Set_int Cmd.opt_samples,
      "set the number of samples to use");
@@ -439,6 +556,12 @@ let main () =
     ("--inline",
      Arg.Set Cmd.opt_inline,
      "Perform an inlining transformation on the queries before execution");
+    ("--improve-lower-bounds",
+     Arg.Set_int Cmd.opt_improve_lower_bounds,
+     "Use sampling w/ path conditions + LattE to improve s_min");
+    ("--volume_computation",
+     Arg.String Cmd.set_volume_computation,
+     "Choose tool to perform volume computation during lower bound improvement (\"latte\", or \"volcomp\") default = \"latte\"");
     ("--simplify",
      Arg.String Cmd.set_simplify,
      "precision simplifier (\"halfs\", \"simple\", \"slack\", \"random\"), default = \"halfs\"");
@@ -469,6 +592,7 @@ let main () =
               | 2 -> (module EVALS_PPSS_OCTA : EXP_SYSTEM)
               | 3 -> (module EVALS_PPSS_OCTALATTE : EXP_SYSTEM)
               | 4 -> (module EVALS_PPSS_POLY : EXP_SYSTEM)
+              | 5 -> (module EVALS_PDPSS_POLY : EXP_SYSTEM)
               | _ -> raise Not_expected) : EXP_SYSTEM) in
 
       ifdebug(printf "\n\nBefore evaluation\n\n");
