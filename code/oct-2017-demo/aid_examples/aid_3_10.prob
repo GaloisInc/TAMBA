@@ -1,0 +1,508 @@
+secret:
+  skip;
+
+belief:
+  int ship0_latitude = uniform -90000 90000;
+  int ship0_longitude = uniform -180000 180000;
+  int ship0_maxspeed = uniform 5 50;
+  int ship1_latitude = uniform -90000 90000;
+  int ship1_longitude = uniform -180000 180000;
+  int ship1_maxspeed = uniform 5 50;
+  int ship2_latitude = uniform -90000 90000;
+  int ship2_longitude = uniform -180000 180000;
+  int ship2_maxspeed = uniform 5 50;
+
+  int port0_harbordepth = uniform 5 50;
+  int port1_harbordepth = uniform 5 50;
+  int port2_harbordepth = uniform 5 50;
+  int port3_harbordepth = uniform 5 50;
+  int port4_harbordepth = uniform 5 50;
+  int port5_harbordepth = uniform 5 50;
+  int port6_harbordepth = uniform 5 50;
+  int port7_harbordepth = uniform 5 50;
+  int port8_harbordepth = uniform 5 50;
+  int port9_harbordepth = uniform 5 50;
+
+querydef mpc_reachable ship_id port_id port_latitude port_longitude deadline -> result :
+  int ship_latitude = 0;
+  int ship_longitude = 0;
+  int ship_maxspeed = 0;
+
+  int port_harbordepth = 0;
+
+  if (ship_id == 0) and (port_id == 0) then
+    ship_latitude = ship0_latitude;
+    ship_longitude = ship0_longitude;
+    ship_maxspeed = ship0_maxspeed;
+
+    port_harbordepth = port0_harbordepth;
+  endif;
+  if (ship_id == 0) and (port_id == 1) then
+    ship_latitude = ship0_latitude;
+    ship_longitude = ship0_longitude;
+    ship_maxspeed = ship0_maxspeed;
+
+    port_harbordepth = port1_harbordepth;
+  endif;
+  if (ship_id == 0) and (port_id == 2) then
+    ship_latitude = ship0_latitude;
+    ship_longitude = ship0_longitude;
+    ship_maxspeed = ship0_maxspeed;
+
+    port_harbordepth = port2_harbordepth;
+  endif;
+  if (ship_id == 0) and (port_id == 3) then
+    ship_latitude = ship0_latitude;
+    ship_longitude = ship0_longitude;
+    ship_maxspeed = ship0_maxspeed;
+
+    port_harbordepth = port3_harbordepth;
+  endif;
+  if (ship_id == 0) and (port_id == 4) then
+    ship_latitude = ship0_latitude;
+    ship_longitude = ship0_longitude;
+    ship_maxspeed = ship0_maxspeed;
+
+    port_harbordepth = port4_harbordepth;
+  endif;
+  if (ship_id == 0) and (port_id == 5) then
+    ship_latitude = ship0_latitude;
+    ship_longitude = ship0_longitude;
+    ship_maxspeed = ship0_maxspeed;
+
+    port_harbordepth = port5_harbordepth;
+  endif;
+  if (ship_id == 0) and (port_id == 6) then
+    ship_latitude = ship0_latitude;
+    ship_longitude = ship0_longitude;
+    ship_maxspeed = ship0_maxspeed;
+
+    port_harbordepth = port6_harbordepth;
+  endif;
+  if (ship_id == 0) and (port_id == 7) then
+    ship_latitude = ship0_latitude;
+    ship_longitude = ship0_longitude;
+    ship_maxspeed = ship0_maxspeed;
+
+    port_harbordepth = port7_harbordepth;
+  endif;
+  if (ship_id == 0) and (port_id == 8) then
+    ship_latitude = ship0_latitude;
+    ship_longitude = ship0_longitude;
+    ship_maxspeed = ship0_maxspeed;
+
+    port_harbordepth = port8_harbordepth;
+  endif;
+  if (ship_id == 0) and (port_id == 9) then
+    ship_latitude = ship0_latitude;
+    ship_longitude = ship0_longitude;
+    ship_maxspeed = ship0_maxspeed;
+
+    port_harbordepth = port9_harbordepth;
+  endif;
+  if (ship_id == 1) and (port_id == 0) then
+    ship_latitude = ship1_latitude;
+    ship_longitude = ship1_longitude;
+    ship_maxspeed = ship1_maxspeed;
+
+    port_harbordepth = port0_harbordepth;
+  endif;
+  if (ship_id == 1) and (port_id == 1) then
+    ship_latitude = ship1_latitude;
+    ship_longitude = ship1_longitude;
+    ship_maxspeed = ship1_maxspeed;
+
+    port_harbordepth = port1_harbordepth;
+  endif;
+  if (ship_id == 1) and (port_id == 2) then
+    ship_latitude = ship1_latitude;
+    ship_longitude = ship1_longitude;
+    ship_maxspeed = ship1_maxspeed;
+
+    port_harbordepth = port2_harbordepth;
+  endif;
+  if (ship_id == 1) and (port_id == 3) then
+    ship_latitude = ship1_latitude;
+    ship_longitude = ship1_longitude;
+    ship_maxspeed = ship1_maxspeed;
+
+    port_harbordepth = port3_harbordepth;
+  endif;
+  if (ship_id == 1) and (port_id == 4) then
+    ship_latitude = ship1_latitude;
+    ship_longitude = ship1_longitude;
+    ship_maxspeed = ship1_maxspeed;
+
+    port_harbordepth = port4_harbordepth;
+  endif;
+  if (ship_id == 1) and (port_id == 5) then
+    ship_latitude = ship1_latitude;
+    ship_longitude = ship1_longitude;
+    ship_maxspeed = ship1_maxspeed;
+
+    port_harbordepth = port5_harbordepth;
+  endif;
+  if (ship_id == 1) and (port_id == 6) then
+    ship_latitude = ship1_latitude;
+    ship_longitude = ship1_longitude;
+    ship_maxspeed = ship1_maxspeed;
+
+    port_harbordepth = port6_harbordepth;
+  endif;
+  if (ship_id == 1) and (port_id == 7) then
+    ship_latitude = ship1_latitude;
+    ship_longitude = ship1_longitude;
+    ship_maxspeed = ship1_maxspeed;
+
+    port_harbordepth = port7_harbordepth;
+  endif;
+  if (ship_id == 1) and (port_id == 8) then
+    ship_latitude = ship1_latitude;
+    ship_longitude = ship1_longitude;
+    ship_maxspeed = ship1_maxspeed;
+
+    port_harbordepth = port8_harbordepth;
+  endif;
+  if (ship_id == 1) and (port_id == 9) then
+    ship_latitude = ship1_latitude;
+    ship_longitude = ship1_longitude;
+    ship_maxspeed = ship1_maxspeed;
+
+    port_harbordepth = port9_harbordepth;
+  endif;
+  if (ship_id == 2) and (port_id == 0) then
+    ship_latitude = ship2_latitude;
+    ship_longitude = ship2_longitude;
+    ship_maxspeed = ship2_maxspeed;
+
+    port_harbordepth = port0_harbordepth;
+  endif;
+  if (ship_id == 2) and (port_id == 1) then
+    ship_latitude = ship2_latitude;
+    ship_longitude = ship2_longitude;
+    ship_maxspeed = ship2_maxspeed;
+
+    port_harbordepth = port1_harbordepth;
+  endif;
+  if (ship_id == 2) and (port_id == 2) then
+    ship_latitude = ship2_latitude;
+    ship_longitude = ship2_longitude;
+    ship_maxspeed = ship2_maxspeed;
+
+    port_harbordepth = port2_harbordepth;
+  endif;
+  if (ship_id == 2) and (port_id == 3) then
+    ship_latitude = ship2_latitude;
+    ship_longitude = ship2_longitude;
+    ship_maxspeed = ship2_maxspeed;
+
+    port_harbordepth = port3_harbordepth;
+  endif;
+  if (ship_id == 2) and (port_id == 4) then
+    ship_latitude = ship2_latitude;
+    ship_longitude = ship2_longitude;
+    ship_maxspeed = ship2_maxspeed;
+
+    port_harbordepth = port4_harbordepth;
+  endif;
+  if (ship_id == 2) and (port_id == 5) then
+    ship_latitude = ship2_latitude;
+    ship_longitude = ship2_longitude;
+    ship_maxspeed = ship2_maxspeed;
+
+    port_harbordepth = port5_harbordepth;
+  endif;
+  if (ship_id == 2) and (port_id == 6) then
+    ship_latitude = ship2_latitude;
+    ship_longitude = ship2_longitude;
+    ship_maxspeed = ship2_maxspeed;
+
+    port_harbordepth = port6_harbordepth;
+  endif;
+  if (ship_id == 2) and (port_id == 7) then
+    ship_latitude = ship2_latitude;
+    ship_longitude = ship2_longitude;
+    ship_maxspeed = ship2_maxspeed;
+
+    port_harbordepth = port7_harbordepth;
+  endif;
+  if (ship_id == 2) and (port_id == 8) then
+    ship_latitude = ship2_latitude;
+    ship_longitude = ship2_longitude;
+    ship_maxspeed = ship2_maxspeed;
+
+    port_harbordepth = port8_harbordepth;
+  endif;
+  if (ship_id == 2) and (port_id == 9) then
+    ship_latitude = ship2_latitude;
+    ship_longitude = ship2_longitude;
+    ship_maxspeed = ship2_maxspeed;
+
+    port_harbordepth = port9_harbordepth;
+  endif;
+
+  int result = 0;
+
+  int lat_steps = ship_latitude - port_latitude;
+
+  if lat_steps < 0 then
+    lat_steps = -1 * lat_steps;
+  endif;
+
+  int long_steps = ship_longitude - port_longitude;
+
+  if long_steps < 0 then
+    long_steps = -1 * long_steps;
+  endif;
+
+  if (lat_steps + long_steps) <= deadline * ship_maxspeed then
+    result = 1;
+  endif;
+
+querydef mpc_aid ship_id port_id ship_draft ship_cargo port_available port_longitude port_latitude port_capacity deadline -> result :
+  int ship_latitude = 0;
+  int ship_longitude = 0;
+  int ship_maxspeed = 0;
+
+  int port_harbordepth = 0;
+
+  if (ship_id == 0) and (port_id == 0) then
+    ship_latitude = ship0_latitude;
+    ship_longitude = ship0_longitude;
+    ship_maxspeed = ship0_maxspeed;
+
+    port_harbordepth = port0_harbordepth;
+  endif;
+  if (ship_id == 0) and (port_id == 1) then
+    ship_latitude = ship0_latitude;
+    ship_longitude = ship0_longitude;
+    ship_maxspeed = ship0_maxspeed;
+
+    port_harbordepth = port1_harbordepth;
+  endif;
+  if (ship_id == 0) and (port_id == 2) then
+    ship_latitude = ship0_latitude;
+    ship_longitude = ship0_longitude;
+    ship_maxspeed = ship0_maxspeed;
+
+    port_harbordepth = port2_harbordepth;
+  endif;
+  if (ship_id == 0) and (port_id == 3) then
+    ship_latitude = ship0_latitude;
+    ship_longitude = ship0_longitude;
+    ship_maxspeed = ship0_maxspeed;
+
+    port_harbordepth = port3_harbordepth;
+  endif;
+  if (ship_id == 0) and (port_id == 4) then
+    ship_latitude = ship0_latitude;
+    ship_longitude = ship0_longitude;
+    ship_maxspeed = ship0_maxspeed;
+
+    port_harbordepth = port4_harbordepth;
+  endif;
+  if (ship_id == 0) and (port_id == 5) then
+    ship_latitude = ship0_latitude;
+    ship_longitude = ship0_longitude;
+    ship_maxspeed = ship0_maxspeed;
+
+    port_harbordepth = port5_harbordepth;
+  endif;
+  if (ship_id == 0) and (port_id == 6) then
+    ship_latitude = ship0_latitude;
+    ship_longitude = ship0_longitude;
+    ship_maxspeed = ship0_maxspeed;
+
+    port_harbordepth = port6_harbordepth;
+  endif;
+  if (ship_id == 0) and (port_id == 7) then
+    ship_latitude = ship0_latitude;
+    ship_longitude = ship0_longitude;
+    ship_maxspeed = ship0_maxspeed;
+
+    port_harbordepth = port7_harbordepth;
+  endif;
+  if (ship_id == 0) and (port_id == 8) then
+    ship_latitude = ship0_latitude;
+    ship_longitude = ship0_longitude;
+    ship_maxspeed = ship0_maxspeed;
+
+    port_harbordepth = port8_harbordepth;
+  endif;
+  if (ship_id == 0) and (port_id == 9) then
+    ship_latitude = ship0_latitude;
+    ship_longitude = ship0_longitude;
+    ship_maxspeed = ship0_maxspeed;
+
+    port_harbordepth = port9_harbordepth;
+  endif;
+  if (ship_id == 1) and (port_id == 0) then
+    ship_latitude = ship1_latitude;
+    ship_longitude = ship1_longitude;
+    ship_maxspeed = ship1_maxspeed;
+
+    port_harbordepth = port0_harbordepth;
+  endif;
+  if (ship_id == 1) and (port_id == 1) then
+    ship_latitude = ship1_latitude;
+    ship_longitude = ship1_longitude;
+    ship_maxspeed = ship1_maxspeed;
+
+    port_harbordepth = port1_harbordepth;
+  endif;
+  if (ship_id == 1) and (port_id == 2) then
+    ship_latitude = ship1_latitude;
+    ship_longitude = ship1_longitude;
+    ship_maxspeed = ship1_maxspeed;
+
+    port_harbordepth = port2_harbordepth;
+  endif;
+  if (ship_id == 1) and (port_id == 3) then
+    ship_latitude = ship1_latitude;
+    ship_longitude = ship1_longitude;
+    ship_maxspeed = ship1_maxspeed;
+
+    port_harbordepth = port3_harbordepth;
+  endif;
+  if (ship_id == 1) and (port_id == 4) then
+    ship_latitude = ship1_latitude;
+    ship_longitude = ship1_longitude;
+    ship_maxspeed = ship1_maxspeed;
+
+    port_harbordepth = port4_harbordepth;
+  endif;
+  if (ship_id == 1) and (port_id == 5) then
+    ship_latitude = ship1_latitude;
+    ship_longitude = ship1_longitude;
+    ship_maxspeed = ship1_maxspeed;
+
+    port_harbordepth = port5_harbordepth;
+  endif;
+  if (ship_id == 1) and (port_id == 6) then
+    ship_latitude = ship1_latitude;
+    ship_longitude = ship1_longitude;
+    ship_maxspeed = ship1_maxspeed;
+
+    port_harbordepth = port6_harbordepth;
+  endif;
+  if (ship_id == 1) and (port_id == 7) then
+    ship_latitude = ship1_latitude;
+    ship_longitude = ship1_longitude;
+    ship_maxspeed = ship1_maxspeed;
+
+    port_harbordepth = port7_harbordepth;
+  endif;
+  if (ship_id == 1) and (port_id == 8) then
+    ship_latitude = ship1_latitude;
+    ship_longitude = ship1_longitude;
+    ship_maxspeed = ship1_maxspeed;
+
+    port_harbordepth = port8_harbordepth;
+  endif;
+  if (ship_id == 1) and (port_id == 9) then
+    ship_latitude = ship1_latitude;
+    ship_longitude = ship1_longitude;
+    ship_maxspeed = ship1_maxspeed;
+
+    port_harbordepth = port9_harbordepth;
+  endif;
+  if (ship_id == 2) and (port_id == 0) then
+    ship_latitude = ship2_latitude;
+    ship_longitude = ship2_longitude;
+    ship_maxspeed = ship2_maxspeed;
+
+    port_harbordepth = port0_harbordepth;
+  endif;
+  if (ship_id == 2) and (port_id == 1) then
+    ship_latitude = ship2_latitude;
+    ship_longitude = ship2_longitude;
+    ship_maxspeed = ship2_maxspeed;
+
+    port_harbordepth = port1_harbordepth;
+  endif;
+  if (ship_id == 2) and (port_id == 2) then
+    ship_latitude = ship2_latitude;
+    ship_longitude = ship2_longitude;
+    ship_maxspeed = ship2_maxspeed;
+
+    port_harbordepth = port2_harbordepth;
+  endif;
+  if (ship_id == 2) and (port_id == 3) then
+    ship_latitude = ship2_latitude;
+    ship_longitude = ship2_longitude;
+    ship_maxspeed = ship2_maxspeed;
+
+    port_harbordepth = port3_harbordepth;
+  endif;
+  if (ship_id == 2) and (port_id == 4) then
+    ship_latitude = ship2_latitude;
+    ship_longitude = ship2_longitude;
+    ship_maxspeed = ship2_maxspeed;
+
+    port_harbordepth = port4_harbordepth;
+  endif;
+  if (ship_id == 2) and (port_id == 5) then
+    ship_latitude = ship2_latitude;
+    ship_longitude = ship2_longitude;
+    ship_maxspeed = ship2_maxspeed;
+
+    port_harbordepth = port5_harbordepth;
+  endif;
+  if (ship_id == 2) and (port_id == 6) then
+    ship_latitude = ship2_latitude;
+    ship_longitude = ship2_longitude;
+    ship_maxspeed = ship2_maxspeed;
+
+    port_harbordepth = port6_harbordepth;
+  endif;
+  if (ship_id == 2) and (port_id == 7) then
+    ship_latitude = ship2_latitude;
+    ship_longitude = ship2_longitude;
+    ship_maxspeed = ship2_maxspeed;
+
+    port_harbordepth = port7_harbordepth;
+  endif;
+  if (ship_id == 2) and (port_id == 8) then
+    ship_latitude = ship2_latitude;
+    ship_longitude = ship2_longitude;
+    ship_maxspeed = ship2_maxspeed;
+
+    port_harbordepth = port8_harbordepth;
+  endif;
+  if (ship_id == 2) and (port_id == 9) then
+    ship_latitude = ship2_latitude;
+    ship_longitude = ship2_longitude;
+    ship_maxspeed = ship2_maxspeed;
+
+    port_harbordepth = port9_harbordepth;
+  endif;
+
+  int reachable = 0;
+
+  int lat_steps = ship_latitude - port_latitude;
+
+  if lat_steps < 0 then
+    lat_steps = -1 * lat_steps;
+  endif;
+
+  int long_steps = ship_longitude - port_longitude;
+
+  if long_steps < 0 then
+    long_steps = -1 * long_steps;
+  endif;
+
+  if (lat_steps + long_steps) <= deadline * ship_maxspeed then
+    reachable = 1;
+  endif;
+
+  int feasible = 0;
+
+  if (port_available == 1) and (ship_draft <= port_harbordepth) and (ship_cargo <= port_capacity) then
+    feasible = 1;
+  endif;
+
+  int result = 0;
+
+  if (reachable == 1) and (feasible == 1) then
+    result = 1;
+  endif;
