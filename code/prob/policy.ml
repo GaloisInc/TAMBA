@@ -248,21 +248,19 @@ module MAKE_PSYSTEM (ESYS: EVAL_SYSTEM) = struct
 
     ifverbose1 (
       printf "\nend belief:\n"; ESYS.print_psrep outputdist
-    );
+      );
 
-    let (ignored, outputstate_temp) = Evalstate.eval final_stmt
-        inputstate_full in
+    let outputstate_temp =
+      (match conc_res with
+       | None -> let (_, o) = Evalstate.eval final_stmt inputstate_full in o
+       | Some r -> let o = new state_empty in (o#addvar ("", "result"); o#set ("", "result") r; o))
+    in
 
     let outputstate = outputstate_temp#copy in
     outputstate#project outlist;
 
               (*
                let startrelent = ESYS.psrep_relative_entropy inputdist secretdist in *)
-
-    let _ = match conc_res with
-            | None   -> ()
-            | Some r -> outputstate#set ("", "result") r in
-
     let enddist =
       ESYS.psrep_on_vars
         (ESYS.psrep_given_state outputdist outputstate)
