@@ -95,18 +95,22 @@ def main ():
     mpc_reachable_preamble += "\n"
 
     for i in range(num_ships):
-        for j in range(num_ports):
-            mpc_reachable_preamble += ("  if (ship_id == %d) and (port_id == %d) then\n" % (i, j))
+        mpc_reachable_preamble += ("  if ship_id == %d then\n" % (i))
 
-            for (prefix, _, _) in ship_var_data:
-                mpc_reachable_preamble += ("    ship_%s = ship%d_%s;\n" % (prefix, i, prefix))
+        for (prefix, _, _) in ship_var_data:
+            mpc_reachable_preamble += ("    ship_%s = ship%d_%s;\n" % (prefix, i, prefix))
 
-            mpc_reachable_preamble += "\n"
+        mpc_reachable_preamble += "  endif;\n"
 
-            for (prefix, _, _) in port_var_data:
-                mpc_reachable_preamble += ("    port_%s = port%d_%s;\n" % (prefix, j, prefix))
+    mpc_reachable_preamble += "\n"
 
-            mpc_reachable_preamble += "  endif;\n"
+    for j in range(num_ports):
+        mpc_reachable_preamble += ("  if port_id == %d then\n" % (j))
+
+        for (prefix, _, _) in port_var_data:
+            mpc_reachable_preamble += ("    port_%s = port%d_%s;\n" % (prefix, j, prefix))
+
+        mpc_reachable_preamble += "  endif;\n"
 
     mpc_reachable_body = mpc_reachable_preamble + "\n"
 
