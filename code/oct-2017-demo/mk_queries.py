@@ -37,7 +37,7 @@ def main ():
     if len(sys.argv) != 4:
         exit(1)
 
-    ship_var_data = [("latitude", -90000, 90000), ("longitude", -180000, 180000), ("maxspeed", 5, 50)]
+    ship_var_data = [("latitude", 3000, 18000), ("longitude", 115000, 130000), ("maxspeed", 5, 50)]
     port_var_data = [("harbordepth", 10, 100)]
 
     num_ships = int(sys.argv[1])
