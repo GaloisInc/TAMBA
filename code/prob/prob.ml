@@ -577,9 +577,9 @@ let main () =
 
   try
 
+    let policy = parse !Cmd.input_file Parser.pmock in
     let prob pipe_opt () =
       (* note to self: why is this called pmock? What is pmock? *)
-      let policy = parse !Cmd.input_file Parser.pmock in
 
       ifbench (add_policy_records policy;
                Globals.print_header ());
@@ -615,7 +615,8 @@ let main () =
                                    close prob_w;
                                    Server.start_server pid
                                                        !Cmd.opt_server_port
-                                                       (server_r, server_w) ();
+                                                       (server_r, server_w)
+                                                       policy.querydefs;
            | `In_the_child -> close server_w;
                               close server_r;
                               prob (Some (prob_r, prob_w)) ();

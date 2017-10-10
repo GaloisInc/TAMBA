@@ -6,6 +6,8 @@ open Async.Std
 open Async_extra
 open Cohttp_async
 open Json
+open Pdefs
+open Lang
 
 (* The Async.Pipes that are used as follows:
  *
@@ -126,6 +128,39 @@ let list_models ()  =
   let str = "[" ^ (String.concat ~sep:", " !models) ^ "]\n" in
   Server.respond_with_string str
 
+let process_generic name (n, (i,o,_)) uri host =
+  ifdebug (printf "Prossesing Generic Query\n");
+  let params = List.map i varid_to_string in
+  let static = match Uri.get_query_param uri "static" with
+               | None   -> false
+               | Some "true"  -> true
+               | Some "false" -> false in
+  let params = if static
+               then params
+               else "result" :: params in
+  let (abs, prs) = process_params params uri in
+  ifdebug (printf "Length of abs: %d\nlength of prs: %d\n%!" (List.length abs) (List.length prs));
+  match (abs, prs) with
+  | ([], []) -> raise (Failure "Something when wrong in process_params")
+  | ([], xs) -> let serialised = query_to_string name prs in
+                (* use of unsafe_get_param should be okay because we have no
+                 * absent parameters (matching on (abs, prs)) *)
+                let exists = List.mem !models (unsafe_get_param uri "model") in
+                if exists
+                then ensure_parse uri host serialised
+                else let code = Cohttp.Code.status_of_code 400 in
+                     let rsp = "Error: Trying to work on non-existent model" in
+                     let body = Body.of_string (rsp ^ "\n") in
+                     Log.string logger (host ^ " " ^ Uri.to_string uri ^ " " ^ "400" ^ " " ^ rsp);
+                     Server.respond ~body:body code
+  | (ys, _)  -> let code = Cohttp.Code.status_of_code 400 in
+                let rsp = "Error: Missing " ^ String.concat ~sep:" " ys ^ " parameters" in
+                let body = Body.of_string (rsp ^ "\n") in
+                Log.string logger (host ^ " " ^ Uri.to_string uri ^ " " ^ "400" ^ " " ^ rsp);
+                Server.respond ~body:body code
+
+
+
 let process_query query_name params uri host =
   ifdebug (printf "Prossesing Query\n");
   let (abs, prs) = process_params params uri in
@@ -149,7 +184,8 @@ let process_query query_name params uri host =
                 Log.string logger (host ^ " " ^ Uri.to_string uri ^ " " ^ "400" ^ " " ^ rsp);
                 Server.respond ~body:body code
 
-let handler ~body:_ _sock req =
+let handler querydefs ~body:_ _sock req =
+  let querynames = List.map querydefs fst in
   ifdebug (printf "\nRequest sexp:\n\t%s\n%!"
                   (Core_kernel.Core_sexp.to_string (Cohttp_async.Request.sexp_of_t req)));
   let uri = Cohttp.Request.uri req in
@@ -172,9 +208,12 @@ let handler ~body:_ _sock req =
   | "/Combined"    -> process_query "combined" combined_params uri host
   | "/DeleteModel" -> handle_models "delete_model" uri host
   | "/ListModels"  -> list_models ()
-  | _       -> Server.respond_with_string "Error: Unsupported API Call.\n"
+  | str            -> let str' = String.sub str 1 (String.length str - 1) in
+                      if List.mem querynames str'
+                      then List.Assoc.find_exn process_generic str' querydefs uri host
+                      else Server.respond_with_string "Error: Unsupported API Call.\n"
 
-let start_server_prime pid port () =
+let start_server_prime pid port querydefs =
   (* Preamble for logging *)
   let pid_int = Core.Std.Pid.to_int pid in
   printf "In the parent. Waiting on child with pid %d\n%!" pid_int;
@@ -184,7 +223,7 @@ let start_server_prime pid port () =
   printf "You can try wget or curl with http://localhost:%d/<something>\n%!" port;
 
   Cohttp_async.Server.create ~on_handler_error:`Raise
-    (Tcp.on_port port) handler
+    (Tcp.on_port port) (handler querydefs)
   >>= fun _ -> Deferred.never ()
 
 let dispatcher_loop (prob_r, prob_w) =
@@ -212,7 +251,7 @@ let dispatcher_loop (prob_r, prob_w) =
                                go ()
   in go ()
 
-let start_server pid port (r_pipe, w_pipe) () =
+let start_server pid port (r_pipe, w_pipe) querydefs =
   dispatcher_loop (r_pipe, w_pipe);
-  start_server_prime pid port ();
+  start_server_prime pid port querydefs;
   never_returns (Scheduler.go ());
