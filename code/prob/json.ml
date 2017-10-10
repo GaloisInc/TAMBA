@@ -47,14 +47,17 @@ let query_to_string query_name params =
  *)
 let parse_query_json str =
   let json_of_query = Yojson.Basic.from_string str in
+  ifdebug (printf "Now using YoJSON structure\n%!");
   let query_name = json_of_query |> Basic.Util.member "query" |> Basic.Util.to_string in
 
+  ifdebug (printf "We now have query_name\n%!");
   (* A function that gets a single parameter from the json and
    * makes it an Int *)
   let get_param str = ifdebug (printf "get_param %s\n%!" str);
                       (str, json_of_query |> Basic.Util.member str |> Basic.Util.to_int) in
 
   let model = json_of_query |> Basic.Util.member "model" |> Basic.Util.to_int in
+  ifdebug (printf "We now the model number\n%!");
   let res   = match Basic.Util.member "result" json_of_query with
               | `Null  -> None
               | `Int r -> Some r in

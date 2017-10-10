@@ -138,7 +138,7 @@ let process_generic name (n, (i,o,_)) uri host =
   let params = if static
                then params
                else "result" :: params in
-  let (abs, prs) = process_params params uri in
+  let (abs, prs) = process_params ("model" :: params) uri in
   ifdebug (printf "Length of abs: %d\nlength of prs: %d\n%!" (List.length abs) (List.length prs));
   match (abs, prs) with
   | ([], []) -> raise (Failure "Something when wrong in process_params")
@@ -210,7 +210,8 @@ let handler querydefs ~body:_ _sock req =
   | "/ListModels"  -> list_models ()
   | str            -> let str' = String.sub str 1 (String.length str - 1) in
                       if List.mem querynames str'
-                      then List.Assoc.find_exn process_generic str' querydefs uri host
+                      then let queryinfo = (str', (List.Assoc.find_exn querydefs str')) in
+                           process_generic str' queryinfo uri host
                       else Server.respond_with_string "Error: Unsupported API Call.\n"
 
 let start_server_prime pid port querydefs =
