@@ -236,7 +236,7 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
   let sym_queries queries querydefs init =
     let final = List.fold_left (fun st q -> sym_query q querydefs { init with pc = st.Symstate.pc }) init queries in
     final.pc
-    
+
   let check_sample queries querydefs expected st =
     let actual = run_queries queries querydefs st in
     expected = actual
@@ -278,7 +278,7 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
 
     ifverbose1 (print_endline ("count {\n" ^ (string_of_gen_poly p) ^ "\n} = " ^ (Z.to_string ret) ^ "\n"));
     (ret, List.nth (poly_of_gen_poly p) max_idx)
-            
+
   (* Lower Bound additions <end> *)
 
   let prob_line = Core_extended.Readline.input_line ~prompt:"prob >> "

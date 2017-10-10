@@ -5,11 +5,11 @@ secret:
 
   (* BRP Rizal *)
   int ship2_eta    = 50;
-  int ship2_berths = 200;
+  int ship2_berths = 100;
 
   (* USNS Mercy *)
   int ship3_eta    = 130;
-  int ship3_berths = 200;
+  int ship3_berths = 300;
 
   (* USNS Comfort *)
   int ship4_eta    = 150;
@@ -17,7 +17,7 @@ secret:
 
   (* KRI Dr Shoeharso *)
   int ship5_eta    = 250;
-  int ship5_berths = 200;
+  int ship5_berths = 500;
 
   (* HMAS Success *)
   int ship6_eta    = 500;
@@ -133,27 +133,23 @@ querydef combined ship eta amount -> result :
 
 query close_enough:
   int ship = 1;
-  int eta = 1000;
+  int eta = 200;
 
 query close_enough:
   int ship = 2;
-  int eta = 1000;
+  int eta = 200;
 
 query close_enough:
   int ship = 3;
-  int eta = 1000;
+  int eta = 200;
 
 query close_enough:
   int ship = 4;
-  int eta = 1000;
+  int eta = 200;
 
 query close_enough:
   int ship = 5;
-  int eta = 1000;
-
-query close_enough:
-  int ship = 6;
-  int eta = 1000;
+  int eta = 200;
 
 query enough_berths:
   int ship = 1;
@@ -169,14 +165,6 @@ query enough_berths:
 
 query enough_berths:
   int ship = 4;
-  int amount = 500;
-
-query enough_berths:
-  int ship = 5;
-  int amount = 500;
-
-query enough_berths:
-  int ship = 6;
   int amount = 500;
 
 query enough_berths:
@@ -196,14 +184,6 @@ query enough_berths:
   int amount = 250;
 
 query enough_berths:
-  int ship = 5;
-  int amount = 250;
-
-query enough_berths:
-  int ship = 6;
-  int amount = 250;
-
-query enough_berths:
   int ship = 1;
   int amount = 125;
 
@@ -213,16 +193,8 @@ query enough_berths:
 
 query enough_berths:
   int ship = 3;
-  int amount = 125;
+  int amount = 375;
 
 query enough_berths:
   int ship = 4;
-  int amount = 125;
-
-query enough_berths:
-  int ship = 5;
-  int amount = 125;
-
-query enough_berths:
-  int ship = 6;
   int amount = 125;
