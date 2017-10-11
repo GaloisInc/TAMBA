@@ -119,7 +119,7 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
         printf "sample_true = %d\nsample_false = %d\n" y n
       )
 
-  let common_run (queryname, querystmt) conc_res querydefs ps_in =
+  let common_run (queryname, querystmt) ids conc_res querydefs ps_in =
         ifbench Globals.start_timer Globals.timer_query;
 
         let ps = ps_in in
@@ -170,7 +170,7 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
           (printf "\nquery (single assignment):\n"; print_stmt progstmt; printf "\n");
 
 
-        let ans = PSYS.policysystem_answer ps (queryname, querytuple) conc_res querystmt in
+        let ans = PSYS.policysystem_answer ps (queryname, querytuple) ids conc_res querystmt in
         let res = ans.PSYS.result in
         let ps = PSYS.policysystem_answered ps ans.PSYS.update in
 
@@ -200,7 +200,7 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
     | [] -> ps_in
     | (queryname, querystmt) :: t ->
         printf "\n--- Query #%d ------------------\n" count;
-        let ps_out = common_run (queryname, querystmt) RunConc querydefs ps_in in
+        let ps_out = common_run (queryname, querystmt) [] RunConc querydefs ps_in in
         pmock_queries (count + 1) t querydefs ps_out
 
   (* Lower Bound additions <begin> *)
@@ -298,7 +298,7 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
                                     else "Model does not exist.\n" in
                           (msg, ps_outs)
 
-  let manage_query querydefs ps_ins ps_orig (qn, ins, model, res) =
+  let manage_query querydefs ps_ins ps_orig (qn, ins, model, ids, res) =
       let (inlist, outlist, progstmt) = try List.assoc qn querydefs
                                         with e -> raise (General_error qn) in
       ifdebug (printf "inlist: %s\n%!" (varid_list_to_string inlist));
@@ -321,7 +321,7 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
        * the analysis *)
       let ins2 = List.map (fun (n,x) -> (n, Some x)) ins in
       let ps_out = let qstmt = make_int_assignments ins2 in
-                   common_run (qn, qstmt) res querydefs ps_in in
+                   common_run (qn, qstmt) ids res querydefs ps_in in
       ifdebug (printf "Query has been run\n%!");
 
       (* Once we've run the analysis we produce our response string and
@@ -349,7 +349,7 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
           let cmd = Pervasives.input_line p_read in
           ifdebug (printf "The command: %s\n" cmd);
           let cmd_info = Json.parse_query_json cmd in
-          let (qn, ins, model, res) = cmd_info in
+          let (qn, ins, model, ids, res) = cmd_info in
           let (msg, ps_outs) = if qn = "init_model" || qn = "delete_model"
                                then manage_models qn model ps_ins ps_orig
                                else manage_query querydefs ps_ins ps_orig cmd_info in
@@ -378,7 +378,8 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
                                   (* TODO: Print out which inputs failed (snd of the tuple will be None) *)
                                   then (printf "Input(s) are not valid\n"; ps_in)
                                   else (let qstmt = make_int_assignments ins in
-                                        common_run (str, qstmt) RunConc querydefs) ps_in in
+                                        (* TODO(ins): integrate `ids` into interpreter *)
+                                        common_run (str, qstmt) [] RunConc querydefs) ps_in in
                      interpreter_loop (count + 1)
                                  (prob_line ())
                                  ps_out)

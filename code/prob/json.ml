@@ -88,4 +88,4 @@ let parse_query_json str =
   ifdebug (printf "ids: %s\n%!" (String.concat ", " ids));
   let mkvid (str, v) = (("", str), v) in
   ifdebug (printf "qn: %s\n%!" query_name);
-  (query_name, List.map mkvid inlist, model, res)
+  (query_name, List.map mkvid inlist, model, ids, res)

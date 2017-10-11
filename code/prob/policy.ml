@@ -171,7 +171,7 @@ module MAKE_PSYSTEM (ESYS: EVAL_SYSTEM) = struct
         policysystem_check_policies (count + 1) r distout distbelief distactual outputs
 
 
-  let policysystem_answer (ps: policysystem) (querytup: (string * (Lang.varid list * Lang.varid list * Lang.stmt))) conc_res (queryinput_stmt: Lang.stmt) :  policysystemresult =
+  let policysystem_answer (ps: policysystem) (querytup: (string * (Lang.varid list * Lang.varid list * Lang.stmt))) (ids : string list) conc_res (queryinput_stmt: Lang.stmt) :  policysystemresult =
     (* todo: simplify some of this query preparation, factor out to someplace else, also done repeatedly in prob.ml *)
 
     ifverbose1 (
@@ -180,7 +180,7 @@ module MAKE_PSYSTEM (ESYS: EVAL_SYSTEM) = struct
 
     let (queryname, query) = querytup in
     let (inlist, outlist, querystmt) = query in
-    let secretvars = ESYS.psrep_vars ps.belief in
+    let secretvars = if ids = [] then ESYS.psrep_vars ps.belief else List.map (fun name -> ("", name)) ids in
 
     let (ignored, inputstate_temp) = Evalstate.eval queryinput_stmt (new state_empty) in
 
