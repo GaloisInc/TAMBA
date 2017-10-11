@@ -2,6 +2,7 @@ open Yojson
 open Globals
 open Cohttp_async
 open Printf
+open Util
 
 let int_of_bool_string str =
   match str with
@@ -33,8 +34,10 @@ let query_to_string query_name params =
     match name with
     | "resource" -> (name, `Int (resource_map value))
     | "result"   -> (name, `Int (int_of_bool_string value))
+    | "static"   -> (name, `Int (int_of_bool_string value))
+    | "ids"      -> (name, Basic.from_string value)
     | v          -> (name, `Int (int_of_string value)) in
-  try Some (Yojson.to_string (`Assoc (query_json :: List.map param_to_json params)))
+  try Some (Yojson.Basic.to_string (`Assoc (query_json :: List.map param_to_json params)))
   with e -> None
 
 (* Take the string-serialized version of the JSON representing a query
@@ -58,20 +61,31 @@ let parse_query_json str =
 
   let model = json_of_query |> Basic.Util.member "model" |> Basic.Util.to_int in
   ifdebug (printf "We now the model number\n%!");
+  (* check if this query is meant to be static *)
+  let static = match Basic.Util.member "static" json_of_query with
+              | `Null  -> false
+              | `Int 0 -> false
+              | `Int 1 -> true in
   let res   = match Basic.Util.member "result" json_of_query with
-              | `Null  -> None
-              | `Int r -> Some r in
+              | `Null  -> if static then Static else RunConc
+              | `Int r -> Dynamic r in
   (* get the list of parameters (i.e. everything except
    * "query", "resource", "result", or "model" *)
   let param_list = List.filter (fun x -> x <> "query" &&
                                          x <> "resource" &&
                                          x <> "model" &&
+                                         x <> "static" &&
+                                         x <> "ids" &&
                                          x <> "result")
                                (Basic.Util.keys json_of_query) in
   ifdebug (printf "param_list:";
            let _ = List.map (fun x -> printf " %s," x) param_list in
            printf "\n%!");
   let inlist = List.map get_param param_list in
+  let ids = match Basic.Util.member "ids" json_of_query with
+            | `Null    -> []
+            | `List xs -> List.map Basic.to_string xs in
+  ifdebug (printf "ids: %s\n%!" (String.concat ", " ids));
   let mkvid (str, v) = (("", str), v) in
   ifdebug (printf "qn: %s\n%!" query_name);
   (query_name, List.map mkvid inlist, model, res)

@@ -12,6 +12,10 @@ exception Loop_exit;;
 exception Not_implemented;;
 exception Not_expected;;
 
+type 'a query_res = Dynamic of 'a
+                  | RunConc
+                  | Static
+
 let debug s =
   prerr_string s;
   prerr_string "\n";

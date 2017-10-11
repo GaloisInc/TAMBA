@@ -128,6 +128,8 @@ let list_models ()  =
   let str = "[" ^ (String.concat ~sep:", " !models) ^ "]\n" in
   Server.respond_with_string str
 
+let handle_leakage = Server.respond_with_string "Not yet implemented"
+
 let process_generic name (n, (i,o,_)) uri host =
   ifdebug (printf "Prossesing Generic Query\n");
   let params = List.map i varid_to_string in
@@ -136,7 +138,7 @@ let process_generic name (n, (i,o,_)) uri host =
                | Some "true"  -> true
                | Some "false" -> false in
   let params = if static
-               then params
+               then "static" :: "ids" :: params
                else "result" :: params in
   let (abs, prs) = process_params ("model" :: params) uri in
   ifdebug (printf "Length of abs: %d\nlength of prs: %d\n%!" (List.length abs) (List.length prs));
@@ -207,6 +209,7 @@ let handler querydefs ~body:_ _sock req =
   | "/Resource"    -> process_query "enough_berths" resource_params uri host
   | "/Combined"    -> process_query "combined" combined_params uri host
   | "/DeleteModel" -> handle_models "delete_model" uri host
+  | "/getLeakage"  -> handle_leakage
   | "/ListModels"  -> list_models ()
   | str            -> let str' = String.sub str 1 (String.length str - 1) in
                       if List.mem querynames str'
