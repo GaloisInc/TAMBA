@@ -182,7 +182,8 @@ module MAKE_PSYSTEM (ESYS: EVAL_SYSTEM) = struct
 
     let (queryname, query) = querytup in
     let (inlist, outlist, querystmt) = query in
-    let secretvars = if ids = [] then ESYS.psrep_vars ps.belief else List.map (fun name -> ("", name)) ids in
+    let secretvars = ESYS.psrep_vars ps.belief in
+    ifdebug (printf "Secretvars are: %s\n" (varid_list_to_string secretvars));
 
     let (ignored, inputstate_temp) = Evalstate.eval queryinput_stmt (new state_empty) in
 
@@ -259,9 +260,16 @@ module MAKE_PSYSTEM (ESYS: EVAL_SYSTEM) = struct
        | Dynamic r -> (let o = new state_empty in
                       (o#addvar ("", "result"); o#set ("", "result") r; o)), false)
     in
+    let secretvars = if ids = [] then
+                       ESYS.psrep_vars ps.belief
+                     else
+                       List.map (fun name -> ("", name)) ids in
+    ifdebug (printf "\n\nWe are going to project on: %s\n" (varid_list_to_string secretvars));
 
     if static then
-      let ps_updater = {newbelief = outputdist} in
+      let enddist =
+        ESYS.psrep_on_vars outputdist secretvars in
+      let ps_updater = {newbelief = enddist} in
       {result = RTrueValue ([]);
        update = ps_updater}
     else
