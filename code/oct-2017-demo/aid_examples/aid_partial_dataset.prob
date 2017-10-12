@@ -1,0 +1,170 @@
+secret:
+  int ship1_latitude = 8963;
+  int ship1_longitude = 121944;
+  int ship1_maxspeed = 10;
+  int ship2_latitude = 8287;
+  int ship2_longitude = 122524;
+  int ship2_maxspeed = 20;
+  int ship3_latitude = 11145;
+  int ship3_longitude = 126899;
+  int ship3_maxspeed = 30;
+  int ship4_latitude = 9563;
+  int ship4_longitude = 118995;
+  int ship4_maxspeed = 35;
+
+belief:
+  int ship1_latitude = uniform -90000 90000;
+  int ship1_longitude = uniform -180000 180000;
+  int ship1_maxspeed = uniform 5 50;
+  int ship2_latitude = uniform -90000 90000;
+  int ship2_longitude = uniform -180000 180000;
+  int ship2_maxspeed = uniform 5 50;
+  int ship3_latitude = uniform -90000 90000;
+  int ship3_longitude = uniform -180000 180000;
+  int ship3_maxspeed = uniform 5 50;
+  int ship4_latitude = uniform -90000 90000;
+  int ship4_longitude = uniform -180000 180000;
+  int ship4_maxspeed = uniform 5 50;
+
+  int port1_harbordepth = uniform 5 50;
+  int port2_harbordepth = uniform 5 50;
+  int port3_harbordepth = uniform 5 50;
+  int port4_harbordepth = uniform 5 50;
+
+querydef mpc_reachable ship_id port_id port_latitude port_longitude deadline -> result :
+  int ship_latitude = 0;
+  int ship_longitude = 0;
+  int ship_maxspeed = 0;
+
+  if ship_id == 1 then
+    ship_latitude = ship1_latitude;
+    ship_longitude = ship1_longitude;
+    ship_maxspeed = ship1_maxspeed;
+  endif;
+  if ship_id == 2 then
+    ship_latitude = ship2_latitude;
+    ship_longitude = ship2_longitude;
+    ship_maxspeed = ship2_maxspeed;
+  endif;
+  if ship_id == 3 then
+    ship_latitude = ship3_latitude;
+    ship_longitude = ship3_longitude;
+    ship_maxspeed = ship3_maxspeed;
+  endif;
+  if ship_id == 4 then
+    ship_latitude = ship4_latitude;
+    ship_longitude = ship4_longitude;
+    ship_maxspeed = ship4_maxspeed;
+  endif;
+
+  int result = 0;
+
+  if ((ship_latitude - port_latitude) + (ship_longitude - port_longitude)) <= deadline * ship_maxspeed and
+     ((port_latitude - ship_latitude) + (ship_longitude - port_longitude)) <= deadline * ship_maxspeed and
+     ((ship_latitude - port_latitude) + (port_longitude - ship_longitude)) <= deadline * ship_maxspeed and
+     ((port_latitude - ship_latitude) + (port_longitude - ship_longitude)) <= deadline * ship_maxspeed then
+    result = 1;
+  endif;
+
+querydef mpc_aid ship_id port_id ship_draft ship_cargo port_available port_longitude port_latitude port_capacity deadline -> result :
+  int ship_latitude = 0;
+  int ship_longitude = 0;
+  int ship_maxspeed = 0;
+
+  int port_harbordepth = 0;
+
+  if ship_id == 1 then
+    ship_latitude = ship1_latitude;
+    ship_longitude = ship1_longitude;
+    ship_maxspeed = ship1_maxspeed;
+  endif;
+  if ship_id == 2 then
+    ship_latitude = ship2_latitude;
+    ship_longitude = ship2_longitude;
+    ship_maxspeed = ship2_maxspeed;
+  endif;
+  if ship_id == 3 then
+    ship_latitude = ship3_latitude;
+    ship_longitude = ship3_longitude;
+    ship_maxspeed = ship3_maxspeed;
+  endif;
+  if ship_id == 4 then
+    ship_latitude = ship4_latitude;
+    ship_longitude = ship4_longitude;
+    ship_maxspeed = ship4_maxspeed;
+  endif;
+
+  if port_id == 1 then
+    port_harbordepth = port1_harbordepth;
+  endif;
+  if port_id == 2 then
+    port_harbordepth = port2_harbordepth;
+  endif;
+  if port_id == 3 then
+    port_harbordepth = port3_harbordepth;
+  endif;
+  if port_id == 4 then
+    port_harbordepth = port4_harbordepth;
+  endif;
+
+  int reachable = 0;
+
+  int lat_steps = ship_latitude - port_latitude;
+
+  if lat_steps < 0 then
+    lat_steps = -1 * lat_steps;
+  endif;
+
+  int long_steps = ship_longitude - port_longitude;
+
+  if long_steps < 0 then
+    long_steps = -1 * long_steps;
+  endif;
+
+  if (lat_steps + long_steps) <= deadline * ship_maxspeed then
+    reachable = 1;
+  endif;
+
+  int feasible = 0;
+
+  if (port_available == 1) and (ship_draft <= port_harbordepth) and (ship_cargo <= port_capacity) then
+    feasible = 1;
+  endif;
+
+  int result = 0;
+
+  if (reachable == 1) and (feasible == 1) then
+    result = 1;
+  endif;
+
+(* 1,1 *)
+query mpc_reachable:
+  int ship_id = 1;
+  int port_id = 1;
+  int port_latitude = 10316;
+  int port_longitude = 123886;
+  int deadline = 320;
+
+(* 1,2 *)
+query mpc_reachable:
+  int ship_id = 1;
+  int port_id = 2;
+  int port_latitude = 10268;
+  int port_longitude = 123994;
+  int deadline = 320;
+
+(* 1,3 *)
+query mpc_reachable:
+  int ship_id = 1;
+  int port_id = 3;
+  int port_latitude = 9683;
+  int port_longitude = 123500;
+  int deadline = 320;
+
+(* 1,4 *)
+query mpc_reachable:
+  int ship_id = 1;
+  int port_id = 4;
+  int port_latitude = 9650;
+  int port_longitude = 124366;
+  int deadline = 320;
