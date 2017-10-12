@@ -13,6 +13,19 @@ let int_of_bool_string str =
   | s       -> try int_of_string s
                with e -> raise (Failure "Could not parse result argument")
 
+(* I (JMCT) am so angry that I have to write the following function.
+ * This shouldn't even be a thing.
+ * Real World OCaml lied about how Yojson handles string value!
+ *
+ * This function removes the opening a closing quotes from json string
+ *)
+let rem_quotes json =
+  let str     = Basic.to_string json in
+  let len     = String.length str in
+  let no_open = String.sub str 1 (len - 1) in
+  let no_quot = String.sub no_open 0 (len - 2) in
+  no_quot
+
 (* Taking a query's name and the parameters for that query
  * create a JSON value and serialize to a string
  *
@@ -84,7 +97,7 @@ let parse_query_json str =
   let inlist = List.map get_param param_list in
   let ids = match Basic.Util.member "ids" json_of_query with
             | `Null    -> []
-            | `List xs -> List.map Basic.to_string xs in
+            | `List xs -> List.map rem_quotes xs in
   ifdebug (printf "ids: %s\n%!" (String.concat ", " ids));
   let mkvid (str, v) = (("", str), v) in
   ifdebug (printf "qn: %s\n%!" query_name);
