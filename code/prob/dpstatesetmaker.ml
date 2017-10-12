@@ -136,6 +136,7 @@ module MakeDPStateset
     _assert "Cannot add an existing var!" (not (mem v (vars dpss)));
     make_new [v] @ dpss
 
+  let rep_size dpss = 1
   let size (dpss: pstateset) = fold_left (fun s (f, p) -> s *! PSS.size p) zone dpss
 
   let prod (dpss1: pstateset) (dpss2: pstateset) =

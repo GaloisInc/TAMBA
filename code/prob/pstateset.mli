@@ -39,6 +39,9 @@ module type PSTATESET_TYPE =
     (** Count the number of points inside a pstateset. *)
     val size: pstateset -> Z.t
 
+    (** Return a measure of the size of the representation. *)
+    val rep_size: pstateset -> int
+
     val slack: pstateset -> Q.t
 
     (** Combine two pstatesets representing mutually exclusive sets of dimensions into a single

@@ -11,7 +11,7 @@
     - include: tasks/ocaml.yaml
     - include: tasks/ppl.yaml
     - include: tasks/ntl.yaml
-    - include: tasks/barvinok.yaml
+#    - include: tasks/barvinok.yaml
     - include: tasks/latte.yaml
     - include: tasks/volcomp.yaml
     - include: tasks/prob.yaml
