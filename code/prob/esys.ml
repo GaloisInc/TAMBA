@@ -3,6 +3,7 @@ open Lang
 open Util
 open Gmp
 open Ppl_ocaml
+open Printf
 
 (*module SS  = Statesetsimple.Stateset(ES) *)
 (*module SSP = Statesetpoly.Stateset*)
@@ -23,18 +24,21 @@ module PSS_OCTA = Pstatesetmaker.MakePStateset(SS_OCTA)
 module PSS_OCTALATTE = Pstatesetmaker.MakePStateset(SS_OCTALATTE)
 
 module DPSS_POLY = Dpstatesetmaker.MakeDPStateset(SS_POLY)(PSS_POLY)
+module DPSS_RBOX = Dpstatesetmaker.MakeDPStateset(SS_BOX)(PSS_BOX)
 
 module PPSS_POLY = Ppowersetmaker.MakePPowerset(SS_POLY)(PSS_POLY)
 module PPSS_BOX  = Ppowersetmaker.MakePPowerset(SS_BOX) (PSS_BOX)
 module PPSS_OCTA = Ppowersetmaker.MakePPowerset(SS_OCTA)(PSS_OCTA)
 module PPSS_OCTALATTE = Ppowersetmaker.MakePPowerset(SS_OCTALATTE)(PSS_OCTALATTE)
 module PDPSS_POLY = Ppowersetmaker.MakePPowerset(SS_POLY)(DPSS_POLY)
+module PDPSS_RBOX = Ppowersetmaker.MakePPowerset(SS_BOX)(DPSS_RBOX)
 
 module EPPSS_POLY = Evalpstateset.Eval(PPSS_POLY)
 module EPPSS_BOX  = Evalpstateset.Eval(PPSS_BOX)
 module EPPSS_OCTA = Evalpstateset.Eval(PPSS_OCTA)
 module EPPSS_OCTALATTE = Evalpstateset.Eval(PPSS_OCTALATTE)
 module EPDPSS_POLY = Evalpstateset.Eval(PDPSS_POLY)
+module EPDPSS_RBOX = Evalpstateset.Eval(PDPSS_RBOX)
 
 module type EVAL_SYSTEM = sig
   type srep
@@ -65,6 +69,7 @@ module type EVAL_SYSTEM = sig
 
   val get_alpha_beta: psrep -> (int * int)
 
+  val psrep_rep_size: psrep -> int
   val psrep_size: psrep -> Z.t
   val psrep_smin_smax: psrep -> (Z.t * Z.t)
   val psrep_pmin_pmax: psrep -> (Q.t * Q.t)
@@ -118,6 +123,7 @@ module Make_esys_pss
   let get_alpha_beta = M.get_alpha_beta
   let psrep_sample = M.sample_pstateset
   let psrep_improve_lower_bounds = M.improve_lower_bounds
+  let psrep_rep_size = M.rep_size
   let psrep_size = M.size
   let psrep_smin_smax = M.prob_smin_smax
   let psrep_pmin_pmax = M.prob_pmin_pmax
@@ -134,3 +140,4 @@ module ESYS_PPSS_BOX: EVAL_SYSTEM = Make_esys_pss(SS_BOX)(PPSS_BOX)(EPPSS_BOX)
 module ESYS_PPSS_OCTA: EVAL_SYSTEM  = Make_esys_pss(SS_OCTA)(PPSS_OCTA)(EPPSS_OCTA)
 module ESYS_PPSS_OCTALATTE: EVAL_SYSTEM  = Make_esys_pss(SS_OCTALATTE)(PPSS_OCTALATTE)(EPPSS_OCTALATTE)
 module ESYS_PDPSS_POLY: EVAL_SYSTEM = Make_esys_pss(SS_POLY)(PDPSS_POLY)(EPDPSS_POLY)
+module ESYS_PDPSS_RBOX: EVAL_SYSTEM = Make_esys_pss(SS_BOX)(PDPSS_RBOX)(EPDPSS_RBOX)

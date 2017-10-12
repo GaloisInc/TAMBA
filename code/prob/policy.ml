@@ -154,12 +154,14 @@ module MAKE_PSYSTEM (ESYS: EVAL_SYSTEM) = struct
     : string option =
     (* let max_prob = find_max_belief distout outputs policies.pvars in *)
     ifverbose1 (
-      printf "\n----------------------\n";
-      printf "Checking Policy #%d:\n" count;
-      printf "Number of policies: %d\n" (List.length policies);
-      printf "Max belief of distout: %s\n" (Gmp.Q.to_string (ESYS.psrep_max_belief distout));
-      printf "Max belief of revised: %s\n" (Gmp.Q.to_string (ESYS.psrep_max_belief distbelief));
-      printf "Max belief of distactual: %s\n" (Gmp.Q.to_string (ESYS.psrep_max_belief distactual))
+      printf "\n----------------------\n%!";
+      printf "Checking Policy #%d:\n%!" count;
+      printf "Number of policies: %d\n%!" (List.length policies);
+      let mb = (ESYS.psrep_max_belief distout) in
+      printf "got mb\n%!";
+      printf "Max belief of distout: %s\n%!" (Gmp.Q.to_string mb);
+      printf "Max belief of revised: %s\n%!" (Gmp.Q.to_string (ESYS.psrep_max_belief distbelief));
+      printf "Max belief of distactual: %s\n%!" (Gmp.Q.to_string (ESYS.psrep_max_belief distactual))
     );
     match policies with
     | [] -> None
@@ -288,16 +290,18 @@ module MAKE_PSYSTEM (ESYS: EVAL_SYSTEM) = struct
          printf "relative entropy (revised -> secret): %f\n" endrelent;
          printf "bits learned: %f\n" (startrelent -. endrelent); *)
 
-      printf "\n### checking policies ###\n";
+      printf "\n### checking policies ###\n%!";
     );
     (*flush stdout;*)
 
     ifnotverbose (
+      printf "starting revision\n%!";
       let rev_belief = ESYS.psrep_max_belief enddist in
-      printf "Revised max-belief: %s\n" (Gmp.Q.to_string rev_belief);
+      printf "Revised max-belief: %s\n%!" (Gmp.Q.to_string rev_belief);
       (* lg (U/V) == lg U - lg V *)
       let cuma_leakage = lg (Gmp.Q.to_float rev_belief) -. lg (!Globals.init_max_belief) in
-      printf "Cumulative leakage: %s\n%!" (string_of_float cuma_leakage)
+      printf "Cumulative leakage: %s\n%!" (string_of_float cuma_leakage);
+      printf "Number of states: %d\n%!" (ESYS.psrep_rep_size enddist)
     );
 
     match policysystem_check_policies 0 ps.policies outputdist enddist secretdist outlist with

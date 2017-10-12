@@ -119,6 +119,8 @@ module MakePStateset(* create pstateset from a stateset *)
       SS.print_stateset pss.ss;
       printf "\n"
 
+    let rep_size pss = SS.rep_size pss.ss
+
     let size pss = SS.stateset_size pss.ss
 
     let prod pss1 pss2 =

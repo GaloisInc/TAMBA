@@ -64,6 +64,7 @@ struct
        dim = (List.length varlist);
        varmap = vmap}
 
+  let rep_size aset = 1
   let stateset_size aset = aset.size
 
   let stateset_is_empty aset1 = Z.is_zero (stateset_size aset1)
@@ -384,6 +385,29 @@ struct
 
   exception Break_loop
 
+  (* Like statesets_exact_intersections but just returns the list of
+     overlaps. Shapes that don't overlap other shapes are included separately.
+     So for each shape s in ssl, the output contains a set representing
+     {shapes s' s.t. s' \inter s <> \empty}
+     Crucially, this does -not- partition, so you never get more outputs
+     than you had input shapes. *)
+  let statesets_overlap (ssl: (stateset * 'a) list): (('a list) list) =
+    let rec roll_up s ssl touch_s no_touch_s =
+      match ssl with
+        [] -> (touch_s, no_touch_s)
+      | (s',d')::ssl ->
+         if P.regions_are_disjoint s.bound s'.bound then
+           roll_up s ssl touch_s ((s',d')::no_touch_s)
+         else
+           roll_up s ssl (d'::touch_s) no_touch_s in
+    let rec compute_res ssl accum =
+      match ssl with
+        [] -> accum
+      | (s,d)::ssl ->
+         let (touch_s, no_touch_s) = roll_up s ssl [d] [] in
+         compute_res no_touch_s (touch_s::accum) in
+    compute_res ssl []
+
   let statesets_exact_intersections (ssl: (stateset * 'a) list): (('a list) list) =
     (* Takes a set of statesets, with each have some associated but
        unused data value, and produces a list (one for each disjoint
@@ -402,7 +426,7 @@ struct
         let p1ref = ref p1temp in
         let notes1ref = ref notes1temp in
           while (not (Queue.is_empty !queue)) do
-            (*printf "queue = %d, queue copy = %d, queue done = %d\n"
+            (*printf "queue = %d, queue copy = %d, queue done = %d\n%!"
               (Queue.length !queue)
               (Queue.length !queue_copy)
               (Queue.length queue_done);
@@ -451,11 +475,11 @@ struct
 	let p1ref = ref p1temp in
 	let notes1ref = ref notes1temp in
 	  while (not (Queue.is_empty !queue)) do
-	    (*printf "queue = %d, queue copy = %d, queue done = %d\n"
+	    (*printf "queue = %d, queue copy = %d, queue done = %d\n%!"
 	      (Queue.length !queue)
 	      (Queue.length !queue_copy)
 	      (Queue.length queue_done);
-	    printf "p1ref = \n"; P.print_region !p1ref;
+            printf "p1ref = \n"; P.print_region !p1ref;
 	    printf "queue=\n";
 	    List.iter (fun (p, n) -> printf "(%d): " (List.length n); P.print_region p; printf "\n") (list_of_queue !queue);
 	    flush Pervasives.stdout;*)

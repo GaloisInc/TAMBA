@@ -18,6 +18,7 @@ module type STATESET_TYPE =
 
     val stateset_copy: stateset -> stateset
 
+    val rep_size: stateset -> int
     val stateset_size: stateset -> Z.t
 
     val lookup_dim: stateset -> int -> varid
@@ -62,6 +63,7 @@ module type STATESET_TYPE =
 
     val statesets_approx_intersections: ((stateset * 'a) list) -> ('a list) list
     val statesets_exact_intersections: ((stateset * 'a) list) -> ('a list) list
+    val statesets_overlap: ((stateset * 'a) list) -> ('a list) list
 
     val stateset_make_splitter: stateset -> lexp -> (splitter list * splitter list)
 

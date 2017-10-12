@@ -36,6 +36,8 @@ struct
     printf "PPowerset\n";
     List.iter PSS.print pss
 
+  let rep_size pss = List.length pss
+
   let size pss =
     List.fold_left
       (fun accum apss -> accum +! PSS.size apss)
@@ -271,7 +273,9 @@ struct
 
           (*let prob_lists = SS.statesets_approx_intersections probs in  *)
 
-          let prob_lists = SS.statesets_exact_intersections probs in
+          (* don't need exact intersections here, just overlap *)
+          (*let prob_lists = SS.statesets_exact_intersections probs in*)
+          let prob_lists = SS.statesets_overlap probs in
 
           let prob_maxes = List.map
             (fun plist ->

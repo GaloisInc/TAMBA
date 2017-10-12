@@ -485,6 +485,7 @@ module EVALS_PPSS_BOX  = MAKE_EVALS(ESYS_PPSS_BOX);;
 module EVALS_PPSS_OCTA = MAKE_EVALS(ESYS_PPSS_OCTA);;
 module EVALS_PPSS_OCTALATTE = MAKE_EVALS(ESYS_PPSS_OCTALATTE);;
 module EVALS_PDPSS_POLY = MAKE_EVALS(ESYS_PDPSS_POLY);;
+module EVALS_PDPSS_RBOX = MAKE_EVALS(ESYS_PDPSS_RBOX);;
 
 let main () =
   Arg.parse [
@@ -518,7 +519,7 @@ let main () =
      "set the uniforms split factor, default = 1");
     ("--domain",
      Arg.String Cmd.set_domain,
-     "set the PPL domain for evaluation (\"list\", \"box\", \"octa\", \"octalatte\", or \"poly\"), default = \"poly\"");
+     "set the PPL domain for evaluation (\"list\", \"box\", \"octa\", \"octalatte\", \"decomposed-poly\", \"relbox\", or \"poly\"), default = \"poly\"");
     ("--barv",
      Arg.Unit (fun () -> Cmd.opt_count_bin := "barvinok_count"),
      "Use `barvinok_count` to count number of points in a polyhedron");
@@ -595,6 +596,7 @@ let main () =
               | 3 -> (module EVALS_PPSS_OCTALATTE : EXP_SYSTEM)
               | 4 -> (module EVALS_PPSS_POLY : EXP_SYSTEM)
               | 5 -> (module EVALS_PDPSS_POLY : EXP_SYSTEM)
+              | 6 -> (module EVALS_PDPSS_RBOX : EXP_SYSTEM)
               | _ -> raise Not_expected) : EXP_SYSTEM) in
 
       ifdebug(printf "\n\nBefore evaluation\n\n");
