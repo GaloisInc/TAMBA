@@ -283,7 +283,7 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
 
   let prob_line = Core_extended.Readline.input_line ~prompt:"prob >> "
 
-  let manage_models qn model ps_ins ps_orig =
+  let manage_models qn ids model ps_ins ps_orig =
       let ps_ins2 = List.remove_assoc model ps_ins in
       let exists = List.mem_assoc model ps_ins in
       match qn with
@@ -297,6 +297,14 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
                                     then "Model deleted.\n"
                                     else "Model does not exist.\n" in
                           (msg, ps_outs)
+      | "get_leakage"  -> let msg = if exists
+                                    then let model_ps = List.assoc model ps_ins in
+                                         let var_ids = List.map (fun x -> ("", x)) ids in
+                                         let ps_vars = ESYS.psrep_on_vars (model_ps.PSYS.belief) var_ids in
+                                         let max_belief = ESYS.psrep_max_belief ps_vars in
+                                         string_of_float (Gmp.Q.to_float max_belief) ^ "\n"
+                                    else "Model does not exist.\n" in
+                          (msg, ps_ins)
 
   let manage_query querydefs ps_ins ps_orig (qn, ins, model, ids, res) =
       let (inlist, outlist, progstmt) = try List.assoc qn querydefs
@@ -350,8 +358,8 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
           ifdebug (printf "The command: %s\n" cmd);
           let cmd_info = Json.parse_query_json cmd in
           let (qn, ins, model, ids, res) = cmd_info in
-          let (msg, ps_outs) = if qn = "init_model" || qn = "delete_model"
-                               then manage_models qn model ps_ins ps_orig
+          let (msg, ps_outs) = if qn = "init_model" || qn = "delete_model" || qn = "get_leakage"
+                               then manage_models qn ids model ps_ins ps_orig
                                else manage_query querydefs ps_ins ps_orig cmd_info in
           output_string p_write msg;
           ifdebug (printf "%s has been written to p_write\n%!" msg);

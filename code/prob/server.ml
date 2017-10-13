@@ -113,6 +113,20 @@ let ensure_parse uri host cmd =
             Server.respond ~body:body code
   | Some str -> pass_to_prob str uri host
 
+let handle_leakage cmd uri host =
+  let m_opt = Uri.get_query_param uri "model" in
+  match m_opt with
+  | None     -> let code = Cohttp.Code.status_of_code 400 in
+                let body = Body.of_string "Error: Missing 'model' parameter\n" in
+                Server.respond ~body:body code
+  | Some str -> let ids_opts = Uri.get_query_param uri "ids" in
+                (match ids_opts with
+                 | None     -> let code = Cohttp.Code.status_of_code 400 in
+                               let body = Body.of_string "Error: Missing 'ids' parameter\n" in
+                               Server.respond ~body:body code
+                 | Some ids -> let serialised = query_to_string cmd [("model", str); ("ids", ids)] in
+                               ensure_parse uri host serialised)
+
 
 let handle_models cmd uri host =
   let m_opt = Uri.get_query_param uri "model" in
@@ -127,8 +141,6 @@ let handle_models cmd uri host =
 let list_models ()  =
   let str = "[" ^ (String.concat ~sep:", " !models) ^ "]\n" in
   Server.respond_with_string str
-
-let handle_leakage = Server.respond_with_string "Not yet implemented"
 
 let process_generic name (n, (i,o,_)) uri host =
   ifdebug (printf "Prossesing Generic Query\n");
@@ -209,7 +221,7 @@ let handler querydefs ~body:_ _sock req =
   | "/Resource"    -> process_query "enough_berths" resource_params uri host
   | "/Combined"    -> process_query "combined" combined_params uri host
   | "/DeleteModel" -> handle_models "delete_model" uri host
-  | "/getLeakage"  -> handle_leakage
+  | "/get_leakage"  -> handle_leakage "get_leakage" uri host
   | "/ListModels"  -> list_models ()
   | str            -> let str' = String.sub str 1 (String.length str - 1) in
                       if List.mem querynames str'
