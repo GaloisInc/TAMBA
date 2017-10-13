@@ -1,38 +1,5 @@
 import sys
 
-# reachable ::=
-#   int reachable = 0;
-#
-#   int lat_steps = ship?_latitude - port_latitude;
-#
-#   if lat_steps < 0 then
-#     lat_steps = -lat_steps;
-#   endif;
-#
-#   int long_steps = ship?_longitude - port_longitude;
-#
-#   if long_steps < 0 then
-#     long_step = -long_steps;
-#   endif;
-#
-#   if (lat_steps + long_steps) / ship?_maxspeed <= deadline then
-#     reachable = 1;
-#   endif;
-
-# feasible ::=
-#   int feasible = 0;
-#
-#   if (port_available && ship_draft <= port?_harbordepth && ship_cargo <= port_cap) then
-#     feasible = 1;
-#   endif;
-
-# aid ::=
-#   int result = 0;
-#
-#   if (reachable && feasible) then
-#     result = 1;
-#   endif;
-
 def main ():
     if len(sys.argv) != 4:
         exit(1)
@@ -76,74 +43,47 @@ def main ():
 
     out.write("\n" + belief)
 
-    # Queries
-
-    ## MPC Reachable
-
-    mpc_reachable_sig = "querydef mpc_reachable ship_id port_id port_latitude port_longitude deadline -> result :\n"
-
-    mpc_reachable_preamble = ""
-
-    for (prefix, _, _) in ship_var_data:
-        mpc_reachable_preamble += ("  int ship_%s = 0;\n" % prefix)
-
-    mpc_reachable_preamble += "\n"
-
-    for (prefix, _, _) in port_var_data:
-        mpc_reachable_preamble += ("  int port_%s = 0;\n" % prefix)
-
-    mpc_reachable_preamble += "\n"
-
-    for i in range(num_ships):
-        mpc_reachable_preamble += ("  if ship_id == %d then\n" % (i))
-
-        for (prefix, _, _) in ship_var_data:
-            mpc_reachable_preamble += ("    ship_%s = ship%d_%s;\n" % (prefix, i, prefix))
-
-        mpc_reachable_preamble += "  endif;\n"
-
-    mpc_reachable_preamble += "\n"
-
-    for j in range(num_ports):
-        mpc_reachable_preamble += ("  if port_id == %d then\n" % (j))
-
-        for (prefix, _, _) in port_var_data:
-            mpc_reachable_preamble += ("    port_%s = port%d_%s;\n" % (prefix, j, prefix))
-
-        mpc_reachable_preamble += "  endif;\n"
-
-    mpc_reachable_body = mpc_reachable_preamble + "\n"
-
-    mpc_reachable_body += ("  int result = 0;\n"
-                           "\n"
-                           "  int lat_steps = ship_latitude - port_latitude;\n"
-                           "\n"
-                           "  if lat_steps < 0 then\n"
-                           "    lat_steps = -1 * lat_steps;\n"
-                           "  endif;\n"
-                           "\n"
-                           "  int long_steps = ship_longitude - port_longitude;\n"
-                           "\n"
-                           "  if long_steps < 0 then\n"
-                           "    long_steps = -1 * long_steps;\n"
-                           "  endif;\n"
-                           "\n"
-                           "  if (lat_steps + long_steps) <= deadline * ship_maxspeed then\n"
-                           "    result = 1;\n"
-                           "  endif;\n"
-                           )
-
-    mpc_reachable = mpc_reachable_sig + mpc_reachable_body
-
-    out.write("\n" + mpc_reachable)
-
     ## MPC Aid
 
-    mpc_aid_sig = "querydef mpc_aid ship_id port_id ship_draft ship_cargo port_available port_longitude port_latitude port_capacity deadline -> result :\n"
+    ### Signature
 
-    mpc_aid_preamble = mpc_reachable_preamble
+    mpc_aid_sig = "querydef mpc_aid ship_id port_id ship_draft ship_cargo port_available port_longitude port_latitude port_offloadcapacity deadline -> result :\n"
 
-    mpc_aid_body = mpc_aid_preamble + "\n"
+    ### Preamble
+
+    mpc_preamble = ""
+
+    for (prefix, _, _) in ship_var_data:
+        mpc_preamble += ("  int ship_%s = 0;\n" % prefix)
+
+    mpc_preamble += "\n"
+
+    for (prefix, _, _) in port_var_data:
+        mpc_preamble += ("  int port_%s = 0;\n" % prefix)
+
+    mpc_preamble += "\n"
+
+    for i in range(num_ships):
+        mpc_preamble += ("  if ship_id == %d then\n" % (i))
+
+        for (prefix, _, _) in ship_var_data:
+            mpc_preamble += ("    ship_%s = ship%d_%s;\n" % (prefix, i, prefix))
+
+        mpc_preamble += "  endif;\n"
+
+    mpc_preamble += "\n"
+
+    for j in range(num_ports):
+        mpc_preamble += ("  if port_id == %d then\n" % (j))
+
+        for (prefix, _, _) in port_var_data:
+            mpc_preamble += ("    port_%s = port%d_%s;\n" % (prefix, j, prefix))
+
+        mpc_preamble += "  endif;\n"
+
+    ### Body
+    
+    mpc_aid_body = ""
 
     mpc_aid_body += ("  int reachable = 0;\n"
                      "\n"
@@ -165,7 +105,7 @@ def main ():
                      "\n"
                      "  int feasible = 0;\n"
                      "\n"
-                     "  if (port_available == 1) and (ship_draft <= port_harbordepth) and (ship_cargo <= port_capacity) then\n"
+                     "  if (port_available == 1) and (ship_draft <= port_harbordepth) and (ship_cargo <= port_offloadcapacity) then\n"
                      "    feasible = 1;\n"
                      "  endif;\n"
                      "\n"
@@ -176,7 +116,7 @@ def main ():
                      "  endif;\n"
                      )
 
-    mpc_aid = mpc_aid_sig + mpc_aid_body
+    mpc_aid = mpc_aid_sig + mpc_preamble + "\n" + mpc_aid_body
 
     out.write("\n" + mpc_aid)
    
