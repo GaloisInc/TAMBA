@@ -253,78 +253,163 @@ module MAKE_PSYSTEM (ESYS: EVAL_SYSTEM) = struct
       printf "\nend belief:\n"; ESYS.print_psrep outputdist
       );
 
-    let (outputstate_temp, static) =
-      (match conc_res with
-       | Static    -> (new state_empty, true)
-       | RunConc -> (let (_, o) = Evalstate.eval final_stmt inputstate_full in o, false)
-       | Dynamic r -> (let o = new state_empty in
-                      (o#addvar ("", "result"); o#set ("", "result") r; o)), false)
-    in
     let secretvars = if ids = [] then
                        ESYS.psrep_vars ps.belief
                      else
                        List.map (fun name -> ("", name)) ids in
+
     ifdebug (printf "\n\nWe are going to project on: %s\n" (varid_list_to_string secretvars));
 
-    if static then
-      let enddist =
-        ESYS.psrep_on_vars outputdist secretvars in
-      let ps_updater = {newbelief = enddist} in
-      {result = RTrueValue ([]);
-       update = ps_updater}
-    else
-      let outputstate = outputstate_temp#copy in
-      outputstate#project outlist;
+    (match conc_res with
+     | Static    ->
+        let result_var = ("", "result") in
+        let o_true = new state_empty in
+        o_true#addvar result_var;
+        o_true#set result_var 1;
+        let o_false = new state_empty in
+        o_false#addvar result_var;
+        o_false#set result_var 0;
+
+        let o_true_projected = o_true#copy in
+        o_true_projected#project outlist;
+
+        let o_false_projected = o_false#copy in
+        o_false_projected#project outlist;
+
+        let enddist_true = ESYS.psrep_on_vars (ESYS.psrep_given_state outputdist o_true_projected) secretvars in
+        let enddist_false = ESYS.psrep_on_vars (ESYS.psrep_given_state outputdist o_false_projected) secretvars in
+
+        let rev_belief_true = ESYS.psrep_max_belief enddist_true in
+        let rev_belief_false = ESYS.psrep_max_belief enddist_false in
+
+        let enddist =
+          if Q.compare rev_belief_false rev_belief_true <= 0 then (* rev_belief_false <= rev_belief_true *)
+            enddist_true
+          else
+            enddist_false
+        in
+
+        let ps_updater = {newbelief = enddist} in
+
+        (match policysystem_check_policies 0 ps.policies outputdist enddist secretdist outlist with
+        | None -> {result = RTrueValue ([]);
+                    update = ps_updater}
+        | Some (s) -> {result = RReject (s);
+                       update = {newbelief = ps.belief}})
+     | RunConc ->
+        let outputstate_temp = (let (_, o) = Evalstate.eval final_stmt inputstate_full in o) in
+
+        let outputstate = outputstate_temp#copy in
+        outputstate#project outlist;
 
                 (*
-                 let startrelent = ESYS.psrep_relative_entropy inputdist secretdist in *)
-      let enddist =
+                    let startrelent = ESYS.psrep_relative_entropy inputdist secretdist in *)
+        let enddist =
         ESYS.psrep_on_vars
-          (ESYS.psrep_given_state outputdist outputstate)
-          secretvars in
+            (ESYS.psrep_given_state outputdist outputstate)
+            secretvars in
 
-      let ps_updater = {newbelief = enddist} in
+        let ps_updater = {newbelief = enddist} in
 
-      (* let ps_updater = {newbelief = outputdist} in *)
+        (* let ps_updater = {newbelief = outputdist} in *)
                 (*
-                  let endrelent = ESYS.psrep_relative_entropy enddist secretdist in
+                    let endrelent = ESYS.psrep_relative_entropy enddist secretdist in
                 *)
 
-      ifverbose1 (
+        ifverbose1 (
         printf "\ninput state:\n\t"; inputstate_full#print; printf "\n";
-      );
+        );
 
-      printf "query %s" queryname; inputstate#print_as_args;
+        printf "query %s" queryname; inputstate#print_as_args;
 
-      printf " = "; outputstate#print_as_args; printf "\n";
+        printf " = "; outputstate#print_as_args; printf "\n";
 
-      ifverbose1 (
+        ifverbose1 (
         printf "\nrevised belief\n"; ESYS.print_psrep enddist;
 
         (* printf "relative entropy (start -> secret): %f\n" startrelent;
-           printf "relative entropy (revised -> secret): %f\n" endrelent;
-           printf "bits learned: %f\n" (startrelent -. endrelent); *)
+            printf "relative entropy (revised -> secret): %f\n" endrelent;
+            printf "bits learned: %f\n" (startrelent -. endrelent); *)
 
         printf "\n### checking policies ###\n";
-      );
-      (*flush stdout;*)
+        );
+        (*flush stdout;*)
 
-      ifnotverbose (
+        ifnotverbose (
         let rev_belief = ESYS.psrep_max_belief enddist in
         printf "Revised max-belief: %s\n" (Gmp.Q.to_string rev_belief);
         (* lg (U/V) == lg U - lg V *)
         let cuma_leakage = lg (Gmp.Q.to_float rev_belief) -. lg (!Globals.init_max_belief) in
         printf "Cumulative leakage: %s\n%!" (string_of_float cuma_leakage);
         printf "Number of states: %d\n%!" (ESYS.psrep_rep_size enddist)
-      );
+        );
 
-      match policysystem_check_policies 0 ps.policies outputdist enddist secretdist outlist with
-          (*match policysystem_check_policies 0 ps.policies outputdist outputdist secretdist outlist with*)
-      (*        | None -> {result = RTrueValue (outputstate#canon);*)
-      | None -> {result = RTrueValue ([]);
-                 update = ps_updater}
-      | Some (s) -> {result = RReject (s);
-                     update = {newbelief = ps.belief}}
+        (match policysystem_check_policies 0 ps.policies outputdist enddist secretdist outlist with
+            (*match policysystem_check_policies 0 ps.policies outputdist outputdist secretdist outlist with*)
+        (*        | None -> {result = RTrueValue (outputstate#canon);*)
+        | None -> {result = RTrueValue ([]);
+                    update = ps_updater}
+        | Some (s) -> {result = RReject (s);
+                       update = {newbelief = ps.belief}})
+     | Dynamic r ->
+        let result_var = ("", "result") in
+        let outputstate_temp = new state_empty in
+        outputstate_temp#addvar result_var;
+        outputstate_temp#set result_var r;
+
+        let outputstate = outputstate_temp#copy in
+        outputstate#project outlist;
+
+                (*
+                    let startrelent = ESYS.psrep_relative_entropy inputdist secretdist in *)
+        let enddist =
+        ESYS.psrep_on_vars
+            (ESYS.psrep_given_state outputdist outputstate)
+            secretvars in
+
+        let ps_updater = {newbelief = enddist} in
+
+        (* let ps_updater = {newbelief = outputdist} in *)
+                (*
+                    let endrelent = ESYS.psrep_relative_entropy enddist secretdist in
+                *)
+
+        ifverbose1 (
+        printf "\ninput state:\n\t"; inputstate_full#print; printf "\n";
+        );
+
+        printf "query %s" queryname; inputstate#print_as_args;
+
+        printf " = "; outputstate#print_as_args; printf "\n";
+
+        ifverbose1 (
+        printf "\nrevised belief\n"; ESYS.print_psrep enddist;
+
+        (* printf "relative entropy (start -> secret): %f\n" startrelent;
+            printf "relative entropy (revised -> secret): %f\n" endrelent;
+            printf "bits learned: %f\n" (startrelent -. endrelent); *)
+
+        printf "\n### checking policies ###\n";
+        );
+        (*flush stdout;*)
+
+        ifnotverbose (
+        let rev_belief = ESYS.psrep_max_belief enddist in
+        printf "Revised max-belief: %s\n" (Gmp.Q.to_string rev_belief);
+        (* lg (U/V) == lg U - lg V *)
+        let cuma_leakage = lg (Gmp.Q.to_float rev_belief) -. lg (!Globals.init_max_belief) in
+        printf "Cumulative leakage: %s\n%!" (string_of_float cuma_leakage);
+        printf "Number of states: %d\n%!" (ESYS.psrep_rep_size enddist)
+        );
+
+        (match policysystem_check_policies 0 ps.policies outputdist enddist secretdist outlist with
+            (*match policysystem_check_policies 0 ps.policies outputdist outputdist secretdist outlist with*)
+        (*        | None -> {result = RTrueValue (outputstate#canon);*)
+        | None -> {result = RTrueValue ([]);
+                    update = ps_updater}
+        | Some (s) -> {result = RReject (s);
+                       update = {newbelief = ps.belief}}))
+
 end
 ;;
 
