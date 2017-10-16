@@ -66,32 +66,62 @@ querydef mpc_reachable ship_id port_id port_latitude port_longitude deadline -> 
     result = 1;
   endif;
 
-querydef mpc_aid ship_id port_id ship_draft ship_cargo port_available port_longitude port_latitude port_capacity deadline -> result :
-  int ship_latitude = 0;
-  int ship_longitude = 0;
-  int ship_maxspeed = 0;
+querydef mpc_aid ship_id port_id ship_draft ship_cargo port_available port_long port_lat port_offloadcapacity deadline -> result :
+  int ship_lat = 0;
+  int ship_long = 0;
+  int ship_speed = 0;
 
   int port_harbordepth = 0;
 
   if ship_id == 1 then
-    ship_latitude = ship1_latitude;
-    ship_longitude = ship1_longitude;
-    ship_maxspeed = ship1_maxspeed;
+    ship_lat = ship1_lat;
+    ship_long = ship1_long;
+    ship_speed = ship1_speed;
   endif;
   if ship_id == 2 then
-    ship_latitude = ship2_latitude;
-    ship_longitude = ship2_longitude;
-    ship_maxspeed = ship2_maxspeed;
+    ship_lat = ship2_lat;
+    ship_long = ship2_long;
+    ship_speed = ship2_speed;
   endif;
   if ship_id == 3 then
-    ship_latitude = ship3_latitude;
-    ship_longitude = ship3_longitude;
-    ship_maxspeed = ship3_maxspeed;
+    ship_lat = ship3_lat;
+    ship_long = ship3_long;
+    ship_speed = ship3_speed;
   endif;
   if ship_id == 4 then
-    ship_latitude = ship4_latitude;
-    ship_longitude = ship4_longitude;
-    ship_maxspeed = ship4_maxspeed;
+    ship_lat = ship4_lat;
+    ship_long = ship4_long;
+    ship_speed = ship4_speed;
+  endif;
+  if ship_id == 5 then
+    ship_lat = ship5_lat;
+    ship_long = ship5_long;
+    ship_speed = ship5_speed;
+  endif;
+  if ship_id == 6 then
+    ship_lat = ship6_lat;
+    ship_long = ship6_long;
+    ship_speed = ship6_speed;
+  endif;
+  if ship_id == 7 then
+    ship_lat = ship7_lat;
+    ship_long = ship7_long;
+    ship_speed = ship7_speed;
+  endif;
+  if ship_id == 8 then
+    ship_lat = ship8_lat;
+    ship_long = ship8_long;
+    ship_speed = ship8_speed;
+  endif;
+  if ship_id == 9 then
+    ship_lat = ship9_lat;
+    ship_long = ship9_long;
+    ship_speed = ship9_speed;
+  endif;
+  if ship_id == 10 then
+    ship_lat = ship10_lat;
+    ship_long = ship10_long;
+    ship_speed = ship10_speed;
   endif;
 
   if port_id == 1 then
@@ -106,28 +136,52 @@ querydef mpc_aid ship_id port_id ship_draft ship_cargo port_available port_longi
   if port_id == 4 then
     port_harbordepth = port4_harbordepth;
   endif;
+  if port_id == 5 then
+    port_harbordepth = port5_harbordepth;
+  endif;
+  if port_id == 6 then
+    port_harbordepth = port6_harbordepth;
+  endif;
+  if port_id == 7 then
+    port_harbordepth = port7_harbordepth;
+  endif;
+  if port_id == 8 then
+    port_harbordepth = port8_harbordepth;
+  endif;
+  if port_id == 9 then
+    port_harbordepth = port9_harbordepth;
+  endif;
+  if port_id == 10 then
+    port_harbordepth = port10_harbordepth;
+  endif;
 
   int reachable = 0;
 
-  int lat_steps = ship_latitude - port_latitude;
+  int lat_steps = ship_lat - port_lat;
 
   if lat_steps < 0 then
     lat_steps = -1 * lat_steps;
   endif;
 
-  int long_steps = ship_longitude - port_longitude;
+  int long_steps = ship_long - port_long;
 
   if long_steps < 0 then
     long_steps = -1 * long_steps;
   endif;
 
-  if (lat_steps + long_steps) <= deadline * ship_maxspeed then
+  if (lat_steps + long_steps) <= deadline * ship_speed then
     reachable = 1;
   endif;
 
+  if (ship_latitude - port_latitude) <= deadline * ship_maxspeed and
+     (ship_longitude - port_longitude) <= deadline * ship_maxspeed and
+     (port_longitude - ship_longitude) <= deadline * ship_maxspeed and
+     (port_latitude - ship_latitude) <= deadline * ship_maxspeed then
+    result = 1;
+
   int feasible = 0;
 
-  if (port_available == 1) and (ship_draft <= port_harbordepth) and (ship_cargo <= port_capacity) then
+  if (port_available == 1) and (ship_draft <= port_harbordepth) and (ship_cargo <= port_offloadcapacity) then
     feasible = 1;
   endif;
 

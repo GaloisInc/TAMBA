@@ -130,35 +130,25 @@ module Ppldomainbox: (PPLDOMAIN_TYPE with type region = rational_box) =
 
     let _bounds_of_box p =
       let dims = ppl_Rational_Box_space_dimension p in
-      let gens = ppl_Rational_Box_get_minimized_constraints p in
-      let bounds = List.map (fun g ->
-                    match g with
-                      | Greater_Or_Equal (Variable d, Coefficient c) ->
-                          (d, Q.from_z c)
-                      | Greater_Or_Equal (Times (z, Variable d), Coefficient c) ->
-                          (d, (Q.from_z c) // (Q.from_z z))
-                      | Equal (Times (z, Variable d), Coefficient c) ->
-                          (d, (Q.from_z c) // (Q.from_z z))
-                      | _ ->
-                          printf "\n*** can't handle constraint: ";
-                          print_constraint g;
-                          printf "\n";
-                          flush stdout;
-                          raise (General_error "unexpected constraint type"))
-        gens in
-      let vmin = Array.make dims None in
-      let vmax = Array.make dims None in
-        List.iter (fun (d, b) ->
-                     if (is_none vmin.(d)) then
-                       vmin.(d) <- Some b;
-                     if (is_none vmax.(d)) then
-                       vmax.(d) <- Some b;
-                     if b < get_some vmin.(d) then
-                       vmin.(d) <- Some b;
-                     if b > get_some vmax.(d) then
-                       vmax.(d) <- Some b) bounds;
-        (Array.map (fun (Some (v)) -> Z.to_int (qceil v)) vmin,
-         Array.map (fun (Some (v)) -> Z.to_int (qfloor v)) vmax)
+      let get_upper i =
+        let (bounded, num, denom, closed) =
+          ppl_Rational_Box_has_upper_bound p i in
+        if not bounded then failwith (sprintf "Error: unbounded box dimension: %d\n" i)
+        else if Z.equal denom Z.one then
+          if closed then Z.to_int num
+          else (Z.to_int num) - 1
+        else 
+          Z.to_int (Z.fdiv_q num denom) in
+      let get_lower i =
+        let (bounded, num, denom, closed) =
+          ppl_Rational_Box_has_lower_bound p i in
+        if not bounded then failwith "Error: unbounded box dimension"
+        else if Z.equal denom Z.one then
+          if closed then Z.to_int num
+          else (Z.to_int num) + 1
+        else 
+          Z.to_int (Z.cdiv_q num denom) in
+      (Array.init dims get_lower, Array.init dims get_upper)
 
       let _sample_bounds (lo, hi) = 
         let f j = lo.(j) + Random.int (hi.(j) - lo.(j) + 1) in
