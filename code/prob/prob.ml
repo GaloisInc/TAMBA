@@ -283,7 +283,7 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
 
   let prob_line = Core_extended.Readline.input_line ~prompt:"prob >> "
 
-  let manage_models qn ids model ps_ins ps_orig =
+  let manage_models qn ids model ps_ins ps_orig (tolerance:int) =
       let ps_ins2 = List.remove_assoc model ps_ins in
       let exists = List.mem_assoc model ps_ins in
       match qn with
@@ -302,14 +302,19 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
                                          let var_ids = List.map (fun x -> ("", x)) ids in
                                          let ps_vars = ESYS.psrep_on_vars (model_ps.PSYS.belief) var_ids in
                                          let max_belief = ESYS.psrep_max_belief ps_vars in
-                                         string_of_float (Gmp.Q.to_float max_belief) ^ "\n"
+                                         ifdebug (printf "tolerance = %d\n%!" tolerance);
+                                         ifdebug (printf "max belief = %s\n%!" (Gmp.Q.to_string max_belief));
+                                         let scaled = (Gmp.Q.to_float (Gmp.Q.mul max_belief (Gmp.Q.from_int tolerance))) in
+                                         string_of_float (Float.min scaled 1.0) ^ "\n"
                                     else "Model does not exist.\n" in
                           (msg, ps_ins)
 
-  let manage_query querydefs ps_ins ps_orig (qn, ins, model, ids, res) =
+  let manage_query querydefs ps_ins ps_orig (qn, ins, model, ids, (tolerance:int), res) =
       let (inlist, outlist, progstmt) = try List.assoc qn querydefs
                                         with e -> raise (General_error qn) in
       ifdebug (printf "inlist: %s\n%!" (varid_list_to_string inlist));
+
+      ifdebug (printf "tolerance = %d\n%!" tolerance);
 
       (* We get the actual model under test from our assoc list (ps_in)
        * and then create a list that does not have it as a member (ps_ins2)
@@ -335,6 +340,7 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
       (* Once we've run the analysis we produce our response string and
        * package up the new assoc list of models *)
       let rev_belief = ESYS.psrep_max_belief ps_out.belief in
+      let rev_belief = Gmp.Q.mul rev_belief (Gmp.Q.from_int tolerance) in
       ifdebug (printf "Max belief: %s\n%!" (Q.to_string rev_belief));
       (* lg (U/V) == lg U - lg V *)
       (* TODO: This is the leakage computation, SRI doesn't care
@@ -345,8 +351,8 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
       let msg = string_of_float (Gmp.Q.to_float rev_belief) ^ "\n" in
 
       let ps_out = match res with
-                   | Static -> ps_in
-                   | _      -> ps_out in
+                   | Static _ -> ps_in
+                   | _        -> ps_out in
       let ps_outs = (model, ps_out) :: ps_ins2 in
       (msg, ps_outs)
 
@@ -357,9 +363,9 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
           let cmd = Pervasives.input_line p_read in
           ifdebug (printf "The command: %s\n" cmd);
           let cmd_info = Json.parse_query_json cmd in
-          let (qn, ins, model, ids, res) = cmd_info in
+          let (qn, ins, model, ids, tolerance, res) = cmd_info in
           let (msg, ps_outs) = if qn = "init_model" || qn = "delete_model" || qn = "get_leakage"
-                               then manage_models qn ids model ps_ins ps_orig
+                               then manage_models qn ids model ps_ins ps_orig tolerance
                                else manage_query querydefs ps_ins ps_orig cmd_info in
           output_string p_write msg;
           ifdebug (printf "%s has been written to p_write\n%!" msg);

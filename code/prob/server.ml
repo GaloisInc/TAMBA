@@ -104,16 +104,20 @@ let unsafe_get_param uri param =
   | None     -> raise (Failure ("unsafe_get_param was used on param " ^ param))
   | Some str -> str
 
-let ensure_parse uri host cmd =
+let ensure_parse uri host (cmd:string option) =
+  ifdebug (printf "ensure_parse\n%!");
   match cmd with
   | None -> let code = Cohttp.Code.status_of_code 400 in
             let rsp = "Error: Could not parse query" in
             let body = Body.of_string (rsp ^ "\n") in
             Log.string logger (host ^ " " ^ Uri.to_string uri ^ " " ^ "400" ^ " " ^ rsp);
             Server.respond ~body:body code
-  | Some str -> pass_to_prob str uri host
+  | Some str ->
+     printf "passing to prob: %s\n%!" str;
+     pass_to_prob str uri host
 
 let handle_leakage cmd uri host =
+  ifdebug (printf "handle_leakage: %s\n%!" (Uri.to_string uri));
   let m_opt = Uri.get_query_param uri "model" in
   match m_opt with
   | None     -> let code = Cohttp.Code.status_of_code 400 in
@@ -124,8 +128,14 @@ let handle_leakage cmd uri host =
                  | None     -> let code = Cohttp.Code.status_of_code 400 in
                                let body = Body.of_string "Error: Missing 'ids' parameter\n" in
                                Server.respond ~body:body code
-                 | Some ids -> let serialised = query_to_string cmd [("model", str); ("ids", ids)] in
-                               ensure_parse uri host serialised)
+                 | Some ids -> let tol_opts = Uri.get_query_param uri "tolerance" in
+                               (match tol_opts with
+                                | None -> let code = Cohttp.Code.status_of_code 400 in
+                                          let body = Body.of_string "Error: Missing 'tolerance' parameter\n" in
+                                          Server.respond ~body:body code
+                                | Some tol -> let serialised = query_to_string cmd [("model", str); ("ids", ids); ("tolerance", tol)] in
+                                              ifdebug (printf "serialised = %s\n%!" ((fun (Some x) -> x) serialised));
+                                              ensure_parse uri host serialised))
 
 
 let handle_models cmd uri host =
@@ -150,7 +160,7 @@ let process_generic name (n, (i,o,_)) uri host =
                | Some "true"  -> true
                | Some "false" -> false in
   let params = if static
-               then "static" :: "ids" :: params
+               then "static" :: "ids" :: "tolerance" :: params
                else "result" :: params in
   let (abs, prs) = process_params ("model" :: params) uri in
   ifdebug (printf "Length of abs: %d\nlength of prs: %d\n%!" (List.length abs) (List.length prs));
@@ -176,12 +186,15 @@ let process_generic name (n, (i,o,_)) uri host =
 
 
 let process_query query_name params uri host =
-  ifdebug (printf "Prossesing Query\n");
+  let _ = Cmd.opt_debug := true in
+  ifdebug (printf "Prossesing Query: %s\n" query_name);
   let (abs, prs) = process_params params uri in
   ifdebug (printf "Length of abs: %d\nlength of prs: %d\n%!" (List.length abs) (List.length prs));
+  let _ = Cmd.opt_debug := false in
   match (abs, prs) with
-  | ([], []) -> raise (Failure "Something when wrong in process_params")
+  | ([], []) -> printf "failure\n%!"; raise (Failure "Something when wrong in process_params")
   | ([], xs) -> let serialised = query_to_string query_name prs in
+                ifdebug (printf "query = %s\n%!" ((fun (Some s) -> s) serialised));
                 (* use of unsafe_get_param should be okay because we have no
                  * absent parameters (matching on (abs, prs)) *)
                 let exists = List.mem !models (unsafe_get_param uri "model") in
@@ -193,6 +206,7 @@ let process_query query_name params uri host =
                      Log.string logger (host ^ " " ^ Uri.to_string uri ^ " " ^ "400" ^ " " ^ rsp);
                      Server.respond ~body:body code
   | (ys, _)  -> let code = Cohttp.Code.status_of_code 400 in
+                ifdebug (printf "code 400\n%!");
                 let rsp = "Error: Missing " ^ String.concat ~sep:" " ys ^ " parameters" in
                 let body = Body.of_string (rsp ^ "\n") in
                 Log.string logger (host ^ " " ^ Uri.to_string uri ^ " " ^ "400" ^ " " ^ rsp);
@@ -216,12 +230,12 @@ let handler querydefs ~body:_ _sock req =
                 |> Option.map ~f:(sprintf "So you wanna know about ship %s, eh?\n")
                 |> Option.value ~default:"You need to specify a ship, silly.\n"
                 |> Server.respond_with_string
-  | "/InitModel"   -> handle_models "init_model" uri host
+  | "/init_model"  -> handle_models "init_model" uri host
   | "/Distance"    -> process_query "close_enough" distance_params uri host
   | "/Resource"    -> process_query "enough_berths" resource_params uri host
   | "/Combined"    -> process_query "combined" combined_params uri host
-  | "/DeleteModel" -> handle_models "delete_model" uri host
-  | "/get_leakage"  -> handle_leakage "get_leakage" uri host
+  | "/delete_model" -> handle_models "delete_model" uri host
+  | "/get_leakage"  -> ifdebug (printf "get_leakage: %s\n%!" (Uri.to_string uri)); handle_leakage "get_leakage" uri host
   | "/ListModels"  -> list_models ()
   | str            -> let str' = String.sub str 1 (String.length str - 1) in
                       if List.mem querynames str'

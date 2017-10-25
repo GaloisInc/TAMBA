@@ -261,7 +261,8 @@ module MAKE_PSYSTEM (ESYS: EVAL_SYSTEM) = struct
     ifdebug (printf "\n\nWe are going to project on: %s\n" (varid_list_to_string secretvars));
 
     (match conc_res with
-     | Static    ->
+     | Static t  ->
+        ifdebug (printf "Computing static leakage, tolerance = %d\n%!" t);
         let result_var = ("", "result") in
         let o_true = new state_empty in
         o_true#addvar result_var;
@@ -280,7 +281,9 @@ module MAKE_PSYSTEM (ESYS: EVAL_SYSTEM) = struct
         let enddist_false = ESYS.psrep_on_vars (ESYS.psrep_given_state outputdist o_false_projected) secretvars in
 
         let rev_belief_true = ESYS.psrep_max_belief enddist_true in
+        ifdebug (printf "rev_belief_true = %s\n" (Gmp.Q.to_string rev_belief_true));
         let rev_belief_false = ESYS.psrep_max_belief enddist_false in
+        ifdebug (printf "rev_belief_false = %s\n" (Gmp.Q.to_string rev_belief_false));
 
         let enddist =
           if Q.compare rev_belief_false rev_belief_true <= 0 then (* rev_belief_false <= rev_belief_true *)
@@ -297,6 +300,7 @@ module MAKE_PSYSTEM (ESYS: EVAL_SYSTEM) = struct
         | Some (s) -> {result = RReject (s);
                        update = {newbelief = ps.belief}})
      | RunConc ->
+        ifdebug (printf "RunConc\n%!");
         let outputstate_temp = (let (_, o) = Evalstate.eval final_stmt inputstate_full in o) in
 
         let outputstate = outputstate_temp#copy in
@@ -352,6 +356,7 @@ module MAKE_PSYSTEM (ESYS: EVAL_SYSTEM) = struct
         | Some (s) -> {result = RReject (s);
                        update = {newbelief = ps.belief}})
      | Dynamic r ->
+        ifdebug (printf "Computing dynamic leakage\n%!");
         let result_var = ("", "result") in
         let outputstate_temp = new state_empty in
         outputstate_temp#addvar result_var;

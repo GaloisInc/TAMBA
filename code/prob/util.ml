@@ -14,7 +14,7 @@ exception Not_expected;;
 
 type 'a query_res = Dynamic of 'a
                   | RunConc
-                  | Static
+                  | Static of int
 
 let debug s =
   prerr_string s;

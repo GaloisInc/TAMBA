@@ -32,7 +32,8 @@ let rem_quotes json =
  * Note: the validation of the query needs to happen before
  *       this function is called
  *)
-let query_to_string query_name params =
+let query_to_string query_name params : string option =
+  ifdebug (printf "query_name: %s%!\n" query_name);
   let query_json = ("query", `String query_name) in
 
   (* if the query is 'Resource' or 'Combined' we need to encode the
@@ -44,14 +45,23 @@ let query_to_string query_name params =
                        | "kits"   -> 3 in
 
   let param_to_json (name, value) =
+    ifdebug (printf "param: %s\tvalue: %s\n%!" name value);
     match name with
     | "resource" -> (name, `Int (resource_map value))
-    | "result"   -> (name, `Int (int_of_bool_string value))
+    | "result"   -> (name, `Int (int_of_string value))
     | "static"   -> (name, `Int (int_of_bool_string value))
     | "ids"      -> (name, Basic.from_string value)
+    | "ship_lat" -> (name, `Int (int_of_float (float_of_string value *. 1000.0)))
+    | "ship_long" -> (name, `Int (int_of_float (float_of_string value *. 1000.0)))
+    | "port_lat" -> (name, `Int (int_of_float (float_of_string value *. 1000.0)))
+    | "port_long" -> (name, `Int (int_of_float (float_of_string value *. 1000.0)))
+    | "tolerance" -> (name, `Int (int_of_string value))
     | v          -> (name, `Int (int_of_string value)) in
   try Some (Yojson.Basic.to_string (`Assoc (query_json :: List.map param_to_json params)))
-  with e -> None
+  with e ->
+    printf "%s\n%!" (Printexc.to_string e);
+    Printexc.print_backtrace stdout;
+    None
 
 (* Take the string-serialized version of the JSON representing a query
  * and give back a 4-tuple with the following:
@@ -79,13 +89,17 @@ let parse_query_json str =
               | `Null  -> false
               | `Int 0 -> false
               | `Int 1 -> true in
+  let tolerance = match Basic.Util.member "tolerance" json_of_query with
+              | `Null  -> 1
+              | `Int r -> r in
   let res   = match Basic.Util.member "result" json_of_query with
-              | `Null  -> if static then Static else RunConc
-              | `Int r -> Dynamic r in
+              | `Null  -> if static then (ifdebug (printf "Static!\n%!"); Static tolerance) else RunConc
+              | `Int r -> (ifdebug (printf "Dynamic!%!"); Dynamic r) in
   (* get the list of parameters (i.e. everything except
    * "query", "resource", "result", or "model" *)
   let param_list = List.filter (fun x -> x <> "query" &&
                                          x <> "resource" &&
+                                         x <> "tolerance" &&
                                          x <> "model" &&
                                          x <> "static" &&
                                          x <> "ids" &&
@@ -101,4 +115,4 @@ let parse_query_json str =
   ifdebug (printf "ids: %s\n%!" (String.concat ", " ids));
   let mkvid (str, v) = (("", str), v) in
   ifdebug (printf "qn: %s\n%!" query_name);
-  (query_name, List.map mkvid inlist, model, ids, res)
+  (query_name, List.map mkvid inlist, model, ids, tolerance, res)

@@ -2,38 +2,37 @@ secret:
   skip;
 
 belief:
-  int ship0_latitude = uniform 3000 18000;
-  int ship0_longitude = uniform 115000 130000;
-  int ship0_maxspeed = uniform 5 50;
-  int ship1_latitude = uniform 3000 18000;
-  int ship1_longitude = uniform 115000 130000;
-  int ship1_maxspeed = uniform 5 50;
-  int ship2_latitude = uniform 3000 18000;
-  int ship2_longitude = uniform 115000 130000;
-  int ship2_maxspeed = uniform 5 50;
-  int ship3_latitude = uniform 3000 18000;
-  int ship3_longitude = uniform 115000 130000;
-  int ship3_maxspeed = uniform 5 50;
-  int ship4_latitude = uniform 3000 18000;
-  int ship4_longitude = uniform 115000 130000;
-  int ship4_maxspeed = uniform 5 50;
-  int ship5_latitude = uniform 3000 18000;
-  int ship5_longitude = uniform 115000 130000;
-  int ship5_maxspeed = uniform 5 50;
-  int ship6_latitude = uniform 3000 18000;
-  int ship6_longitude = uniform 115000 130000;
-  int ship6_maxspeed = uniform 5 50;
-  int ship7_latitude = uniform 3000 18000;
-  int ship7_longitude = uniform 115000 130000;
-  int ship7_maxspeed = uniform 5 50;
-  int ship8_latitude = uniform 3000 18000;
-  int ship8_longitude = uniform 115000 130000;
-  int ship8_maxspeed = uniform 5 50;
-  int ship9_latitude = uniform 3000 18000;
-  int ship9_longitude = uniform 115000 130000;
-  int ship9_maxspeed = uniform 5 50;
+  int ship1_lat = uniform 3000 18000;
+  int ship1_long = uniform 115000 130000;
+  int ship1_speed = uniform 5 50;
+  int ship2_lat = uniform 3000 18000;
+  int ship2_long = uniform 115000 130000;
+  int ship2_speed = uniform 5 50;
+  int ship3_lat = uniform 3000 18000;
+  int ship3_long = uniform 115000 130000;
+  int ship3_speed = uniform 5 50;
+  int ship4_lat = uniform 3000 18000;
+  int ship4_long = uniform 115000 130000;
+  int ship4_speed = uniform 5 50;
+  int ship5_lat = uniform 3000 18000;
+  int ship5_long = uniform 115000 130000;
+  int ship5_speed = uniform 5 50;
+  int ship6_lat = uniform 3000 18000;
+  int ship6_long = uniform 115000 130000;
+  int ship6_speed = uniform 5 50;
+  int ship7_lat = uniform 3000 18000;
+  int ship7_long = uniform 115000 130000;
+  int ship7_speed = uniform 5 50;
+  int ship8_lat = uniform 3000 18000;
+  int ship8_long = uniform 115000 130000;
+  int ship8_speed = uniform 5 50;
+  int ship9_lat = uniform 3000 18000;
+  int ship9_long = uniform 115000 130000;
+  int ship9_speed = uniform 5 50;
+  int ship10_lat = uniform 3000 18000;
+  int ship10_long = uniform 115000 130000;
+  int ship10_speed = uniform 5 50;
 
-  int port0_harbordepth = uniform 5 50;
   int port1_harbordepth = uniform 5 50;
   int port2_harbordepth = uniform 5 50;
   int port3_harbordepth = uniform 5 50;
@@ -43,68 +42,66 @@ belief:
   int port7_harbordepth = uniform 5 50;
   int port8_harbordepth = uniform 5 50;
   int port9_harbordepth = uniform 5 50;
+  int port10_harbordepth = uniform 5 50;
 
-querydef mpc_aid ship_id port_id ship_draft ship_cargo port_available port_longitude port_latitude port_offloadcapacity deadline -> result :
-  int ship_latitude = 0;
-  int ship_longitude = 0;
-  int ship_maxspeed = 0;
+querydef mpc_aid ship_id port_id ship_draft ship_cargo port_available port_long port_lat port_offloadcapacity deadline -> result :
+  int ship_lat = 0;
+  int ship_long = 0;
+  int ship_speed = 0;
 
   int port_harbordepth = 0;
 
-  if ship_id == 0 then
-    ship_latitude = ship0_latitude;
-    ship_longitude = ship0_longitude;
-    ship_maxspeed = ship0_maxspeed;
-  endif;
   if ship_id == 1 then
-    ship_latitude = ship1_latitude;
-    ship_longitude = ship1_longitude;
-    ship_maxspeed = ship1_maxspeed;
+    ship_lat = ship1_lat;
+    ship_long = ship1_long;
+    ship_speed = ship1_speed;
   endif;
   if ship_id == 2 then
-    ship_latitude = ship2_latitude;
-    ship_longitude = ship2_longitude;
-    ship_maxspeed = ship2_maxspeed;
+    ship_lat = ship2_lat;
+    ship_long = ship2_long;
+    ship_speed = ship2_speed;
   endif;
   if ship_id == 3 then
-    ship_latitude = ship3_latitude;
-    ship_longitude = ship3_longitude;
-    ship_maxspeed = ship3_maxspeed;
+    ship_lat = ship3_lat;
+    ship_long = ship3_long;
+    ship_speed = ship3_speed;
   endif;
   if ship_id == 4 then
-    ship_latitude = ship4_latitude;
-    ship_longitude = ship4_longitude;
-    ship_maxspeed = ship4_maxspeed;
+    ship_lat = ship4_lat;
+    ship_long = ship4_long;
+    ship_speed = ship4_speed;
   endif;
   if ship_id == 5 then
-    ship_latitude = ship5_latitude;
-    ship_longitude = ship5_longitude;
-    ship_maxspeed = ship5_maxspeed;
+    ship_lat = ship5_lat;
+    ship_long = ship5_long;
+    ship_speed = ship5_speed;
   endif;
   if ship_id == 6 then
-    ship_latitude = ship6_latitude;
-    ship_longitude = ship6_longitude;
-    ship_maxspeed = ship6_maxspeed;
+    ship_lat = ship6_lat;
+    ship_long = ship6_long;
+    ship_speed = ship6_speed;
   endif;
   if ship_id == 7 then
-    ship_latitude = ship7_latitude;
-    ship_longitude = ship7_longitude;
-    ship_maxspeed = ship7_maxspeed;
+    ship_lat = ship7_lat;
+    ship_long = ship7_long;
+    ship_speed = ship7_speed;
   endif;
   if ship_id == 8 then
-    ship_latitude = ship8_latitude;
-    ship_longitude = ship8_longitude;
-    ship_maxspeed = ship8_maxspeed;
+    ship_lat = ship8_lat;
+    ship_long = ship8_long;
+    ship_speed = ship8_speed;
   endif;
   if ship_id == 9 then
-    ship_latitude = ship9_latitude;
-    ship_longitude = ship9_longitude;
-    ship_maxspeed = ship9_maxspeed;
+    ship_lat = ship9_lat;
+    ship_long = ship9_long;
+    ship_speed = ship9_speed;
+  endif;
+  if ship_id == 10 then
+    ship_lat = ship10_lat;
+    ship_long = ship10_long;
+    ship_speed = ship10_speed;
   endif;
 
-  if port_id == 0 then
-    port_harbordepth = port0_harbordepth;
-  endif;
   if port_id == 1 then
     port_harbordepth = port1_harbordepth;
   endif;
@@ -132,22 +129,25 @@ querydef mpc_aid ship_id port_id ship_draft ship_cargo port_available port_longi
   if port_id == 9 then
     port_harbordepth = port9_harbordepth;
   endif;
+  if port_id == 10 then
+    port_harbordepth = port10_harbordepth;
+  endif;
 
   int reachable = 0;
 
-  int lat_steps = ship_latitude - port_latitude;
+  int lat_steps = ship_lat - port_lat;
 
   if lat_steps < 0 then
     lat_steps = -1 * lat_steps;
   endif;
 
-  int long_steps = ship_longitude - port_longitude;
+  int long_steps = ship_long - port_long;
 
   if long_steps < 0 then
     long_steps = -1 * long_steps;
   endif;
 
-  if (lat_steps + long_steps) <= deadline * ship_maxspeed then
+  if (lat_steps + long_steps) <= deadline * ship_speed then
     reachable = 1;
   endif;
 
