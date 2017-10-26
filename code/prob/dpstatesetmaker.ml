@@ -23,6 +23,18 @@ module MakeDPStateset
   module SS = SSM
   module PSS = PSSM
 
+  (** A decomposed pstateset (dpstateset) is represented as a mapping from factors (set of related
+     variables) to the corresponding underlying pstatesets which relate and contrain the variables
+     in their factor. The representation relies on the invariant that the factors are both mutually
+     exclusive and exahustive; this invariant must be checked whenever a dpstateset is
+     created/modified.
+
+     Ultimately, the pstateset represented by a dpstateset is the product of each of its constituent
+     factors' pstatesets; the result of applying any function over the dpstateset should be
+     identical to the result of applying that same function over the product (defactorization) of
+     the constituents. In cases where maintaining factorization is not necessary, such functions are
+     implemented in exactly this way.
+   *)
   type stateset = SS.stateset
   type factor = varid list
   type base_pstateset = factor * PSS.pstateset
@@ -50,6 +62,7 @@ module MakeDPStateset
     ) dpss;
     print_string "\n"
 
+  (** An empty factor is useless, and may safely be removed. *)
   let purge_useless (dpss: pstateset) = filter (fun (f, p) -> f != []) dpss
 
   (* Poor man's set library. *)
@@ -77,11 +90,14 @@ module MakeDPStateset
     | None :: t -> catSomes t
 
   (** Factorization Utilities *)
+
   let factorization (dpss: pstateset): factor list = map fst dpss
 
+  (** Find the factor in a dpstateset satisfying the given property; none if no such dpstateset exists. *)
   let find_factor_by (fn: factor -> factor -> bool) (f: factor) (dpss: pstateset) : base_pstateset option
     = try Some (find (fun (f', p) -> fn f f') dpss) with Not_found -> None
 
+  (** Merge just enough factors from `fs` such that the factor `f` is fully contained in one of them. *)
   let rec reconcile_factor (fs: factor list) (f: factor) : factor list =
     match fs with
     | [] -> [f]
@@ -90,6 +106,10 @@ module MakeDPStateset
 
   let prod_with_factor ((f, p): base_pstateset) ((f', p'): base_pstateset) : base_pstateset = (f +@ f', PSS.prod p p')
 
+  (** The least common factorization of two factorizations fs1 and fs2 is the fs such that each
+     factor in fs1 or fs2 is contained fully in a factor in fs, and no two unrelated variables end
+     up in the same factor.
+   *)
   let lcf (fs1: factor list) (fs2: factor list) = fold_left reconcile_factor [] (fs1 @ fs2)
 
   let is_compatible_with (fs1: factor list) (fs2: factor list)
@@ -98,6 +118,8 @@ module MakeDPStateset
   let _assert msg inv = if inv then () else failwith msg
   let invariant b s = if b then () else failwith s
 
+  (** Construct the pstateset corresponding to the factor f, by merging pstatesets corresponding to
+     constituent factors from dpss *)
   let construct_factor_poly (dpss: pstateset) (f: factor) : base_pstateset =
     let get_base_or_new v = match find_factor_by set_contained [v] dpss with
       | None -> ([v], PSS.make_new [v])
@@ -107,20 +129,24 @@ module MakeDPStateset
     | [] -> ([], PSS.make_empty ())
     | h :: t -> fold_left prod_with_factor h t
 
+  (** "Refactorize" a dpss according to a new factorization fs, by merging pstatesets as necessary. *)
   let normalize (dpss: pstateset) (fs: factor list) =
     _assert "Factorizations incompatible!" (is_compatible_with (factorization dpss) fs);
     map (construct_factor_poly dpss) (sort_uniq compare fs)
 
+  (** "Refactorize" two dpss' according to their own least common factorization, by merging pstatesets as necessary. *)
   let pairwise_normalize (dpss1: pstateset) (dpss2: pstateset): (pstateset * pstateset) =
     let cfs = lcf (factorization dpss1) (factorization dpss2) in
     (normalize dpss1 cfs, normalize dpss2 cfs)
 
+  (** Apply function fn to the pstateset corresponding to the factor containing f, and replace it with the result. *)
   let rec with_factor (f: factor) (fn: base_pstateset -> base_pstateset) (dpss: pstateset) : pstateset =
     match dpss with
     | [] -> []
     | (f', p) :: t when set_contained f f' -> fn (f', p) :: t
     | h :: t -> h :: with_factor f fn t
 
+  (** Merge all constituent factor pstatesets, essentially reverting a decomposition to the underlying pstateset. *)
   let defactorize (dpss: pstateset) = snd (fold_left prod_with_factor ([], PSS.make_new []) dpss)
 
   (** PStateset API *)
