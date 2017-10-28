@@ -15,18 +15,17 @@ let latte_bin = !opt_count_bin
 let barvinok_bin = "barvinok_count"
 let latte_bin_max = "latte-maximize"
 let latte_bin_max_b = "latte-maximize bbs"
-let latte_tmp = Globals.file_abs "latte_tmp"
-
-let latte_workdir = (latte_tmp ^ "/" ^ (string_of_int (Unix.getpid ())));;
 
 (*let latte_env = Array.create 1 ("PWD=" ^ latte_workdir);;*)
 (*let latte_env = Array.create 0 "";;*)
 let latte_env = Unix.environment ();;
 
-if Sys.file_exists latte_workdir then
-  ignore (Unix.system ("rm -Rf " ^ latte_workdir));;
-Unix.mkdir latte_workdir 0o700;;
-Unix.chdir latte_workdir;;
+let setup_latte_workdir () =
+  printf "latte_tmp_dir: %s\n%!" !latte_tmp_dir;
+  if Sys.file_exists !latte_tmp_dir then
+    ignore (Unix.system ("rm -Rf " ^ !latte_tmp_dir));
+  Unix.mkdir !latte_tmp_dir 0o700;
+  Unix.chdir !latte_tmp_dir
 
 type latte = string
 type lspec = (Z.t list) list
@@ -83,7 +82,7 @@ let _count_models =
           Globals.max_record rec_count_max ns;
           Globals.max_record rec_latte_max ns
         );
-        let filename = latte_workdir ^ "/" ^ (rand_tmp_name ()) in
+        let filename = !latte_tmp_dir ^ "/" ^ (rand_tmp_name ()) in
           write_file filename alatte;
 
           Globals.bench_latte_start ();
@@ -189,7 +188,7 @@ let _maximize_models_bin =
           Globals.max_record rec_latte_max ns
   );
   (*  let ret = ( *)
-  let filename = latte_workdir ^ "/" ^ (rand_tmp_name2 ()) in
+  let filename = !latte_tmp_dir ^ "/" ^ (rand_tmp_name2 ()) in
   let filename_cost = filename ^ ".cost" in
     write_file filename alatte;
     write_file filename_cost le;

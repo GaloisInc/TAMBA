@@ -1,0 +1,7 @@
+[Unit]
+Description=TAMBA Server for QIF of prob queries
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/prob --server 7891 --domain decomposed-poly --precise-conditioning /home/qif/TAMBA/code/oct-2017-demo/aid_examples/final/aid_2_2.prob
+ExecReload=/bin/kill -HUP $MAINPID
