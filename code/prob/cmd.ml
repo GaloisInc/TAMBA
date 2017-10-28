@@ -1,4 +1,5 @@
 open Util
+open Printf
 
 (* options *)
 let opt_latte_minmax = ref false
@@ -59,7 +60,6 @@ let set_simplify str =
 
 (* args *)
 let input_file = ref "-"
-
 
 
 (*
