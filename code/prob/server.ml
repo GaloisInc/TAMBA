@@ -32,7 +32,7 @@ let (log_in, logger) =
   let mk_log x = let output_file = Log.Output.rotating_file `Text x (Log.Rotation.default ()) in
                  Log.create `Info [output_file] in
   let prefix = if !Globals.log_dir = "" then
-                  "../../logs"
+                  "var/log/"
                else
                   !Globals.log_dir in
   (mk_log (prefix ^ "qif-requests"), mk_log (prefix ^ "qif-responses"))
