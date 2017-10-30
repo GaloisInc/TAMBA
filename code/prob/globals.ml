@@ -41,6 +41,8 @@ let file_abs f = (* assuming f is specified relative to new environment *)
 
 let latte_tmp_dir = ref (file_abs "latte_tmp" ^ "/" ^ (string_of_int (Unix.getpid ())))
 
+let log_dir = ref ""
+
 
 let do_ifverbose f =
   if !Cmd.opt_verbose = 2 then f ();;

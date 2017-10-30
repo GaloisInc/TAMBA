@@ -31,7 +31,11 @@ let (q_reader, q_writer) = Pipe.create ()
 let (log_in, logger) =
   let mk_log x = let output_file = Log.Output.rotating_file `Text x (Log.Rotation.default ()) in
                  Log.create `Info [output_file] in
-  (mk_log "../../logs/qif-requests", mk_log "../../logs/qif-responses")
+  let prefix = if !Globals.log_dir = "" then
+                  "../../logs"
+               else
+                  !Globals.log_dir in
+  (mk_log (prefix ^ "qif-requests"), mk_log (prefix ^ "qif-responses"))
 
 (* Maintain a list of models in use *)
 let models = ref []

@@ -563,11 +563,12 @@ let main () =
     ("--count-latte",
      Arg.Set Cmd.opt_count_latte,
      "count number of calls to count");
-    ("--latte-dir",
+    ("--log-dir",
      Arg.String (fun s ->
                    printf "Current latte_tmp: %s\n%!" !Globals.latte_tmp_dir;
                    Globals.latte_tmp_dir := Globals.file_abs s ^ "/" ^ (string_of_int (Unix.getpid ()));
-                   printf "New latte_tmp: %s\n%!" !Globals.latte_tmp_dir),
+                   printf "New latte_tmp: %s\n%!" !Globals.latte_tmp_dir;
+                   Globals.log_dir := Globals.file_abs s),
      "specify latte working directory");
     ("--bench-latte",
      Arg.String (fun s ->
@@ -636,6 +637,7 @@ let main () =
       Globals.bench_latte_close () in
 
 
+    Latte.setup_latte_workdir ();
     if !Cmd.opt_server
     then let (prob_r, server_w) = pipe () in
          let (server_r, prob_w) = pipe () in
@@ -648,9 +650,8 @@ let main () =
                                                        policy.querydefs;
            | `In_the_child -> close server_w;
                               close server_r;
-                              Latte.setup_latte_workdir ();
                               prob (Some (prob_r, prob_w)) ();
-    else Latte.setup_latte_workdir (); prob None ();
+    else prob None ();
 
   with
     | e ->
