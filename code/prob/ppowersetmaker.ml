@@ -193,12 +193,6 @@ struct
 
   let max_prob pss = raise (General_error "max_prob not implemented")
 
-  let prob_max_in_min_out pss s =
-    List.fold_left (fun (inmass, outmass) apss ->
-                      let (morein, moreout) = PSS.prob_max_in_min_out apss s in
-                        (inmass +/ morein, outmass +/ moreout))
-      (qzero, qzero) pss
-
   let prob_smin_smax pss = List.fold_left (fun (imin, imax) (min,max) -> (imin +! min, imax +! max)) (zzero, zzero)
                                           (List.map PSS.prob_smin_smax pss)
 
@@ -251,12 +245,6 @@ struct
 
   let is_possible pss =
     List.exists PSS.is_possible pss
-
-  let prob_max_norm pss s =
-    if not (is_possible pss) then qzero
-    else
-      let (massin, massout) = prob_max_in_min_out pss s in
-        massin // massout
 
   let min_mass pss = list_sum_general qzero Q.add (List.map (fun apss -> PSS.min_mass apss) pss)
 

@@ -90,10 +90,6 @@ module type PSTATESET_TYPE =
 
     val prob_scale: pstateset -> Q.t -> pstateset
 
-    val prob_max_in_min_out: pstateset -> state -> (Q.t * Q.t)
-
-    val prob_max_norm: pstateset -> state -> Q.t (* returns the max prob of a point normalized *)
-
     val prob_max_min: pstateset -> (Q.t * Q.t)
 
     val prob_smin_smax: pstateset -> (Z.t * Z.t)
