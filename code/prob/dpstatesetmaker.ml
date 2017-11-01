@@ -224,25 +224,26 @@ module MakeDPStateset
         (f1, PSS.abstract_plus p1 p2)
     ) ndpss1 ndpss2
 
-  let relative_entropy dpss1 dpss2 = PSS.relative_entropy (defactorize dpss1) (defactorize dpss2)
+  let relative_entropy dpss1 dpss2 = raise Not_implemented
 
   (* TODO: Check correctness of these probability calculations *)
 
-  let prob_scale dpss scalar = make_singleton (PSS.prob_scale (defactorize dpss) scalar)
+  let prob_scale dpss scalar = map (fun (f, p) -> (f, PSS.prob_scale p scalar)) dpss
 
   let fold_map_q f c = fold_left ( */ ) qone (map f c)
   let fold_map_z f c = fold_left ( *! ) zone (map f c)
   let bifold_map_q f c = fold_left (fun (a, b) (c, d) -> (a */ b, c */ d)) (qone, qone) (map f c)
   let bifold_map_z f c = fold_left (fun (a, b) (c, d) -> (a *! b, c *! d)) (zone, zone) (map f c)
 
-  let prob_max_min dpss = PSS.prob_max_min (defactorize dpss) (* TODO: This one doesn't follow expected decomposition. *)
+  let prob_max_min dpss = bifold_map_q (fun (_, p) -> PSS.prob_max_min p) dpss
   let prob_smin_smax dpss = bifold_map_z (PSS.prob_smin_smax % snd) dpss
   let prob_pmin_pmax dpss = bifold_map_q (PSS.prob_pmin_pmax % snd) dpss
   let prob_mmin_mmax dpss = bifold_map_q (PSS.prob_mmin_mmax % snd) dpss
   let min_mass dpss = fold_map_q (PSS.min_mass % snd) dpss
-  let max_belief dpss = PSS.max_belief (defactorize dpss)
+  let max_belief dpss = fold_map_q (fun (_, p) -> PSS.max_belief p) dpss
   let is_possible dpss = for_all (fun (f, p) -> PSS.is_possible p) dpss
   let stateset_hull dpss = PSS.stateset_hull (defactorize dpss)
+
   let get_alpha_beta dpss = PSS.get_alpha_beta (defactorize dpss)
   let sample_pstateset dpss n es = make_singleton (PSS.sample_pstateset (defactorize dpss) n es)
   let improve_lower_bounds checker runner init lim dpss
