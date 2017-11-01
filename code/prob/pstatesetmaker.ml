@@ -377,25 +377,36 @@ module MakePStateset(* create pstateset from a stateset *)
 
     let project_single pss v =
 
-      (*
-        printf "projecting out %s\n" (Lang.varid_to_string v); flush stdout;
-        printf "\n------------------\n";
-        print pss; printf "\n";
-      *)
+      printf "projecting out %s\n" (Lang.varid_to_string v); flush stdout;
+      printf "\n------------------\n";
+      print pss; printf "\n";
 
       let all_vars = SS.stateset_vars pss.ss in
 
       let (hmin, hmax) = SS.stateset_min_max_height pss.ss v in
 
+      ifdebug (printf "hmin: %s\n%!" (Z.to_string hmin));
+      ifdebug (printf "hmax: %s\n%!" (Z.to_string hmax));
+
       let remain_vars = list_subtract all_vars [v] in
       let new_ss = SS.stateset_on_vars pss.ss remain_vars in
       let original_size = SS.stateset_size pss.ss in
       let new_size = SS.stateset_size new_ss in
+
+      ifdebug (printf "new_size: %s\n%!" (Z.to_string new_size));
+
       let est = pss.est in
+
+      let new_smin = if (est.smin = est.smax) && (est.smin = original_size) then
+                        (ifdebug (printf "Polyhedron was precise, keeping setting smin to new smax");
+                         new_size)
+                     else
+                        qceil ((Q.from_z est.smin) // (Q.from_z hmax)) (* todo: check this *) in
+
       let new_est = {
         pmin = est.pmin */ (Q.from_z (Z.max zone ((hmin -! original_size) +! est.smin)));
         pmax = est.pmax */ (Q.from_z (Z.min hmax est.smax));
-        smin = qceil ((Q.from_z est.smin) // (Q.from_z hmax)); (* todo: check this *)
+        smin = new_smin;
         smax = Z.min new_size est.smax;
         mmin = est.mmin;
         mmax = est.mmax;
