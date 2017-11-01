@@ -204,9 +204,16 @@ struct
        varmap = newvarmap}
 
   let stateset_min_max_height ss v = (* (qone, qone) *)
-    if (ss.size =! zone) then (zone, zone) else
+    ifdebug (printf "Inside stateset_min_max_height\n%!");
+    (* NB: '=!' means 'equals' for Gmp.Z :'( *)
+    if (ss.size =! zone) then
+       (ifdebug (printf "ss.size =! zone");
+        (zone, zone))
+    else
       (* note: latte uses a different output format when trying to maximize over a region having only 1 point *)
-      P.region_min_max_height ss.bound (_var_lookup ss v)
+      (printf "ss keys: %s\n%!" (varid_list_to_string (Bimap.keys ss.varmap));
+       ifdebug (printf "ss.size /=! zone");
+       P.region_min_max_height ss.bound (_var_lookup ss v))
 
   (* todo: make a version of this that doesn't bother with anything but report size of intersection *)
   let stateset_intersect (ss1: stateset) (ss2: stateset) : stateset =

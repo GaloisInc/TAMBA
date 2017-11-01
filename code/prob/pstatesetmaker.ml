@@ -166,6 +166,8 @@ module MakePStateset(* create pstateset from a stateset *)
            raise (General_error "got pmin less than zero"))
         else if (pss.est.smax <! pss.est.smin) then
           (printer ();
+           printf "smax: %s\n%!" (Z.to_string pss.est.smax);
+           printf "smin: %s\n%!" (Z.to_string pss.est.smin);
            raise (General_error "got smax < smin"))
         else if (pss.est.pmax </ pss.est.pmin) then
           (printer ();
@@ -401,9 +403,11 @@ module MakePStateset(* create pstateset from a stateset *)
         numn = 0;
         underapprox = ppl_new_NNC_Polyhedron_from_space_dimension 0 Empty
       } in
+      ifdebug (printf "\npss:\n\t%!"; print pss);
       let temp =
         {ss = new_ss;
          est = new_est} in
+      ifdebug (printf "\ntemp:\n\t%!"; print temp);
 
         (*
         printf "\n------------------\n";
@@ -418,6 +422,7 @@ module MakePStateset(* create pstateset from a stateset *)
     let project pss vl =
       let all_vars = SS.stateset_vars pss.ss in
       let removed_vars = list_subtract all_vars vl in
+      ifdebug (printf "removed: %s\n%!" (varid_list_to_string removed_vars));
 
         List.fold_left (fun apss vname -> project_single apss vname) pss removed_vars
 

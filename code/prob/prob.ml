@@ -300,7 +300,12 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
       | "get_leakage"  -> let msg = if exists
                                     then let model_ps = List.assoc model ps_ins in
                                          let var_ids = List.map (fun x -> ("", x)) ids in
-                                         let ps_vars = ESYS.psrep_on_vars (model_ps.PSYS.belief) var_ids in
+                                         ifdebug (printf "Secret vars before projection: %s\n%!" (varid_list_to_string (ESYS.psrep_vars model_ps.PSYS.belief)));
+                                         ifdebug (printf "desired varids for projection: %s\n%!" (varid_list_to_string var_ids));
+                                         let ps_vars = printf "about to call psrep_on_vars\n"; ESYS.psrep_on_vars (model_ps.PSYS.belief) var_ids in
+                                         printf "Secret vars after projection: \t%s\n%!" (varid_list_to_string (ESYS.psrep_vars ps_vars));
+                                         flush Pervasives.stdout;
+                                         flush Pervasives.stdout;
                                          let max_belief = ESYS.psrep_max_belief ps_vars in
                                          ifdebug (printf "tolerance = %d\n%!" tolerance);
                                          ifdebug (printf "max belief = %s\n%!" (Gmp.Q.to_string max_belief));

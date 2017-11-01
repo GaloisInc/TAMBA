@@ -114,7 +114,10 @@ module Make_esys_pss
   let psrep_set_all d s = M.set_all d (s#canon)
   let psrep_relative_entropy d1 d2 = M.relative_entropy d1 d2
 
-  let psrep_on_vars d vars = M.project d vars
+  let psrep_on_vars d vars = printf "In psrep_on_vars\n%!";
+                             let res = M.project d vars in
+                             printf "After projection!\n%!";
+                             res
 
   let psrep_given_state d s = M.intersect d (S.stateset_point s)
 

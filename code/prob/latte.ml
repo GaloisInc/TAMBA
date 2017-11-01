@@ -193,6 +193,7 @@ let _maximize_models_bin =
     write_file filename alatte;
     write_file filename_cost le;
 
+      ifdebug (printf "latte maximize filename: %s\n%!" filename);
       ifdebug (printf "maximizing (latte) ...";
                flush Pervasives.stdout);
       ifbench (Globals.start_timer Globals.timer_maximize);
