@@ -1,0 +1,3 @@
+curl -X GET "localhost:8081/createModel?model=1"
+curl "localhost:8081/dynamicLeakage?model=1&tolerance=50" -d "query=\\set deadline 12 \\set ship_id 1 SELECT port.port_id FROM port, ship WHERE earliest_arrival(POINT(ship.longitude, ship.latitude), POINT(port.longitude, port.latitude), ship.maxspeed) <= ?deadline AND port.available = true AND port.harbordepth >= ship.draft AND port.offloadcapacity >= ship.cargo AND ship.ship_id = ?ship_id" -d "result=[{\"PORT_ID\":\"10\"},{\"PORT_ID\":\"2\"}]" -d "ids=[\"ship1_maxspeed\"]"
+curl "localhost:8081/getLeakage?model=1&tolerance=100" -d "ids=[\"ship1_maxspeed\"]"
