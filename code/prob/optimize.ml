@@ -163,6 +163,34 @@ let get_new_assigns out_live s_vars a_stack =
   let needed = diff out_live s_vars in
   (needed, List.map (write_assign a_stack) needed)
 
+let partial_op name v =
+  match name with
+  | "and" -> if v then None else Some false
+  | "or"  -> if v then Some true else None
+
+(* Try to short-circuit lexp so that we can avoid having a SIf statement *)
+let rec try_eval_lexp ex =
+  match ex with
+  | LEBool (v)           -> Some (v = 1)
+  | LEBinop (op, l1, l2) -> try_eval_binop op l1 l2
+  | rel                  -> match lexp_vars rel with
+                            | (_::_) -> None
+                            | []     -> try_eval_relop rel
+and try_eval_binop (name, f) l1 l2 =
+  match (try_eval_lexp l1, try_eval_lexp l2) with
+  | (None, None)       -> None
+  | (Some v, None)     -> partial_op name v
+  | (None, Some v)     -> partial_op name v
+  | (Some v1, Some v2) -> let v11 = if v1 then 1 else 0 in
+                          let v21 = if v2 then 1 else 0 in
+                          Some (f v11 v21 = 1)
+and try_eval_relop rel =
+  printf "The relation: "; print_lexp rel; printf " ";
+  let res = Evalstate.eval_lexp rel (new State.state_empty) in
+  printf "The result: %d" res; printf "\n";
+  Some (res = 1)
+
+
 (* We return a tuple of:
  *  [a list of variables],
  *  the new assignment stack,
@@ -206,18 +234,17 @@ let rec rewrite_stmt cstmt s_vars assign_stack : (varid list * (varid * aexp) li
         (a_vars, a_stack1, List.fold_right (fun s1 s2 -> SSeq (s1,s2)) new_assigns stmt2)
     | SLivenessAnnot ((u,d,o,i),SIf (p, st, sf)) ->
         let p1 = sub_lexp p assign_stack in
-        let vs = lexp_vars p1 in
+        let vs = try_eval_lexp p1 in
         (match vs with
-           | (_::_) ->
+           | None ->
              let (a_vars, a_stack1, new_assigns, st2, sf2) =
                     manage_branch o s_vars assign_stack st sf in
              let stmt2 = SIf (p1, st2, sf2) in
              (a_vars, a_stack1, List.fold_right (fun s1 s2 -> SSeq (s1, s2)) new_assigns stmt2)
-           | []      -> let res = Evalstate.eval_lexp p1 (new State.state_empty) in
-                          (match res with
-                            | 0 -> rewrite_stmt sf s_vars assign_stack
-                            | 1 -> rewrite_stmt st s_vars assign_stack
-                            | _ -> failwith "the impossible happened, predicate returned non-bool"))
+           | Some (v) -> (match v with
+                          | false -> rewrite_stmt sf s_vars assign_stack
+                          | true  -> rewrite_stmt st s_vars assign_stack
+                          | _ -> failwith "the impossible happened, predicate returned non-bool"))
     | p -> print_stmt p; failwith "Need to implement"
 
 and manage_branch out_live s_vars a_stack s1 s2 =

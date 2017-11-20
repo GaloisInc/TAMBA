@@ -81,13 +81,11 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
         printf "alpha: %f, beta: %f\n" beta_alpha beta_beta
       );
       printf "\n";
-      let size_z = Z.to_float (ESYS.psrep_size enddist2) in
+      let size_z = ESYS.psrep_size enddist2 in
 
-      let (pmi, pma) = let (i, a) = ESYS.psrep_pmin_pmax enddist2
-                       in (Q.float_from i, Q.float_from a) in
+      let (pmi, pma) = ESYS.psrep_pmin_pmax enddist2 in
       let (smi, sma) = ESYS.psrep_smin_smax enddist2 in
-      let (mmi, mma) = let (i, a) = ESYS.psrep_mmin_mmax enddist2
-                       in (Q.float_from i, Q.float_from a) in
+      let (mmi, mma) = ESYS.psrep_mmin_mmax enddist2 in
 
 
       (* The following code is using GSL via Pareto, and sometimes
@@ -109,15 +107,33 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
 
       (* Output to be processed by bench.hs *)
       ifverbose1 (
-        printf "\n\nsize_z = %f\n" size_z;
-        printf "pmin = %f\n" pmi;
-        printf "pmax = %f\n" pma;
+        printf "\n\nsize_z = %s\n" (Z.string_from size_z);
+        printf "pmin = %s\n" (Q.to_string pmi);
+        printf "pmax = %s\n" (Q.to_string pma);
         printf "smin = %s\n" (Z.string_from smi);
         printf "smax = %s\n" (Z.string_from sma);
-        printf "mmin = %f\n" mmi;
-        printf "mmax = %f\n" mma;
+        printf "mmin = %s\n" (Q.to_string mmi);
+        printf "mmax = %s\n" (Q.to_string mma);
         printf "sample_true = %d\nsample_false = %d\n" y n
-      )
+        )
+
+  let maxbelief_final queries querydefs ps =
+    let enddist = ps.PSYS.belief in
+    let trips = List.map (make_trip querydefs ps) queries in
+    let rec maxbelief_final' samples_so_far ps_so_far =
+      let mb_so_far = ESYS.psrep_max_belief ps_so_far in
+      let (y, n) = ESYS.get_alpha_beta ps_so_far in
+      printf "%d %s\n" samples_so_far (Q.to_string mb_so_far);
+      flush Pervasives.stdout;
+      if Q.cmp (Q.div !Cmd.opt_max_belief mb_so_far) !Cmd.opt_mb_level < 0 then (* (optimal mb / so far mb) < desired prec. *)
+        let ps_so_far = ESYS.psrep_sample ps_so_far !Cmd.opt_samples trips in
+        maxbelief_final' (samples_so_far + !Cmd.opt_samples) ps_so_far
+      else
+        (printf "Needed %d samples to reach a precision of %s on max-belief\n" samples_so_far (Q.to_string !Cmd.opt_mb_level);
+        (samples_so_far, ps_so_far))
+    in
+    let _ = maxbelief_final' 0 enddist in
+    ()
 
   let common_run (queryname, querystmt) ids conc_res querydefs ps_in =
         ifbench Globals.start_timer Globals.timer_query;
@@ -483,7 +499,27 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
                                  base_final_dist.PSYS.valcache
                                  !Cmd.opt_improve_lower_bounds
                                  base_final_dist.PSYS.belief in
-              { base_final_dist with belief = belief_new }
+              let ret = { base_final_dist with belief = belief_new } in
+
+              let (y,n) = ESYS.get_alpha_beta ret.belief in
+              let size_z = ESYS.psrep_size ret.belief in
+              let (pmi, pma) = ESYS.psrep_pmin_pmax ret.belief in
+              let (smi, sma) = ESYS.psrep_smin_smax ret.belief in
+              let (mmi, mma) = ESYS.psrep_mmin_mmax ret.belief in
+
+              ifverbose1 (
+                printf "\n\nsize_z = %s\n" (Z.string_from size_z);
+                printf "pmin = %s\n" (Q.to_string pmi);
+                printf "pmax = %s\n" (Q.to_string pma);
+                printf "smin = %s\n" (Z.string_from smi);
+                printf "smax = %s\n" (Z.string_from sma);
+                printf "mmin = %s\n" (Q.to_string mmi);
+                printf "mmax = %s\n" (Q.to_string mma);
+                printf "sample_true = %d\nsample_false = %d\n" y n
+              );
+
+              ret
+             
             else
               base_final_dist in
           (if !Cmd.opt_improve_lower_bounds > 0 then
@@ -496,7 +532,10 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
 
           if !Cmd.opt_count_latte
           then printf "Number of calls to LattE: %d\n" !Globals.latte_count;
-          sample_final queries querydefs improved_final_dist
+          if Q.is_zero !Cmd.opt_max_belief then
+            sample_final queries querydefs improved_final_dist
+          else
+            maxbelief_final queries querydefs improved_final_dist
   (*with
       | e ->
           printf "%s\n" (Printexc.to_string e);
@@ -537,6 +576,10 @@ let main () =
     ("--samples",
      Arg.Set_int Cmd.opt_samples,
      "set the number of samples to use");
+    ("--max-belief",
+     Arg.String (fun s ->
+         Cmd.opt_max_belief := Util.of_string_Q s),
+     "specify an optimal max-belief, if this option is set then the arg to --samples will be assumed to be an increment amount");
     ("--blackbox",
      Arg.Set Cmd.opt_blackbox,
      "reset the belief to uniform between each query");

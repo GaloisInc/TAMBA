@@ -53,6 +53,11 @@ let from_string_Q s =
 
     Q.add w' ds'
 
+let of_string_Q s =
+  let parts = Str.split (Str.regexp "/") s in
+  let num_s :: den_s :: [] = parts in
+  let (num, den) = (Z.from_string num_s, Z.from_string den_s) in
+  Q.from_zs num den
                                                    
 let pair_first (a, b) = a
 let pair_second (a, b) = b
