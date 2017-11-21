@@ -1,0 +1,63 @@
+secret:
+  (* G = 0,  A = 1 *)
+  int alice1 = 0;
+  int alice2 = 0;
+
+  int bob1 = 1;
+  int bob2 = 1;
+
+  int carol1 = 0;
+  int carol2 = 1;
+
+  int dave1 = 0;
+  int dave2 = 0;
+
+  int eve1 = 1;
+  int eve2 = 1;
+
+  int fred1 = 0;
+  int fred2 = 1;
+
+belief:
+  int alice1 = uniform 0 1;
+  int alice2 = uniform 0 1;
+  int bob1 = uniform 0 1;
+  int bob2 = uniform 0 1;
+  int dave1 = uniform 0 1;
+  int dave2 = uniform 0 1;
+  int eve1 = uniform 0 1;
+  int eve2 = uniform 0 1;
+
+querydef exact_sum -> result :
+  int result = 0;
+
+  int carol1;
+  int carol2;
+  pif 1:1 then
+    carol1 = alice1;
+  else
+    carol1 = alice2;
+  endpif;
+  pif 1:1 then
+    carol2 = bob1;
+  else
+    carol2 = bob2;
+  endpif;
+
+  int fred1;
+  int fred2;
+  pif 1:1 then
+    fred1 = dave1;
+  else
+    fred1 = dave2;
+  endpif;
+  pif 1:1 then
+    fred2 = eve1;
+  else
+    fred2 = eve2;
+  endpif;
+
+  result = alice1 + alice2 + bob1 + bob2 + carol1 + carol2 + dave1 + dave2 + eve1 + eve2 + fred1 + fred2;
+
+query exact_sum:
+  skip;
