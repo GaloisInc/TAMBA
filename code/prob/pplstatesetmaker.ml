@@ -211,8 +211,9 @@ struct
         (zone, zone))
     else
       (* note: latte uses a different output format when trying to maximize over a region having only 1 point *)
-      (printf "ss keys: %s\n%!" (varid_list_to_string (Bimap.keys ss.varmap));
-       ifdebug (printf "ss.size /=! zone");
+      (ifdebug (printf "ss keys: %s\n%!" (varid_list_to_string (Bimap.keys ss.varmap));
+                printf "v: %s\n%!" (varid_to_string v);
+                printf "ss.size /=! zone");
        P.region_min_max_height ss.bound (_var_lookup ss v))
 
   (* todo: make a version of this that doesn't bother with anything but report size of intersection *)

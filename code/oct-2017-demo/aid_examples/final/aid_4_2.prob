@@ -2,8 +2,7 @@ secret:
   int ship1_lat=89;
   int ship1_long=1219;
   int ship1_maxspeed=10;
-
-  int ship2_lat=82;
+int ship2_lat=82;
   int ship2_long=1225;
   int ship2_maxspeed=20;
 
@@ -35,8 +34,8 @@ belief:
   int ship8_long = uniform 1200 1250;
   int ship8_maxspeed = uniform 10 35;
 
-  int port1_harbordepth = uniform 5 50;
-  int port8_harbordepth = uniform 5 50;
+  int port1_harbordepth = uniform 5 66;
+  int port8_harbordepth = uniform 5 66;
 
 querydef mpc_aid ship_id port_id ship_draft ship_cargo port_available port_long port_lat port_offloadcapacity deadline -> result :
   int ship_lat = 0;
@@ -76,10 +75,10 @@ querydef mpc_aid ship_id port_id ship_draft ship_cargo port_available port_long 
 
   int result = 0;
 
-  if (ship_lat - port_lat) <= deadline * ship_maxspeed and
-     (ship_long - port_long) <= deadline * ship_maxspeed and
-     (port_long - ship_long) <= deadline * ship_maxspeed and
-     (port_lat - ship_lat) <= deadline * ship_maxspeed then
+  if ((ship_lat - port_lat) * 100) <= deadline * ship_maxspeed and
+     ((ship_long - port_long) * 100) <= deadline * ship_maxspeed and
+     ((port_long - ship_long) * 100) <= deadline * ship_maxspeed and
+     ((port_lat - ship_lat) * 100) <= deadline * ship_maxspeed then
      if (ship_draft <= port_harbordepth) then
        result = 1;
      endif;

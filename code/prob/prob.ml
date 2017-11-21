@@ -318,7 +318,7 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
                                          let var_ids = List.map (fun x -> ("", x)) ids in
                                          ifdebug (printf "Secret vars before projection: %s\n%!" (varid_list_to_string (ESYS.psrep_vars model_ps.PSYS.belief)));
                                          ifdebug (printf "desired varids for projection: %s\n%!" (varid_list_to_string var_ids));
-                                         let ps_vars = printf "about to call psrep_on_vars\n"; ESYS.psrep_on_vars (model_ps.PSYS.belief) var_ids in
+                                         let ps_vars = printf "about to call psrep_on_vars\n"; ESYS.psrep_on_vars model_ps.PSYS.belief var_ids in
                                          printf "Secret vars after projection: \t%s\n%!" (varid_list_to_string (ESYS.psrep_vars ps_vars));
                                          flush Pervasives.stdout;
                                          flush Pervasives.stdout;
@@ -326,7 +326,7 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
                                          ifdebug (printf "tolerance = %d\n%!" tolerance);
                                          ifdebug (printf "max belief = %s\n%!" (Gmp.Q.to_string max_belief));
                                          let scaled = (Gmp.Q.to_float (Gmp.Q.mul max_belief (Gmp.Q.from_int tolerance))) in
-                                         string_of_float (Float.min scaled 1.0) ^ "\n"
+                                         string_of_float (Float.min scaled 1.0) ^ "0" ^ "\n"
                                     else "Model does not exist.\n" in
                           (msg, ps_ins)
 
