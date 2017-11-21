@@ -87,7 +87,7 @@ let rec map_dnf (f : lsym -> lsym) (dnf : lsym) : lsym =
   let rec map_conjs (f' : lsym -> lsym) (cs : lsym) : lsym =
     match cs with
     | SymAnd (l, rest) -> SymAnd (f' l, map_conjs f' rest)
-    | _                -> f' cs
+    | _                -> SymTrue
   in
 
   let rec map_disjs (f' : lsym -> lsym) (ds : lsym) : lsym =
@@ -335,28 +335,32 @@ let lnf_of_lsym (l : lsym) : lsym =
   let dnf = simple_dnf (dnf_of_lsym l) in
   let linear_dnf = map_dnf linearize_lsym dnf in
   let minimal_linear_dnf = simple_dnf (map_dnf elim_const_leq linear_dnf) in
+
   minimal_linear_dnf
 
 
 let linear_system_of_lsym (l : lsym) : (int VarIDMap.t * int) list list =
   let lnf = lnf_of_lsym l in
-  let lnf_lists = collapse_dnf lnf in
-  let ir_of_linear_lsym (l : lsym) : int VarIDMap.t * int =
-    let rec ir_of_linear_asym (a : asym) : int VarIDMap.t =
-      match a with
-      | SymAdd (SymMul (SymInt n, SymAtom x), rest) -> VarIDMap.add x n (ir_of_linear_asym rest)
-      | SymMul (SymInt n, SymAtom x)                -> VarIDMap.singleton x n
-      | _                                           -> raise (General_error ("Tried to get IR for constant or non-linear asym: " ^ (asym_to_string a)))
+  if lnf = SymTrue then
+    [[]]
+  else
+    let lnf_lists = collapse_dnf lnf in
+    let ir_of_linear_lsym (l : lsym) : int VarIDMap.t * int =
+        let rec ir_of_linear_asym (a : asym) : int VarIDMap.t =
+        match a with
+        | SymAdd (SymMul (SymInt n, SymAtom x), rest) -> VarIDMap.add x n (ir_of_linear_asym rest)
+        | SymMul (SymInt n, SymAtom x)                -> VarIDMap.singleton x n
+        | _                                           -> raise (General_error ("Tried to get IR for constant or non-linear asym: " ^ (asym_to_string a)))
+        in
+
+        match l with
+        | SymLeq (aterms, SymInt n) -> (ir_of_linear_asym aterms, n)
+        | _                         -> raise (General_error ("Tried to get IR for non-linear lsym: " ^ (lsym_to_string l)))
     in
-    
-    match l with
-    | SymLeq (aterms, SymInt n) -> (ir_of_linear_asym aterms, n)
-    | _                         -> raise (General_error ("Tried to get IR for non-linear lsym: " ^ (lsym_to_string l)))
-  in
-    
-  let ret = List.map (fun c -> List.map ir_of_linear_lsym c) lnf_lists in
-  (* List.iter (fun cs -> List.iter (fun (a, c) -> VarIDMap.iter (fun (_, name) coeff -> print_string ((string_of_int coeff) ^ name ^ " ")) a; print_endline ("<= " ^ (string_of_int c))) cs; print_newline ()) ret; *)
-  ret
+
+    let ret = List.map (fun c -> List.map ir_of_linear_lsym c) lnf_lists in
+    (* List.iter (fun cs -> List.iter (fun (a, c) -> VarIDMap.iter (fun (_, name) coeff -> print_string ((string_of_int coeff) ^ name ^ " ")) a; print_endline ("<= " ^ (string_of_int c))) cs; print_newline ()) ret; *)
+    ret
 
 
 
