@@ -166,25 +166,28 @@ module Ppldomainpoly: (PPLDOMAIN_TYPE with type region = polyhedron) =
                                            ((if v <! amin then v else amin),
                                             (if v >! amax then v else amax))) (List.hd heights, List.hd heights) (List.tl heights) in
 
-        ifdebug (
-          let (lmin, lmax) =
-            (
-              let r = copy_region r in
-              let le = Minus(Variable (vnum1), Variable (vnum2)) in
-                duplicate_dimension r vnum1;
-                let lout = (poly_maximize r le) in
-                  (zone, lout +! zone)
-            ) in
+        (*
+        let (lmin, lmax) =
+            let r = copy_region r in
+            let le = Minus(Variable (vnum1), Variable (vnum2)) in
+              duplicate_dimension r vnum1;
+              let lout = (poly_maximize r le) in
+                (zone, lout +! zone)
+        in
 
-            (*printf "latte  min/max = %s %s\n" (Z.to_string lmin) (Z.to_string lmax);
-              printf "points min/max = %s %s\n" (Z.to_string pmin) (Z.to_string pmax);*)
+          (*printf "latte  min/max = %s %s\n" (Z.to_string lmin) (Z.to_string lmax);
+            printf "points min/max = %s %s\n" (Z.to_string pmin) (Z.to_string pmax);*)
 
-            if (pmin <! lmin) || (pmax > lmax) then
-              (
-                printf "latte  min/max = %s %s\n" (Z.to_string lmin) (Z.to_string lmax);
-                printf "points min/max = %s %s\n" (Z.to_string pmin) (Z.to_string pmax);
-                raise (General_error "latte based heights were better")
-              ));
+        (* if (pmin <! lmin) || (pmax >! lmax) then
+          (
+            printf "latte  min/max = %s %s\n" (Z.to_string lmin) (Z.to_string lmax);
+            printf "points min/max = %s %s\n" (Z.to_string pmin) (Z.to_string pmax);
+	   
+            (* raise (General_error "latte based heights were better") *)
+          )
+        *)
+        let (pmin, pmax) = (Z.max pmin lmin, Z.min pmax lmax) in
+        *)
         (pmin, pmax)
 
     let _region_min_max_height_points =

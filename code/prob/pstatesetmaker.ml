@@ -397,17 +397,22 @@ module MakePStateset(* create pstateset from a stateset *)
 
       let est = pss.est in
 
-      let new_smin = if (est.smin = est.smax) && (est.smin = original_size) then
-                        (ifdebug (printf "Polyhedron was precise, keeping setting smin to new smax");
-                         new_size)
+      let (new_smin, b) = if (est.smin = est.smax) && (est.smin = original_size) then
+                             (ifdebug (printf "Polyhedron was precise, keeping setting smin to new smax");
+                              (new_size, true))
+                          else
+                             (qceil ((Q.from_z est.smin) // (Q.from_z hmax)), false) (* todo: check this *) in
+
+      let new_smax = if b then
+                        new_smin
                      else
-                        qceil ((Q.from_z est.smin) // (Q.from_z hmax)) (* todo: check this *) in
+                        Z.min new_size est.smax in
 
       let new_est = {
         pmin = est.pmin */ (Q.from_z (Z.max zone ((hmin -! original_size) +! est.smin)));
         pmax = est.pmax */ (Q.from_z (Z.min hmax est.smax));
         smin = new_smin;
-        smax = Z.min new_size est.smax;
+        smax = new_smax;
         mmin = est.mmin;
         mmax = est.mmax;
         numy = 0;
