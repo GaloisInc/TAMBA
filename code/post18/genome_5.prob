@@ -1,0 +1,54 @@
+secret:
+  int root0_0 = 0;
+  int root0_1 = 1;
+  int root1_0 = 0;
+  int root1_1 = 1;
+  int root2_0 = 1;
+  int root2_1 = 0;
+
+belief:
+  int root0_0 = uniform 0 1;
+  int root0_1 = uniform 0 1;
+  int root1_0 = uniform 0 1;
+  int root1_1 = uniform 0 1;
+  int root2_0 = uniform 0 1;
+  int root2_1 = uniform 0 1;
+
+querydef exact_sum -> result :
+  int result = 0;
+  result = result + root0_0 + root0_1;
+  result = result + root1_0 + root1_1;
+  result = result + root2_0 + root2_1;
+
+  int kid3_0;
+  pif 1:1 then
+    kid3_0 = root1_0;
+  else
+    kid3_0 = root0_0;
+  endpif;
+
+  int kid3_1;
+  pif 1:1 then
+    kid3_1 = root1_1;
+  else
+    kid3_1 = root0_1;
+  endpif;
+  result = result + kid3_0 + kid3_1;
+
+  int kid4_0;
+  pif 1:1 then
+    kid4_0 = kid3_0;
+  else
+    kid4_0 = root2_0;
+  endpif;
+
+  int kid4_1;
+  pif 1:1 then
+    kid4_1 = kid3_1;
+  else
+    kid4_1 = root2_1;
+  endpif;
+  result = result + kid4_0 + kid4_1;
+
+query exact_sum:
+  skip;
