@@ -48,7 +48,7 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
       3) the output list and their expected values
 
    *)
-  let make_trip querydefs (ps : PSYS.policysystem) (queryname, querystmt) =
+  let make_trip querydefs (ps : PSYS.policysystem) (queryname, querystmt, _) =
     let querytuple = List.assoc queryname querydefs in
     let (inlist, outlist, progstmt) = querytuple in
 
@@ -214,16 +214,16 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
 
   let rec pmock_queries count queries querydefs ps_in = match queries with
     | [] -> ps_in
-    | (queryname, querystmt) :: t ->
+    | (queryname, querystmt, ids) :: t ->
         printf "\n--- Query #%d ------------------\n" count;
-        let ps_out = common_run (queryname, querystmt) [] RunConc querydefs ps_in in
+        let ps_out = common_run (queryname, querystmt) ids RunConc querydefs ps_in in
         pmock_queries (count + 1) t querydefs ps_out
 
   (* Lower Bound additions <begin> *)
 
   let run_query query querydefs init =
     (* initial public state *)
-    let (qname, qstmt) = query in
+    let (qname, qstmt, _) = query in
     let (_, instate) = Evalstate.eval qstmt (new state_empty) in
     instate#merge init;
 
@@ -234,14 +234,14 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
 
   let run_queries queries querydefs init =
     let pair_up query =
-      let (qname, _) = query in
+      let (qname, _, _) = query in
       let (_, outs, _) = List.assoc qname querydefs in
       make_expected_pairs outs (run_query query querydefs init) in
     List.map pair_up queries
 
   let sym_query query querydefs init =
     (* initial public state *)
-    let (qname, qstmt) = query in
+    let (qname, qstmt, _) = query in
     let (_, instate) = Evalsymstate.eval qstmt init in
 
     (* sym query *)
@@ -438,7 +438,7 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
         (fun (astring, (l1, l2, apstmt)) -> (astring, (l1, l2, Preeval.preeval apstmt)))
         asetup.querydefs in
       let queries   = List.map
-        (fun (astring, apstmt) -> (astring, Preeval.preeval apstmt))
+        (fun (astring, apstmt, ids) -> (astring, Preeval.preeval apstmt, List.map pair_second ids))
         asetup.queries in
       let policies  = asetup.policies in
 
@@ -519,7 +519,7 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
               );
 
               ret
-             
+
             else
               base_final_dist in
           (if !Cmd.opt_improve_lower_bounds > 0 then

@@ -6,7 +6,7 @@ type tpolicy = {name: string;
                 param: Q.t};;
 
 type tquerydef = string * (Lang.varid list * Lang.varid list * Lang.pstmt);;
-type tquerynamed = string * Lang.pstmt;;
+type tquerynamed = string * Lang.pstmt * Lang.varid list;;
 
 type tpmocksetup = {secret: Lang.pstmt;
                     belief: Lang.pstmt;

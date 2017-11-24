@@ -8,7 +8,7 @@ type tpolicy = {
 };;
 
 type tquerydef   = string * (Lang.varid list * Lang.varid list * Lang.pstmt);;
-type tquerynamed = string * Lang.pstmt;;
+type tquerynamed = string * Lang.pstmt * Lang.varid list;;
 
 type tsecret = (string * Lang.pstmt)
 type tbelief = ((Lang.agent list) * (Lang.agent list) * Lang.pstmt)

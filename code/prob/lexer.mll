@@ -25,6 +25,7 @@ rule token = parse
   | "secret"    { SECRET }
   | "belief"    { BELIEF }
   | "query"     { QUERY }
+  | "on"        { PROJECT_ON }
   | "and"       { LAND }
   | "or"        { LOR }
   | "->"        { RA }

@@ -46,7 +46,7 @@
 /* mock setups */
 
 %token <float> FLOAT
-%token COLON SECRET BELIEF QUERY ABOUT
+%token COLON SECRET BELIEF QUERY ABOUT PROJECT_ON
 %token POLICY POLICYSIM QUERYDEF
 
 %start pstmt
@@ -255,7 +255,8 @@ query :
 ;
 
 querynamed :
-| QUERY VAR COLON pstmt { ($2, $4) }
+| QUERY VAR PROJECT_ON varlist COLON pstmt { ($2, $6, $4) }
+| QUERY VAR COLON pstmt { ($2, $4, []) }
 ;
 
 querynamedlist :
