@@ -175,19 +175,10 @@ querydef mpc_aid ship_id port_id ship_draft ship_cargo port_available port_long 
 
   int reachable = 0;
 
-  int lat_steps = ship_lat - port_lat;
-
-  if lat_steps < 0 then
-    lat_steps = -1 * lat_steps;
-  endif;
-
-  int long_steps = ship_long - port_long;
-
-  if long_steps < 0 then
-    long_steps = -1 * long_steps;
-  endif;
-
-  if (lat_steps + long_steps) <= deadline * ship_speed then
+  if (ship_lat - port_lat) + (ship_long - port_long) <= deadline * ship_speed and
+     (ship_lat - port_lat) + (port_long - ship_long) <= deadline * ship_speed and
+     (port_lat - ship_lat) + (port_long - ship_long) <= deadline * ship_speed and
+     (port_lat - ship_lat) + (ship_long - port_long) <= deadline * ship_speed then
     reachable = 1;
   endif;
 
