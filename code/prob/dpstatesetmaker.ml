@@ -211,17 +211,17 @@ module MakeDPStateset
     = fold_left (fun d (v, i) -> with_factor [v] (fun (f, p) -> (f, PSS.set_all p [(v, i)])) d) dpss vsis
 
   let project dpss vs =
-    printf "In dpstatesetmaker `project`\n%!";
+    ifdebug (printf "In dpstatesetmaker `project`\n%!");
     let partitions_by_factor = map (fun (f, _) -> filter (fun v -> mem v f) vs) dpss in
-    print_factorization partitions_by_factor;
-    printf "\n%!";
-    print_factorization (factorization dpss);
-    printf "\n%!";
+    ifdebug (print_factorization partitions_by_factor;
+             printf "\n%!";
+             print_factorization (factorization dpss);
+             printf "\n%!");
     catSomes (map2 (fun (f, p) part ->
-                                       print_factor f;
-                                       printf "\n%!";
-                                       print_factor part;
-                                       printf "\n%!";
+                                       ifdebug (print_factor f;
+                                                printf "\n%!";
+                                                print_factor part;
+                                                printf "\n%!");
                                        if part = [] then
                                           None
                                        else

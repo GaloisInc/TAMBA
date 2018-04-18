@@ -39,7 +39,7 @@ module VarIDMap = Map.Make(OrderedVarID)
 let agent_list_to_string al = String.concat "," al
 
 let varid_to_string (owner, id) = if owner = "" then id else owner ^ "." ^ id
-let varid_list_to_string vl = String.concat "," (List.map varid_to_string vl);
+let varid_list_to_string vl = failwith "Pray for trace" (*String.concat "," (List.map varid_to_string vl);*)
 
 type abinop = (string * (int -> int -> int))
 type lbinop = (string * (int -> int -> int))
