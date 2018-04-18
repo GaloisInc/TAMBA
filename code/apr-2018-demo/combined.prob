@@ -1,0 +1,204 @@
+secret:
+  int ship1_lat = 10000;
+  int ship1_long = 120000;
+  int ship1_speed = 20;
+  int ship2_lat = 4000;
+  int ship2_long = 130000;
+  int ship2_speed = 10;
+  int ship3_lat = 5000;
+  int ship3_long = 12000;
+  int ship3_speed = 30;
+  int ship4_lat = 15000;
+  int ship4_long = 129000;
+  int ship4_speed = 40;
+  int ship5_lat = 17000;
+  int ship5_long = 115000;
+  int ship5_speed = 45;
+  int ship6_lat = 3000;
+  int ship6_long = 130000;
+  int ship6_speed = uniform 5 50;
+  int ship7_lat = 11000;
+  int ship7_long = 116000;
+  int ship7_speed = 35;
+  int ship8_lat = 18000;
+  int ship8_long = 122000;
+  int ship8_speed = 33;
+  int ship9_lat = 11111;
+  int ship9_long = 123123;
+  int ship9_speed = 44;
+  int ship10_lat = 4444;
+  int ship10_long = 111111;
+  int ship10_speed = 40;
+
+  int port1_harbordepth = 5;
+  int port2_harbordepth = 6;
+  int port3_harbordepth = 7;
+  int port4_harbordepth = 8;
+  int port5_harbordepth = 9;
+  int port6_harbordepth = 10;
+  int port7_harbordepth = 11;
+  int port8_harbordepth = 12;
+  int port9_harbordepth = 13;
+  int port10_harbordepth = 14;
+
+belief:
+  int ship1_lat = uniform 3000 18000;
+  int ship1_long = uniform 115000 130000;
+  int ship1_speed = uniform 5 50;
+  int ship2_lat = uniform 3000 18000;
+  int ship2_long = uniform 115000 130000;
+  int ship2_speed = uniform 5 50;
+  int ship3_lat = uniform 3000 18000;
+  int ship3_long = uniform 115000 130000;
+  int ship3_speed = uniform 5 50;
+  int ship4_lat = uniform 3000 18000;
+  int ship4_long = uniform 115000 130000;
+  int ship4_speed = uniform 5 50;
+  int ship5_lat = uniform 3000 18000;
+  int ship5_long = uniform 115000 130000;
+  int ship5_speed = uniform 5 50;
+  int ship6_lat = uniform 3000 18000;
+  int ship6_long = uniform 115000 130000;
+  int ship6_speed = uniform 5 50;
+  int ship7_lat = uniform 3000 18000;
+  int ship7_long = uniform 115000 130000;
+  int ship7_speed = uniform 5 50;
+  int ship8_lat = uniform 3000 18000;
+  int ship8_long = uniform 115000 130000;
+  int ship8_speed = uniform 5 50;
+  int ship9_lat = uniform 3000 18000;
+  int ship9_long = uniform 115000 130000;
+  int ship9_speed = uniform 5 50;
+  int ship10_lat = uniform 3000 18000;
+  int ship10_long = uniform 115000 130000;
+  int ship10_speed = uniform 5 50;
+
+  int port1_harbordepth = uniform 5 50;
+  int port2_harbordepth = uniform 5 50;
+  int port3_harbordepth = uniform 5 50;
+  int port4_harbordepth = uniform 5 50;
+  int port5_harbordepth = uniform 5 50;
+  int port6_harbordepth = uniform 5 50;
+  int port7_harbordepth = uniform 5 50;
+  int port8_harbordepth = uniform 5 50;
+  int port9_harbordepth = uniform 5 50;
+  int port10_harbordepth = uniform 5 50;
+
+querydef mpc_aid ship_id port_id ship_draft ship_cargo port_available port_long port_lat port_offloadcapacity deadline -> result :
+  int ship_lat = 0;
+  int ship_long = 0;
+  int ship_speed = 0;
+
+  int port_harbordepth = 0;
+
+  if ship_id == 1 then
+    ship_lat = ship1_lat;
+    ship_long = ship1_long;
+    ship_speed = ship1_speed;
+  endif;
+  if ship_id == 2 then
+    ship_lat = ship2_lat;
+    ship_long = ship2_long;
+    ship_speed = ship2_speed;
+  endif;
+  if ship_id == 3 then
+    ship_lat = ship3_lat;
+    ship_long = ship3_long;
+    ship_speed = ship3_speed;
+  endif;
+  if ship_id == 4 then
+    ship_lat = ship4_lat;
+    ship_long = ship4_long;
+    ship_speed = ship4_speed;
+  endif;
+  if ship_id == 5 then
+    ship_lat = ship5_lat;
+    ship_long = ship5_long;
+    ship_speed = ship5_speed;
+  endif;
+  if ship_id == 6 then
+    ship_lat = ship6_lat;
+    ship_long = ship6_long;
+    ship_speed = ship6_speed;
+  endif;
+  if ship_id == 7 then
+    ship_lat = ship7_lat;
+    ship_long = ship7_long;
+    ship_speed = ship7_speed;
+  endif;
+  if ship_id == 8 then
+    ship_lat = ship8_lat;
+    ship_long = ship8_long;
+    ship_speed = ship8_speed;
+  endif;
+  if ship_id == 9 then
+    ship_lat = ship9_lat;
+    ship_long = ship9_long;
+    ship_speed = ship9_speed;
+  endif;
+  if ship_id == 10 then
+    ship_lat = ship10_lat;
+    ship_long = ship10_long;
+    ship_speed = ship10_speed;
+  endif;
+
+  if port_id == 1 then
+    port_harbordepth = port1_harbordepth;
+  endif;
+  if port_id == 2 then
+    port_harbordepth = port2_harbordepth;
+  endif;
+  if port_id == 3 then
+    port_harbordepth = port3_harbordepth;
+  endif;
+  if port_id == 4 then
+    port_harbordepth = port4_harbordepth;
+  endif;
+  if port_id == 5 then
+    port_harbordepth = port5_harbordepth;
+  endif;
+  if port_id == 6 then
+    port_harbordepth = port6_harbordepth;
+  endif;
+  if port_id == 7 then
+    port_harbordepth = port7_harbordepth;
+  endif;
+  if port_id == 8 then
+    port_harbordepth = port8_harbordepth;
+  endif;
+  if port_id == 9 then
+    port_harbordepth = port9_harbordepth;
+  endif;
+  if port_id == 10 then
+    port_harbordepth = port10_harbordepth;
+  endif;
+
+  int reachable = 0;
+
+  int lat_steps = ship_lat - port_lat;
+
+  if lat_steps < 0 then
+    lat_steps = -1 * lat_steps;
+  endif;
+
+  int long_steps = ship_long - port_long;
+
+  if long_steps < 0 then
+    long_steps = -1 * long_steps;
+  endif;
+
+  if (lat_steps + long_steps) <= deadline * ship_speed then
+    reachable = 1;
+  endif;
+
+  int feasible = 0;
+
+  if (port_available == 1) and (ship_draft <= port_harbordepth) and (ship_cargo <= port_offloadcapacity) then
+    feasible = 1;
+  endif;
+
+  int result = 0;
+
+  if (reachable == 1) and (feasible == 1) then
+    result = 1;
+  endif;
