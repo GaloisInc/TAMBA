@@ -185,9 +185,9 @@ and try_eval_binop (name, f) l1 l2 =
                           let v21 = if v2 then 1 else 0 in
                           Some (f v11 v21 = 1)
 and try_eval_relop rel =
-  printf "The relation: "; print_lexp rel; printf " ";
+  ifdebug (printf "The relation: "; print_lexp rel; printf " ");
   let res = Evalstate.eval_lexp rel (new State.state_empty) in
-  printf "The result: %d" res; printf "\n";
+  ifdebug (printf "The result: %d" res; printf "\n");
   Some (res = 1)
 
 
