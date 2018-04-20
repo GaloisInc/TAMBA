@@ -1,3 +1,3 @@
 #!/bin/bash
 
-../prob/prob --inline --domain relbox --precise-conditioning combined.prob
+../prob/prob --inline --domain relbox --precise-conditioning $1
