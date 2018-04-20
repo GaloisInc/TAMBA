@@ -1,5 +1,27 @@
 import sys
 
+################################################################################
+##### HOW TO USE THIS SCRIPT
+################################################################################
+# When you invoke this script, you have to provide 3 arguments
+#
+# 1) The "From" perspective
+# 2) The "to" perspective
+# 3) The desired output file name
+#
+# The possible perspectives are:
+#
+#   "us"
+#   "hmas"
+#   "plan"
+#   "boho"
+#   "cebu"
+#   "siqu"
+#
+# So a sample execution would look like:
+#
+# $ python mk_queries.py hmas boho ausie.prob
+
 def main ():
     if len(sys.argv) != 4:
         exit(1)
