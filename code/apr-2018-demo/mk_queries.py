@@ -3,11 +3,12 @@ import sys
 ################################################################################
 ##### HOW TO USE THIS SCRIPT
 ################################################################################
-# When you invoke this script, you have to provide 3 arguments
+# When you invoke this script, you have to provide 4 arguments
 #
 # 1) The "From" perspective
 # 2) The "to" perspective
-# 3) The desired output file name
+# 3) The desired distance metric ('man' = manhattan or 'cheb' = chebyshev)
+# 4) The desired output file name
 #
 # The possible perspectives are:
 #
@@ -20,10 +21,10 @@ import sys
 #
 # So a sample execution would look like:
 #
-# $ python mk_queries.py hmas boho ausie.prob
+# $ python mk_queries.py hmas boho man ausie.prob
 
 def main ():
-    if len(sys.argv) != 4:
+    if len(sys.argv) != 5:
         exit(1)
 
     ############################################################################
@@ -33,8 +34,11 @@ def main ():
     perspective_from = sys.argv[1]
     perspective_to   = sys.argv[2]
 
+    # This determines the distance metric
+    dist_type = sys.argv[3]
+
     # This determines the output filename
-    file_name = sys.argv[3]
+    file_name = sys.argv[4]
     out = open(file_name, 'w+')
 
     print "Creating a prob file %s, from %s\'s perspective to %s\'s perspective..." % (file_name, perspective_from, perspective_to)
@@ -206,17 +210,48 @@ def main ():
     ############################################################################
     # Write out the core logic
     
+    chebyshev    = ""
+    manhattan    = ""
     mpc_aid_body = ""
 
+    ############################
+    # Different distance metrics
+    
+    chebyshev += ("  int x_diff = ship_lat - port_lat;\n"
+                 "\n"
+                 "  if x_diff < 0 then\n"
+                 "      x_diff = -1 * x_diff;\n"
+                 "  endif;\n"
+                 "\n"
+                 "  int y_diff = ship_long - port_long;\n"
+                 "  \n"
+                 "  if y_diff < 0 then\n"
+                 "      y_diff = -1 * y_diff;\n"
+                 "  endif;\n"
+                 "\n"
+                 "  if x_diff > y_diff then\n"
+                 "      if (x_diff <= deadline * ship_speed) then\n"
+                 "          reachable = 1;\n"
+                 "      endif;\n"
+                 "  else\n"
+                 "      if (y_diff <= deadline * ship_speed) then\n"
+                 "          reachable = 1;\n"
+                 "      endif;\n"
+                 "  endif; \n")
 
-    mpc_aid_body += ("  if (ship_lat - port_lat) + (ship_long - port_long) <= deadline * ship_speed and\n"
-                     "     (ship_lat - port_lat) + (port_long - ship_long) <= deadline * ship_speed and\n"
-                     "     (port_lat - ship_lat) + (port_long - ship_long) <= deadline * ship_speed and\n"
-                     "     (port_lat - ship_lat) + (ship_long - port_long) <= deadline * ship_speed then\n"
-                     "    reachable = 1;\n"
-                     "  endif;\n"
-                     "\n"
-                     "  int feasible = 0;\n"
+
+    manhattan += ("  if (ship_lat - port_lat) + (ship_long - port_long) <= deadline * ship_speed and\n"
+                  "     (ship_lat - port_lat) + (port_long - ship_long) <= deadline * ship_speed and\n"
+                  "     (port_lat - ship_lat) + (port_long - ship_long) <= deadline * ship_speed and\n"
+                  "     (port_lat - ship_lat) + (ship_long - port_long) <= deadline * ship_speed then\n"
+                  "    reachable = 1;\n"
+                  "  endif;\n"
+                  "\n")
+
+    dist_map = { "cheb" : chebyshev, "man" : manhattan }
+
+
+    mpc_aid_body += ("  int feasible = 0;\n"
                      "\n"
                      "  if (port_available == 1) and (ship_draft <= port_harbordepth) and (ship_cargo <= port_offloadcapacity) then\n"
                      "    feasible = 1;\n"
@@ -228,7 +263,7 @@ def main ():
                      "    result = 1;\n"
                      "  endif;\n")
 
-    mpc_aid = mpc_aid_sig + mpc_preamble + "\n" + mpc_aid_body
+    mpc_aid = mpc_aid_sig + mpc_preamble + "\n" + dist_map[dist_type] + "\n" + mpc_aid_body
 
     out.write("\n" + mpc_aid)
 
