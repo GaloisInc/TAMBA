@@ -63,7 +63,10 @@ def main ():
     plan_ships = [(8,  "peaceArk",1900, 8703, 122962,685,55,34),
                   (9,  "nanyun"  ,1400,   9232, 120660,550,46,28),
                   (10, "nankang" ,1200,  11800,126280,500,42,26)]
-############################################################################
+
+    all_ships = us_ships + hmas_ships + plan_ships
+
+    ############################################################################
     # PORT DATA BY PARTNER
     #
     # Port data are tuples of the following info:
@@ -84,6 +87,8 @@ def main ():
                       (9,  "larena",           9250,  123600, 600,  5, 30, True),
                       (10, "enriquevillanueve",9272,  123638, 1500, 5, 50, True)]
 
+    all_ports = bohol_ports + cebu_ports + siquijor_ports
+
     ############################################################################ 
     # PARTNER MAP
     #
@@ -97,9 +102,12 @@ def main ():
                     "siqu" : (False, siquijor_ports)}
 
     # look up the partner's data then remove that item from the map
-    is_ship, data = partner_map[perspective_from]
 
-    del partner_map[perspective_from]
+    pers = []
+
+    for part in set([perspective_from, perspective_to]):
+        pers.append(partner_map[part])
+        del partner_map[part]
 
     ############################################################################
     # WRITE OUT THE SECRET DATA
@@ -110,14 +118,15 @@ def main ():
     secret_header = "secret:\n"
     secret_header_stmt = ""
 
-    if is_ship:
-        for ship in data:
-            secret_header_stmt += ("  int ship%d_%s = %d;\n" % (ship[0], "lat", ship[3]))
-            secret_header_stmt += ("  int ship%d_%s = %d;\n" % (ship[0], "long", ship[4]))
-            secret_header_stmt += ("  int ship%d_%s = %d;\n" % (ship[0], "maxspeed", ship[7]))
-    else:
-        for port in data:
-            secret_header_stmt += ("  int port%d_%s = %d;\n" % (port[0], "harbordepth", port[6]))
+    for is_ship, data in pers:
+        if is_ship:
+            for ship in data:
+                secret_header_stmt += ("  int ship%d_%s = %d;\n" % (ship[0], "lat", ship[3]))
+                secret_header_stmt += ("  int ship%d_%s = %d;\n" % (ship[0], "long", ship[4]))
+                secret_header_stmt += ("  int ship%d_%s = %d;\n" % (ship[0], "maxspeed", ship[7]))
+        else:
+            for port in data:
+                secret_header_stmt += ("  int port%d_%s = %d;\n" % (port[0], "harbordepth", port[6]))
 
 
     secret = secret_header + secret_header_stmt
@@ -136,14 +145,15 @@ def main ():
     belief_header = "belief:\n"
     belief_header_stmt = ""
 
-    if is_ship:
-        for ship in data:
-            for (prefix, rng_min, rng_max) in ship_var_data_ranges:
-                belief_header_stmt += ("  int ship%d_%s = uniform %d %d;\n" % (ship[0], prefix, rng_min, rng_max))
-    else:
-        for port in data:
-            for (prefix, rng_min, rng_max) in port_var_data_ranges:
-                belief_header_stmt += ("  int port%d_%s = uniform %d %d;\n" % (port[0], prefix, rng_min, rng_max))
+    for is_ship, data in pers:
+        if is_ship:
+            for ship in data:
+                for (prefix, rng_min, rng_max) in ship_var_data_ranges:
+                    belief_header_stmt += ("  int ship%d_%s = uniform %d %d;\n" % (ship[0], prefix, rng_min, rng_max))
+        else:
+            for port in data:
+                for (prefix, rng_min, rng_max) in port_var_data_ranges:
+                    belief_header_stmt += ("  int port%d_%s = uniform %d %d;\n" % (port[0], prefix, rng_min, rng_max))
 
     belief = belief_header + belief_header_stmt
 
@@ -151,7 +161,7 @@ def main ():
         
 
     ############################################################################
-    ## Query
+    ## QUERY DEFINITION
 
     mpc_aid_sig = "querydef mpc_aid ship_id port_id ship_draft ship_cargo port_available port_long port_lat port_offloadcapacity deadline -> result :\n"
 
@@ -185,7 +195,7 @@ def main ():
     ############################################################################
     # Write out ship selection logic for 10 ships
 
-    for i in range(num_ships):
+    for i in range(1, num_ships + 1):
         mpc_preamble += ("  if ship_id == %d then\n" % (i))
 
         for (prefix, _, _) in ship_var_data_ranges:
@@ -198,7 +208,7 @@ def main ():
     ############################################################################
     # Write out port selection logic for 10 ports
 
-    for j in range(num_ports):
+    for j in range(1, num_ports + 1):
         mpc_preamble += ("  if port_id == %d then\n" % (j))
 
         for (prefix, _, _) in port_var_data_ranges:
@@ -216,34 +226,22 @@ def main ():
 
     ############################
     # Different distance metrics
+
+    reachable = "  int reachable = 0;\n\n"
     
-    chebyshev += ("  int x_diff = ship_lat - port_lat;\n"
-                 "\n"
-                 "  if x_diff < 0 then\n"
-                 "      x_diff = -1 * x_diff;\n"
-                 "  endif;\n"
-                 "\n"
-                 "  int y_diff = ship_long - port_long;\n"
-                 "  \n"
-                 "  if y_diff < 0 then\n"
-                 "      y_diff = -1 * y_diff;\n"
-                 "  endif;\n"
-                 "\n"
-                 "  if x_diff > y_diff then\n"
-                 "      if (x_diff <= deadline * ship_speed) then\n"
-                 "          reachable = 1;\n"
-                 "      endif;\n"
-                 "  else\n"
-                 "      if (y_diff <= deadline * ship_speed) then\n"
-                 "          reachable = 1;\n"
-                 "      endif;\n"
-                 "  endif; \n")
 
+    chebyshev += ("  if ((ship_lat - port_lat <= deadline * ship_maxspeed) and\n"
+                  "      (port_lat - ship_lat <= deadline * ship_maxspeed)) or\n"
+                  "     ((ship_long - port_long <= deadline * ship_maxspeed) and\n"
+                  "      (port_long - ship_long <= deadline * ship_maxspeed)) then\n"
+                  "    reachable = 1;\n"
+                  "  endif;\n"
+                  "\n")
 
-    manhattan += ("  if (ship_lat - port_lat) + (ship_long - port_long) <= deadline * ship_speed and\n"
-                  "     (ship_lat - port_lat) + (port_long - ship_long) <= deadline * ship_speed and\n"
-                  "     (port_lat - ship_lat) + (port_long - ship_long) <= deadline * ship_speed and\n"
-                  "     (port_lat - ship_lat) + (ship_long - port_long) <= deadline * ship_speed then\n"
+    manhattan += ("  if (ship_lat - port_lat) + (ship_long - port_long) <= deadline * ship_maxspeed and\n"
+                  "     (ship_lat - port_lat) + (port_long - ship_long) <= deadline * ship_maxspeed and\n"
+                  "     (port_lat - ship_lat) + (port_long - ship_long) <= deadline * ship_maxspeed and\n"
+                  "     (port_lat - ship_lat) + (ship_long - port_long) <= deadline * ship_maxspeed then\n"
                   "    reachable = 1;\n"
                   "  endif;\n"
                   "\n")
@@ -263,8 +261,46 @@ def main ():
                      "    result = 1;\n"
                      "  endif;\n")
 
-    mpc_aid = mpc_aid_sig + mpc_preamble + "\n" + dist_map[dist_type] + "\n" + mpc_aid_body
+    mpc_aid = mpc_aid_sig + mpc_preamble + "\n" + reachable + dist_map[dist_type] + "\n" + mpc_aid_body
 
     out.write("\n" + mpc_aid)
+
+    ############################################################################
+    ## QUERY SEQUENCE
+
+
+
+    ## Seeing which ships can reach which ports
+
+    query_data = []
+
+    for is_ship, data in pers:
+        if is_ship:
+            for (sid, _, scar, sla, slo, sle, sdr, sp) in data:
+                for (pid, _, pla, plo, off, offt, pde, pav) in all_ports:
+                    query_data.append((sid,pid,sdr,scar,pav,plo,pla,off))
+        else:
+            for (sid, _, scar, sla, slo, sle, sdr, sp) in all_ships:
+                for (pid, _, pla, plo, off, offt, pde, pav) in data:
+                    query_data.append((sid,pid,sdr,scar,pav,plo,pla,off))
+
+    # remove duplicate queries
+    query_data = set(query_data)
+
+    for (sid, pid, sdr, scar, pav, plo, pla, off) in query_data:
+        query_call =   "query mpc_aid:\n"
+        query_call += ("  int ship_id = %d;\n" % (sid))
+        query_call += ("  int port_id = %d;\n" % (pid))
+        query_call += ("  int ship_draft = %d;\n" % (sdr))
+        query_call += ("  int ship_cargo = %d;\n" % (scar))
+        query_call += ("  int port_available = %d;\n" % (pav))
+        query_call += ("  int port_long = %d;\n" % (plo))
+        query_call += ("  int port_lat = %d;\n" % (pla))
+        query_call += ("  int port_offloadcapacity = %d;\n" % (off))
+        query_call += ("  int deadline = %d;\n" % (30))
+
+        out.write("\n" + query_call)
+
+    print("Total number of queries generated: %d\n" % len(query_data))
 
 if __name__ == "__main__": main ()
