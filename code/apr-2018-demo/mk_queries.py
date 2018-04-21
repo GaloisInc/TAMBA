@@ -8,7 +8,8 @@ import sys
 # 1) The "From" perspective
 # 2) The "to" perspective
 # 3) The desired distance metric ('man' = manhattan or 'cheb' = chebyshev)
-# 4) The desired output file name
+# 4) The deadline
+# 5) The desired output file name
 #
 # The possible perspectives are:
 #
@@ -21,10 +22,10 @@ import sys
 #
 # So a sample execution would look like:
 #
-# $ python mk_queries.py hmas boho man ausie.prob
+# $ python mk_queries.py hmas boho man 50 ausie.prob
 
 def main ():
-    if len(sys.argv) != 5:
+    if len(sys.argv) != 6:
         exit(1)
 
     ############################################################################
@@ -37,8 +38,11 @@ def main ():
     # This determines the distance metric
     dist_type = sys.argv[3]
 
+    # The deadline
+    deadline = int(sys.argv[4])
+
     # This determines the output filename
-    file_name = sys.argv[4]
+    file_name = sys.argv[5]
     out = open(file_name, 'w+')
 
     print "Creating a prob file %s, from %s\'s perspective to %s\'s perspective..." % (file_name, perspective_from, perspective_to)
@@ -297,7 +301,7 @@ def main ():
         query_call += ("  int port_long = %d;\n" % (plo))
         query_call += ("  int port_lat = %d;\n" % (pla))
         query_call += ("  int port_offloadcapacity = %d;\n" % (off))
-        query_call += ("  int deadline = %d;\n" % (30))
+        query_call += ("  int deadline = %d;\n" % deadline)
 
         out.write("\n" + query_call)
 
