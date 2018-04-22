@@ -106,12 +106,19 @@ def main ():
                     "siqu" : (False, siquijor_ports)}
 
     # look up the partner's data then remove that item from the map
+    # We need to know the set of perspective: `pers`, the data
+    # for the 'from' perspective `pers_from` and the data
+    # for the 'to' perspective `pers_to`
+
+    pers_from = partner_map[perspective_from]
+    pers_to   = partner_map[perspective_to]
+
 
     pers = []
-
     for part in set([perspective_from, perspective_to]):
         pers.append(partner_map[part])
         del partner_map[part]
+
 
     ############################################################################
     # WRITE OUT THE SECRET DATA
@@ -278,15 +285,15 @@ def main ():
 
     query_data = []
 
-    for is_ship, data in pers:
-        if is_ship:
-            for (sid, _, scar, sla, slo, sle, sdr, sp) in data:
-                for (pid, _, pla, plo, off, offt, pde, pav) in all_ports:
-                    query_data.append((sid,pid,sdr,scar,pav,plo,pla,off))
-        else:
-            for (sid, _, scar, sla, slo, sle, sdr, sp) in all_ships:
-                for (pid, _, pla, plo, off, offt, pde, pav) in data:
-                    query_data.append((sid,pid,sdr,scar,pav,plo,pla,off))
+    is_ship, data = pers_from
+    if is_ship:
+        for (sid, _, scar, sla, slo, sle, sdr, sp) in data:
+            for (pid, _, pla, plo, off, offt, pde, pav) in all_ports:
+                query_data.append((sid,pid,sdr,scar,pav,plo,pla,off))
+    else:
+        for (sid, _, scar, sla, slo, sle, sdr, sp) in all_ships:
+            for (pid, _, pla, plo, off, offt, pde, pav) in data:
+                query_data.append((sid,pid,sdr,scar,pav,plo,pla,off))
 
     # remove duplicate queries
     query_data = set(query_data)
