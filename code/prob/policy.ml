@@ -294,6 +294,15 @@ module MAKE_PSYSTEM (ESYS: EVAL_SYSTEM) = struct
 
         let ps_updater = {newbelief = enddist} in
 
+        ifnotverbose (
+        let rev_belief = ESYS.psrep_max_belief enddist in
+        printf "Revised max-belief: %s\n" (Gmp.Q.to_string rev_belief);
+        (* lg (U/V) == lg U - lg V *)
+        let cuma_leakage = lg (Gmp.Q.to_float rev_belief) -. lg (!Globals.init_max_belief) in
+        printf "Cumulative leakage: %s\n%!" (string_of_float cuma_leakage);
+        printf "Number of states: %d\n%!" (ESYS.psrep_rep_size enddist)
+        );
+
         (match policysystem_check_policies 0 ps.policies outputdist enddist secretdist outlist with
         | None -> {result = RTrueValue ([]);
                     update = ps_updater}

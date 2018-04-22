@@ -15,6 +15,7 @@ open Optimize
 open Gen_poly
 open Core_extended.Readline
 open Repl
+open Str
 
 open Maths
 open Gmp
@@ -216,7 +217,8 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
     | [] -> ps_in
     | (queryname, querystmt) :: t ->
         printf "\n--- Query #%d ------------------\n" count;
-        let ps_out = common_run (queryname, querystmt) [] RunConc querydefs ps_in in
+        let qr = if !Cmd.opt_static then Util.Static 0 else RunConc in
+        let ps_out = common_run (queryname, querystmt) [] qr querydefs ps_in in
         pmock_queries (count + 1) t querydefs ps_out
 
   (* Lower Bound additions <begin> *)
@@ -396,25 +398,33 @@ module MAKE_EVALS (ESYS: EVAL_SYSTEM) = struct
       in
       server_loop []
 
+  let check_static str =
+      let strs = Str.split (Str.regexp " ") str in
+      match List.length strs with
+        | 1 -> (RunConc, str)
+        | 2 -> (Static 0, List.nth strs 1)
+        | _ -> failwith "This shouldn't happen as there can't be query names with spaces in them"
+
   let interpreter count querydefs ps_orig =
       let query_names = List.map (fun (qname, _) -> qname) querydefs in
       let rec interpreter_loop count user_in ps_in =
           match user_in with
             | None -> printf "We're done.\n"; ps_in
             | Some str ->
-                if not (List.mem str query_names)
+                if not (List.mem str (List.append query_names (List.map (fun s -> "static " ^ s) query_names)))
                 then (printf "%s is not a valid query.\n" str;
                      printf "Queries Available: \n\n";
                      List.iter (printf "\t%s\n") query_names;
                      ps_in)
-                else (let (inlist, outlist, progstmt) = List.assoc str querydefs in
-                     let ins = get_query_params str querydefs in
+                else (let (qr, q) = check_static str in
+                     let (inlist, outlist, progstmt) = List.assoc q querydefs in
+                     let ins = get_query_params q querydefs in
                      let ps_out = if not (all_safe ins)
                                   (* TODO: Print out which inputs failed (snd of the tuple will be None) *)
                                   then (printf "Input(s) are not valid\n"; ps_in)
                                   else (let qstmt = make_int_assignments ins in
                                         (* TODO(ins): integrate `ids` into interpreter *)
-                                        common_run (str, qstmt) [] RunConc querydefs) ps_in in
+                                        common_run (q, qstmt) [] qr querydefs) ps_in in
                      interpreter_loop (count + 1)
                                  (prob_line ())
                                  ps_out)
@@ -632,6 +642,9 @@ let main () =
     ("--debug",
      Arg.Set Cmd.opt_debug,
      "debug output");
+    ("--static",
+     Arg.Set Cmd.opt_static,
+     "only calculate worst-case leakage");
     ("--inline",
      Arg.Set Cmd.opt_inline,
      "Perform an inlining transformation on the queries before execution");

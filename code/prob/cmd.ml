@@ -13,6 +13,7 @@ let opt_samples = ref 0
 let opt_max_belief = ref Q.zero
 let opt_mb_level = ref (Q.from_zs (Z.from_int 8) (Z.from_int 10))
 let opt_blackbox = ref false
+let opt_static = ref false
 let opt_split_factor = ref 1
 let opt_domain = ref 4
 let opt_count_bin = ref "count"
