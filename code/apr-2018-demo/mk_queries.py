@@ -285,14 +285,15 @@ def main ():
 
     query_data = []
 
-    is_ship, data = pers_from
-    if is_ship:
-        for (sid, _, scar, sla, slo, sle, sdr, sp) in data:
-            for (pid, _, pla, plo, off, offt, pde, pav) in all_ports:
+    is_ship_from, data_from = pers_from
+    is_ship_to, data_to = pers_to
+    if is_ship_from:
+        for (sid, _, scar, sla, slo, sle, sdr, sp) in data_from:
+            for (pid, _, pla, plo, off, offt, pde, pav) in data_to:
                 query_data.append((sid,pid,sdr,scar,pav,plo,pla,off))
     else:
-        for (sid, _, scar, sla, slo, sle, sdr, sp) in all_ships:
-            for (pid, _, pla, plo, off, offt, pde, pav) in data:
+        for (sid, _, scar, sla, slo, sle, sdr, sp) in data_to:
+            for (pid, _, pla, plo, off, offt, pde, pav) in data_from:
                 query_data.append((sid,pid,sdr,scar,pav,plo,pla,off))
 
     # remove duplicate queries
