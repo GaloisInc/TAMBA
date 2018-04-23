@@ -115,9 +115,10 @@ def main ():
 
 
     pers = []
-    for part in set([perspective_from, perspective_to]):
-        pers.append(partner_map[part])
-        del partner_map[part]
+
+    pers.append(partner_map[perspective_from])
+    del partner_map[perspective_from]
+    pers.append(partner_map[perspective_to])
 
 
     ############################################################################
@@ -129,15 +130,15 @@ def main ():
     secret_header = "secret:\n"
     secret_header_stmt = ""
 
-    for is_ship, data in pers:
-        if is_ship:
-            for ship in data:
-                secret_header_stmt += ("  int ship%d_%s = %d;\n" % (ship[0], "lat", ship[3]))
-                secret_header_stmt += ("  int ship%d_%s = %d;\n" % (ship[0], "long", ship[4]))
-                secret_header_stmt += ("  int ship%d_%s = %d;\n" % (ship[0], "maxspeed", ship[7]))
-        else:
-            for port in data:
-                secret_header_stmt += ("  int port%d_%s = %d;\n" % (port[0], "harbordepth", port[6]))
+    is_ship, data = pers_from
+    if is_ship:
+        for ship in data:
+            secret_header_stmt += ("  int ship%d_%s = %d;\n" % (ship[0], "lat", ship[3]))
+            secret_header_stmt += ("  int ship%d_%s = %d;\n" % (ship[0], "long", ship[4]))
+            secret_header_stmt += ("  int ship%d_%s = %d;\n" % (ship[0], "maxspeed", ship[7]))
+    else:
+        for port in data:
+            secret_header_stmt += ("  int port%d_%s = %d;\n" % (port[0], "harbordepth", port[6]))
 
 
     secret = secret_header + secret_header_stmt
@@ -156,15 +157,15 @@ def main ():
     belief_header = "belief:\n"
     belief_header_stmt = ""
 
-    for is_ship, data in pers:
-        if is_ship:
-            for ship in data:
-                for (prefix, rng_min, rng_max) in ship_var_data_ranges:
-                    belief_header_stmt += ("  int ship%d_%s = uniform %d %d;\n" % (ship[0], prefix, rng_min, rng_max))
-        else:
-            for port in data:
-                for (prefix, rng_min, rng_max) in port_var_data_ranges:
-                    belief_header_stmt += ("  int port%d_%s = uniform %d %d;\n" % (port[0], prefix, rng_min, rng_max))
+    is_ship, data = pers_from
+    if is_ship:
+        for ship in data:
+            for (prefix, rng_min, rng_max) in ship_var_data_ranges:
+                belief_header_stmt += ("  int ship%d_%s = uniform %d %d;\n" % (ship[0], prefix, rng_min, rng_max))
+    else:
+        for port in data:
+            for (prefix, rng_min, rng_max) in port_var_data_ranges:
+                belief_header_stmt += ("  int port%d_%s = uniform %d %d;\n" % (port[0], prefix, rng_min, rng_max))
 
     belief = belief_header + belief_header_stmt
 
