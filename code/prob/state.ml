@@ -13,6 +13,7 @@ class type state = object
   method set: Lang.varid -> int -> unit
   method set_record: Lang.varid -> Lang.record -> unit
   method get: Lang.varid -> int
+  method get_list: Lang.varid list -> (Lang.varid * int) list
   method vars: Lang.varid list
   method iter: (Lang.varid -> int -> unit) -> unit
   method to_string: string
@@ -80,6 +81,8 @@ class state_hashed hv hr : state = object (self)
       Hashtbl.find vals varname
     with
     | Not_found -> raise (General_error ("undefined variable " ^ (Lang.varid_to_string varname)))
+
+  method get_list vs = List.map (fun v -> (v, self#get v)) vs
 
   method vars: (Lang.varid list) = Hashtbl.fold (fun k v accum -> k :: accum ) vals []
 

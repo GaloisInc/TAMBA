@@ -200,7 +200,17 @@ module MAKE_PSYSTEM (ESYS: EVAL_SYSTEM) = struct
         querystmt in
 
 
+
     let inputstate = inputstate_temp#copy in
+    let in_vars = inputstate#vars in
+    let pre_defined_res = List.for_all (fun x -> x) (List.map (fun v -> List.mem v in_vars) outlist) in
+    let pre_def_res_vals = if pre_defined_res
+                           then (printf "It WORKED!!!";
+                                inputstate#get_list outlist)
+                           else (printf "IT DID NOT WORK :((((\n";
+                                printf "\nvars: %s\n" (varid_list_to_string inputstate#vars);
+                                []) in
+    List.iter (fun (v,i) -> printf "The var %s has value %d\n" (varid_to_string v) i) pre_def_res_vals;
     inputstate#project expanded_inlist;
     let inputstate_full = inputstate#copy in
     let sa_querystmt = Preeval.predefine_as_state sa_querystmt inputstate expanded_inlist in
@@ -262,50 +272,75 @@ module MAKE_PSYSTEM (ESYS: EVAL_SYSTEM) = struct
 
     (match conc_res with
      | Static t  ->
-        ifdebug (printf "Computing static leakage, tolerance = %d\n%!" t);
-        let result_var = ("", "result") in
-        let o_true = new state_empty in
-        o_true#addvar result_var;
-        o_true#set result_var 1;
-        let o_false = new state_empty in
-        o_false#addvar result_var;
-        o_false#set result_var 0;
+        let (ps_up, enddist) =
+         (match pre_defined_res with
+            | false -> (ifdebug (printf "Computing static leakage, tolerance = %d\n%!" t);
+                        let result_var = ("", "result") in
+                        let o_true = new state_empty in
+                        o_true#addvar result_var;
+                        o_true#set result_var 1;
+                        let o_false = new state_empty in
+                        o_false#addvar result_var;
+                        o_false#set result_var 0;
 
-        let o_true_projected = o_true#copy in
-        o_true_projected#project outlist;
+                        let o_true_projected = o_true#copy in
+                        o_true_projected#project outlist;
 
-        let o_false_projected = o_false#copy in
-        o_false_projected#project outlist;
+                        let o_false_projected = o_false#copy in
+                        o_false_projected#project outlist;
 
-        let enddist_true = ESYS.psrep_on_vars (ESYS.psrep_given_state outputdist o_true_projected) secretvars in
-        let enddist_false = ESYS.psrep_on_vars (ESYS.psrep_given_state outputdist o_false_projected) secretvars in
+                        let enddist_true = ESYS.psrep_on_vars (ESYS.psrep_given_state outputdist o_true_projected) secretvars in
+                        let enddist_false = ESYS.psrep_on_vars (ESYS.psrep_given_state outputdist o_false_projected) secretvars in
 
-        let rev_belief_true = ESYS.psrep_max_belief enddist_true in
-        ifdebug (printf "rev_belief_true = %s\n" (Gmp.Q.to_string rev_belief_true));
-        let rev_belief_false = ESYS.psrep_max_belief enddist_false in
-        ifdebug (printf "rev_belief_false = %s\n" (Gmp.Q.to_string rev_belief_false));
+                        let rev_belief_true = ESYS.psrep_max_belief enddist_true in
+                        ifdebug (printf "rev_belief_true = %s\n" (Gmp.Q.to_string rev_belief_true));
+                        let rev_belief_false = ESYS.psrep_max_belief enddist_false in
+                        ifdebug (printf "rev_belief_false = %s\n" (Gmp.Q.to_string rev_belief_false));
 
-        let enddist =
-          if Q.compare rev_belief_false rev_belief_true <= 0 then (* rev_belief_false <= rev_belief_true *)
-            enddist_true
-          else
-            enddist_false
-        in
+                        let enddist =
+                          if Q.compare rev_belief_false rev_belief_true <= 0 then (* rev_belief_false <= rev_belief_true *)
+                            enddist_true
+                          else
+                            enddist_false
+                        in
 
-        let ps_updater = {newbelief = enddist} in
+                        let ps_updater = {newbelief = enddist} in
 
-        ifnotverbose (
-        let rev_belief = ESYS.psrep_max_belief enddist in
-        printf "Revised max-belief: %s\n" (Gmp.Q.to_string rev_belief);
-        (* lg (U/V) == lg U - lg V *)
-        let cuma_leakage = lg (Gmp.Q.to_float rev_belief) -. lg (!Globals.init_max_belief) in
-        printf "Cumulative leakage: %s\n%!" (string_of_float cuma_leakage);
-        printf "Number of states: %d\n%!" (ESYS.psrep_rep_size enddist)
-        );
+                        ifnotverbose (
+                        let rev_belief = ESYS.psrep_max_belief enddist in
+                        printf "Revised max-belief: %s\n" (Gmp.Q.to_string rev_belief);
+                        (* lg (U/V) == lg U - lg V *)
+                        let cuma_leakage = lg (Gmp.Q.to_float rev_belief) -. lg (!Globals.init_max_belief) in
+                        printf "Cumulative leakage: %s\n%!" (string_of_float cuma_leakage);
+                        printf "Number of states: %d\n%!" (ESYS.psrep_rep_size enddist)
+                        );
+                        (ps_updater, enddist))
+
+            | true  -> (ifdebug (printf "Computing static leakage, tolerance = %d\n%!" t);
+                        let result_var = ("", "result") in
+                        let res_state = new state_empty in
+                        res_state#set_list pre_def_res_vals;
+
+                        let res_state_projected = res_state#copy in
+                        res_state_projected#project outlist;
+
+                        let enddist = ESYS.psrep_on_vars (ESYS.psrep_given_state outputdist res_state_projected) secretvars in
+
+                        let ps_updater = {newbelief = enddist} in
+
+                        ifnotverbose (
+                        let rev_belief = ESYS.psrep_max_belief enddist in
+                        printf "Revised max-belief: %s\n" (Gmp.Q.to_string rev_belief);
+                        (* lg (U/V) == lg U - lg V *)
+                        let cuma_leakage = lg (Gmp.Q.to_float rev_belief) -. lg (!Globals.init_max_belief) in
+                        printf "Cumulative leakage: %s\n%!" (string_of_float cuma_leakage);
+                        printf "Number of states: %d\n%!" (ESYS.psrep_rep_size enddist)
+                        );
+                        (ps_updater, enddist))) in
 
         (match policysystem_check_policies 0 ps.policies outputdist enddist secretdist outlist with
         | None -> {result = RTrueValue ([]);
-                    update = ps_updater}
+                    update = ps_up}
         | Some (s) -> {result = RReject (s);
                        update = {newbelief = ps.belief}})
      | RunConc ->
