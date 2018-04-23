@@ -53,4 +53,7 @@ dumbParseMB str = fromRational $ read (takeWhile (/= '/') str') % read (drop 1 $
     str' = drop 2 (dropWhile (/= ':') str)
 
 dumbParseLeak :: String -> Double
-dumbParseLeak = read . drop 2 . dropWhile (/= ':')
+dumbParseLeak str = (read . f . drop 2 . dropWhile (/= ':')) str
+  where
+    f "0." = "0.0"
+    f x    = x
