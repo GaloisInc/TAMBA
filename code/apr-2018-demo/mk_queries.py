@@ -25,7 +25,7 @@ import sys
 # $ python mk_queries.py hmas boho man 50 ausie.prob
 
 def main ():
-    if len(sys.argv) != 6:
+    if len(sys.argv) != 7:
         exit(1)
 
     ############################################################################
@@ -45,6 +45,9 @@ def main ():
     file_name = sys.argv[5]
     out = open(file_name, 'w+')
 
+    # The ship to restrict to
+    ship_restrict = sys.argv[6]
+
     print "Creating a prob file %s, from %s\'s perspective to %s\'s perspective..." % (file_name, perspective_from, perspective_to)
 
     num_ships = 10
@@ -55,18 +58,18 @@ def main ():
     #
     # Ship data are tuples of the following info:
     # id(0),name(1),cargo(2),latitude(3),longitude(4),length(5),draft(6),maxspeed(7)
-    us_ships = [(1, "comfort"  ,1000,  8963, 121944,600,40,10),
-                (2, "mercy"    ,2000,    8287, 122524,800,50,20),
-                (3, "sanctuary",1800,11145,126899,500,35,30),
-                (4, "haven"    ,1500,    9563, 118995,550,30,35)]
+    us_ships = [(1, "comfort"  ,1000, 156, 2128,600,40,10),
+                (2, "mercy"    ,2000, 145, 2138,800,50,20),
+                (3, "sanctuary",1800, 195, 2215,500,35,30),
+                (4, "haven"    ,1500, 167, 2077,550,30,35)]
 
-    hmas_ships = [(5, "refuge",2000,   5685, 119124,650,48,32),
-                  (6, "hope"  ,1600,     7496, 119503,480,40,22),
-                  (7, "solace",1400,   9208, 126801,450,32,25)]
+    hmas_ships = [(5, "refuge",2000,   99, 2079,650,48,32),
+                  (6, "hope"  ,1600,  131, 2086,480,40,22),
+                  (7, "solace",1400,  161, 2213,450,32,25)]
 
-    plan_ships = [(8,  "peaceArk",1900, 8703, 122962,685,55,34),
-                  (9,  "nanyun"  ,1400,   9232, 120660,550,46,28),
-                  (10, "nankang" ,1200,  11800,126280,500,42,26)]
+    plan_ships = [(8,  "peaceArk",1900, 152, 2146,685,55,34),
+                  (9,  "nanyun"  ,1400, 161, 2106,550,46,28),
+                  (10, "nankang" ,1200, 206, 2204,500,42,26)]
 
     all_ships = us_ships + hmas_ships + plan_ships
 
@@ -78,18 +81,18 @@ def main ():
     #
     # The only actual secret is the port harbor-depth
 
-    bohol_ports    = [(4,  "jagna",            9650,  124366, 2000, 3, 50, True),
-                      (5,  "tagbilaran",       9673,  123873, 1800, 5, 45, True)]
+    bohol_ports    = [(4,  "jagna",             168,  2171, 2000, 3, 50, True),
+                      (5,  "tagbilaran",        169,  2162, 1800, 5, 45, True)]
 
-    cebu_ports     = [(1,  "cebucity",         10316, 123886, 2500, 2, 65, True),
-                      (2,  "lapulapu",         10268, 123994, 2000, 3, 55, True),
-                      (3,  "alcoy",            9683,  123500, 1500, 4, 45, True)]
+    cebu_ports     = [(1,  "cebucity",          180,  2162, 2500, 2, 65, True),
+                      (2,  "lapulapu",          179,  2164, 2000, 3, 55, True),
+                      (3,  "alcoy",             169,  2155, 1500, 4, 45, True)]
 
-    siquijor_ports = [(6,  "siquijorcity",     9213,  123516, 800,  7, 30, True),
-                      (7,  "sanjuan",          9167,  123500, 1000, 8, 40, True),
-                      (8,  "maria",            9200,  123650, 1100, 6, 45, True),
-                      (9,  "larena",           9250,  123600, 600,  5, 30, True),
-                      (10, "enriquevillanueve",9272,  123638, 1500, 5, 50, True)]
+    siquijor_ports = [(6,  "siquijorcity",      161,  2156, 800,  7, 30, True),
+                      (7,  "sanjuan",           160,  2155, 1000, 8, 40, True),
+                      (8,  "maria",             161,  2158, 1100, 6, 45, True),
+                      (9,  "larena",            161,  2157, 600,  5, 30, True),
+                      (10, "enriquevillanueve", 162,  2158, 1500, 5, 50, True)]
 
     all_ports = bohol_ports + cebu_ports + siquijor_ports
 
@@ -112,7 +115,6 @@ def main ():
 
     pers_from = partner_map[perspective_from]
     pers_to   = partner_map[perspective_to]
-
 
     pers = []
     for part in set([perspective_from, perspective_to]):
@@ -150,21 +152,33 @@ def main ():
     # Here we write out the initial belief using the 'from' perspective that
     # we've been provided
 
-    ship_var_data_ranges = [("lat", 3000, 18000), ("long", 115000, 130000), ("maxspeed", 5, 50)]
+    ship_var_data_ranges = [("lat", 52, 314), ("long", 2007, 2269), ("maxspeed", 5, 50)]
     port_var_data_ranges = [("harbordepth", 10, 100)]
 
     belief_header = "belief:\n"
     belief_header_stmt = ""
 
-    for is_ship, data in pers:
-        if is_ship:
-            for ship in data:
-                for (prefix, rng_min, rng_max) in ship_var_data_ranges:
-                    belief_header_stmt += ("  int ship%d_%s = uniform %d %d;\n" % (ship[0], prefix, rng_min, rng_max))
-        else:
-            for port in data:
-                for (prefix, rng_min, rng_max) in port_var_data_ranges:
-                    belief_header_stmt += ("  int port%d_%s = uniform %d %d;\n" % (port[0], prefix, rng_min, rng_max))
+    # From perspective has a belief
+    (is_ship,data) = pers_from
+    if is_ship:
+        for ship in data:
+            for (prefix, rng_min, rng_max) in ship_var_data_ranges:
+                belief_header_stmt += ("  int ship%d_%s = uniform %d %d;\n" % (ship[0], prefix, rng_min, rng_max))
+    else:
+        for port in data:
+            for (prefix, rng_min, rng_max) in port_var_data_ranges:
+                belief_header_stmt += ("  int port%d_%s = uniform %d %d;\n" % (port[0], prefix, rng_min, rng_max))
+
+    # To perspective is constant so it doesn't contribute to belief
+    (is_ship,data) = pers_to
+    if is_ship:
+        for ship in data:
+            belief_header_stmt += ("  int ship%d_%s = %d;\n" % (ship[0], "lat", ship[3]))
+            belief_header_stmt += ("  int ship%d_%s = %d;\n" % (ship[0], "long", ship[4]))
+            belief_header_stmt += ("  int ship%d_%s = %d;\n" % (ship[0], "maxspeed", ship[7]))
+    else:
+        for port in data:
+            belief_header_stmt += ("  int port%d_%s = %d;\n" % (port[0], "harbordepth", port[6]))
 
     belief = belief_header + belief_header_stmt
 
@@ -241,18 +255,18 @@ def main ():
     reachable = "  int reachable = 0;\n\n"
     
 
-    chebyshev += ("  if ((ship_lat - port_lat <= deadline * ship_maxspeed) and\n"
-                  "      (port_lat - ship_lat <= deadline * ship_maxspeed)) or\n"
-                  "     ((ship_long - port_long <= deadline * ship_maxspeed) and\n"
-                  "      (port_long - ship_long <= deadline * ship_maxspeed)) then\n"
+    chebyshev += ("  if ((3959*(ship_lat - port_lat) <= deadline * ship_maxspeed) and\n"
+                  "      (3959*(port_lat - ship_lat) <= deadline * ship_maxspeed)) or\n"
+                  "     ((3959*(ship_long - port_long) <= deadline * ship_maxspeed) and\n"
+                  "      (3959*(port_long - ship_long) <= deadline * ship_maxspeed)) then\n"
                   "    reachable = 1;\n"
                   "  endif;\n"
                   "\n")
 
-    manhattan += ("  if (ship_lat - port_lat) + (ship_long - port_long) <= deadline * ship_maxspeed and\n"
-                  "     (ship_lat - port_lat) + (port_long - ship_long) <= deadline * ship_maxspeed and\n"
-                  "     (port_lat - ship_lat) + (port_long - ship_long) <= deadline * ship_maxspeed and\n"
-                  "     (port_lat - ship_lat) + (ship_long - port_long) <= deadline * ship_maxspeed then\n"
+    manhattan += ("  if 3959*((ship_lat - port_lat) + (ship_long - port_long)) <= deadline * ship_maxspeed and\n"
+                  "     3959*((ship_lat - port_lat) + (port_long - ship_long)) <= deadline * ship_maxspeed and\n"
+                  "     3959*((port_lat - ship_lat) + (port_long - ship_long)) <= deadline * ship_maxspeed and\n"
+                  "     3959*((port_lat - ship_lat) + (ship_long - port_long)) <= deadline * ship_maxspeed then\n"
                   "    reachable = 1;\n"
                   "  endif;\n"
                   "\n")
@@ -289,18 +303,23 @@ def main ():
     is_ship_to, data_to = pers_to
     if is_ship_from:
         for (sid, _, scar, sla, slo, sle, sdr, sp) in data_from:
-            for (pid, _, pla, plo, off, offt, pde, pav) in data_to:
-                query_data.append((sid,pid,sdr,scar,pav,plo,pla,off))
+            if(str(sid) == ship_restrict):
+                for (pid, _, pla, plo, off, offt, pde, pav) in data_to:
+                    query_data.append((sid,pid,sdr,scar,pav,plo,pla,off))
     else:
         for (sid, _, scar, sla, slo, sle, sdr, sp) in data_to:
-            for (pid, _, pla, plo, off, offt, pde, pav) in data_from:
-                query_data.append((sid,pid,sdr,scar,pav,plo,pla,off))
+            if(str(sid) == ship_restrict):
+                for (pid, _, pla, plo, off, offt, pde, pav) in data_from:
+                    query_data.append((sid,pid,sdr,scar,pav,plo,pla,off))
 
     # remove duplicate queries
     query_data = set(query_data)
 
+    query_num = 0
     for (sid, pid, sdr, scar, pav, plo, pla, off) in query_data:
-        query_call =   "query mpc_aid:\n"
+        query_num += 1
+        query_call =  ("(* %d *)\n" % (query_num))
+        query_call += ("query mpc_aid:\n")
         query_call += ("  int ship_id = %d;\n" % (sid))
         query_call += ("  int port_id = %d;\n" % (pid))
         query_call += ("  int ship_draft = %d;\n" % (sdr))
